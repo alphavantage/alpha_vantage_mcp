@@ -26,6 +26,10 @@ uvx av-mcp YOUR_API_KEY
 
 ### Setup Instructions by Platform
 
+| Supported Platforms | How You Interact with Code | Setup Ease |
+|---|---|---|
+| **Recommended:**<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Additional:**<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude Code](#claude-code)<br>• [Cursor](#cursor)<br>• [Gemini CLI](#gemini-cli)<br>• [OpenAI Agents SDK](#openai-agents-sdk)<br>• [OpenAI Codex](#openai-codex)<br>• [Visual Studio Code](#visual-studio-code) | **AI Handles Everything**<br>Ask questions, and let the AI return market insights and financial answers automatically.<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Coding Copilot**<br>Write or review code with AI suggestions, helping analyze stock data and build finance workflows.<br>• [Claude Code](#claude-code)<br>• [Cursor](#cursor)<br>• [Visual Studio Code](#visual-studio-code)<br><br>**Command Line Control**<br>Execute financial data queries and tasks from the command line.<br>• [Gemini CLI](#gemini-cli)<br><br>**Full Code Integration**<br>Build custom features in your codebase using the API, such as screeners, dashboards, or trading strategies.<br>• [OpenAI Agents SDK](#openai-agents-sdk)<br>• [OpenAI Codex](#openai-codex) | **Instant App Setup**<br>Adjust settings inside the app to connect instantly.<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Config File Setup**<br>Paste a provided snippet into a project config file (e.g., JSON or TOML).<br>• [Cursor](#cursor)<br>• [OpenAI Codex](#openai-codex)<br>• [Visual Studio Code](#visual-studio-code)<br><br>**Terminal Command Setup**<br>Run setup commands in the terminal.<br>• [Claude Code](#claude-code)<br>• [Gemini CLI](#gemini-cli)<br><br>**Custom Code Setup**<br>Write custom code to connect and integrate with the API.<br>• [OpenAI Agents SDK](#openai-agents-sdk) |
+
 <details>
 <summary><b>Install in Claude</b></summary>
 
