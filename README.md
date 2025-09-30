@@ -30,7 +30,7 @@ uvx av-mcp YOUR_API_KEY
 |---|---|---|
 | **Recommended:**<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Additional:**<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude Code](#claude-code)<br>• [Cursor](#cursor)<br>• [Gemini CLI](#gemini-cli)<br>• [OpenAI Agents SDK](#openai-agents-sdk)<br>• [OpenAI Codex](#openai-codex)<br>• [Visual Studio Code](#visual-studio-code) | **AI Handles Everything**<br>Ask questions, and let the AI return market insights and financial answers automatically.<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Coding Copilot**<br>Write or review code with AI suggestions, helping analyze stock data and build finance workflows.<br>• [Claude Code](#claude-code)<br>• [Cursor](#cursor)<br>• [Visual Studio Code](#visual-studio-code)<br><br>**Command Line Control**<br>Execute financial data queries and tasks from the command line.<br>• [Gemini CLI](#gemini-cli)<br><br>**Full Code Integration**<br>Build custom features in your codebase using the API, such as screeners, dashboards, or trading strategies.<br>• [OpenAI Agents SDK](#openai-agents-sdk)<br>• [OpenAI Codex](#openai-codex) | **Instant App Setup**<br>Adjust settings inside the app to connect instantly.<br>• [ChatGPT (Developer Mode)](#chatgpt-developer-mode)<br>• [Claude (Web & Desktop)](#claude-web--desktop)<br><br>**Config File Setup**<br>Paste a provided snippet into a project config file (e.g., JSON or TOML).<br>• [Cursor](#cursor)<br>• [OpenAI Codex](#openai-codex)<br>• [Visual Studio Code](#visual-studio-code)<br><br>**Terminal Command Setup**<br>Run setup commands in the terminal.<br>• [Claude Code](#claude-code)<br>• [Gemini CLI](#gemini-cli)<br><br>**Custom Code Setup**<br>Write custom code to connect and integrate with the API.<br>• [OpenAI Agents SDK](#openai-agents-sdk) |
 
-<details>
+<details id="claude-web--desktop">
 <summary><b>Install in Claude</b></summary>
 
 #### Remote Server Connection
@@ -79,7 +79,7 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 
 </details>
 
-<details>
+<details id="openai-agents-sdk">
 <summary><b>Install in OpenAI Agents SDK</b></summary>
 
 To use the Alpha Vantage MCP server with OpenAI Agents SDK, see our [example agent](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/examples/agent/README.md) that demonstrates:
@@ -94,7 +94,7 @@ The example includes a complete setup guide and configuration templates.
 </details>
 
 
-<details>
+<details id="chatgpt-developer-mode">
 <summary><b>Install in ChatGPT</b></summary>
 
 To connect ChatGPT to this MCP server using ChatGPT Developer mode:
@@ -114,7 +114,7 @@ To connect ChatGPT to this MCP server using ChatGPT Developer mode:
 </details>
 
 
-<details>
+<details id="visual-studio-code">
 <summary><b>Install in Visual Studio Code</b></summary>
 
 Add this to your VS Code MCP config file. See [VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) for more info.
@@ -153,7 +153,7 @@ Open the Chat view and select Agent mode
 </details>
 
 
-<details>
+<details id="cursor">
 <summary><b>Install in Cursor</b></summary>
 
 Pasting the following configuration into your Cursor `~/.cursor/mcp.json` file is the recommended approach. You may also install in a specific project by creating `.cursor/mcp.json` in your project folder. See [Cursor MCP docs](https://docs.cursor.com/context/model-context-protocol) for more info.
@@ -190,7 +190,7 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 </details>
 
 
-<details>
+<details id="claude-code">
 <summary><b>Install in Claude Code</b></summary>
 
 Run this command. See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp) for more info.
@@ -219,7 +219,7 @@ Then connect with:
 </details>
 
 
-<details>
+<details id="openai-codex">
 <summary><b>Install in OpenAI Codex</b></summary>
 
 See [OpenAI Codex](https://github.com/openai/codex) for more information.
@@ -242,7 +242,7 @@ Then connect with:
 </details>
 
 
-<details>
+<details id="gemini-cli">
 <summary><b>Install in Gemini CLI</b></summary>
 
 See [Gemini CLI Configuration](https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html) for details.
