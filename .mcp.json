@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "alpaca": {
+      "command": "/Users/robsherman/Servers/alpaca-mcp-server/myvenv/bin/python",
+      "args": [
+        "/Users/robsherman/Servers/alpaca-mcp-server/alpaca_mcp_server.py"
+      ],
+      "env": {
+        "ALPACA_API_KEY": "AK3YA6NXI9IE03KA1OVJ",
+        "ALPACA_SECRET_KEY": "Ksvq5ljg3TBJt428OWPPhxmkGTq9Nhxuk7Qpwbld"
+      }
+    },
+    "alphavantage": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/robsherman/Documents/Repos/alpha_vantage_mcp/server",
+        "av-mcp",
+        "I4CAOI1X36M4TALF"
+      ]
+    },
+    "financial-datasets": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.financialdatasets.ai/mcp"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ]
+    }
+  }
+}

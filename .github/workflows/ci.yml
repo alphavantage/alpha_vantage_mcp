@@ -1,0 +1,43 @@
+name: Quality Checks
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run Ruff linting
+        run: |
+          uv run ruff check .
+
+      - name: Run Black formatting check
+        run: |
+          uv run black --check .
+
+      - name: Run pytest
+        run: |
+          uv run pytest -v

@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^server/
+      - id: ruff-format
+        files: ^server/
+
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        files: ^server/
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest
+        entry: bash -c 'cd server && uv run pytest -v'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

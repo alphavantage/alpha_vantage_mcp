@@ -1,6 +1,6 @@
-from typing import Optional
 from src.common import _make_api_request
 from src.tools.registry import tool
+
 
 @tool
 def time_series_intraday(
@@ -8,9 +8,9 @@ def time_series_intraday(
     interval: str,
     adjusted: bool = True,
     extended_hours: bool = True,
-    month: Optional[str] = None,
+    month: str | None = None,
     outputsize: str = "compact",
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict | str:
     """
     Returns current and 20+ years of historical intraday OHLCV time series of the equity specified.
@@ -38,14 +38,13 @@ def time_series_intraday(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("TIME_SERIES_INTRADAY", params)
+
 
 @tool
 def time_series_daily(
-    symbol: str,
-    outputsize: str = "compact",
-    datatype: str = "csv"
+    symbol: str, outputsize: str = "compact", datatype: str = "csv"
 ) -> dict | str:
     """
     Returns raw daily time series (OHLCV) of the global equity specified, covering 20+ years of historical data.
@@ -64,14 +63,13 @@ def time_series_daily(
         "outputsize": outputsize,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_DAILY", params)
+
 
 @tool
 def time_series_daily_adjusted(
-    symbol: str,
-    outputsize: str = "compact",
-    datatype: str = "csv"
+    symbol: str, outputsize: str = "compact", datatype: str = "csv"
 ) -> dict | str:
     """
     Returns raw daily OHLCV values, adjusted close values, and historical split/dividend events.
@@ -90,14 +88,12 @@ def time_series_daily_adjusted(
         "outputsize": outputsize,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_DAILY_ADJUSTED", params)
 
+
 @tool
-def time_series_weekly(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict | str:
+def time_series_weekly(symbol: str, datatype: str = "csv") -> dict | str:
     """
     Returns weekly time series (last trading day of each week, OHLCV) covering 20+ years of historical data.
 
@@ -113,14 +109,12 @@ def time_series_weekly(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_WEEKLY", params)
 
+
 @tool
-def time_series_weekly_adjusted(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict | str:
+def time_series_weekly_adjusted(symbol: str, datatype: str = "csv") -> dict | str:
     """
     Returns weekly adjusted time series (OHLCV, adjusted close, volume, dividend) covering 20+ years.
 
@@ -136,14 +130,12 @@ def time_series_weekly_adjusted(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_WEEKLY_ADJUSTED", params)
 
+
 @tool
-def time_series_monthly(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict | str:
+def time_series_monthly(symbol: str, datatype: str = "csv") -> dict | str:
     """
     Returns monthly time series (last trading day of each month, OHLCV) covering 20+ years.
 
@@ -159,14 +151,12 @@ def time_series_monthly(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_MONTHLY", params)
 
+
 @tool
-def time_series_monthly_adjusted(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict | str:
+def time_series_monthly_adjusted(symbol: str, datatype: str = "csv") -> dict | str:
     """
     Returns monthly adjusted time series (OHLCV, adjusted close, volume, dividend) covering 20+ years.
 
@@ -182,8 +172,9 @@ def time_series_monthly_adjusted(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("TIME_SERIES_MONTHLY_ADJUSTED", params)
+
 
 @tool
 def global_quote(symbol: str, datatype: str = "csv") -> dict | str:
@@ -204,11 +195,9 @@ def global_quote(symbol: str, datatype: str = "csv") -> dict | str:
     }
     return _make_api_request("GLOBAL_QUOTE", params)
 
+
 @tool
-def realtime_bulk_quotes(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict | str:
+def realtime_bulk_quotes(symbol: str, datatype: str = "csv") -> dict | str:
     """
     Returns realtime quotes for US-traded symbols in bulk, accepting up to 100 symbols per request.
 
@@ -224,14 +213,12 @@ def realtime_bulk_quotes(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("REALTIME_BULK_QUOTES", params)
 
+
 @tool
-def symbol_search(
-    keywords: str,
-    datatype: str = "csv"
-) -> dict | str:
+def symbol_search(keywords: str, datatype: str = "csv") -> dict | str:
     """
     Returns best-matching symbols and market information based on keywords.
 
@@ -247,8 +234,9 @@ def symbol_search(
         "keywords": keywords,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("SYMBOL_SEARCH", params)
+
 
 @tool
 def market_status() -> dict:
@@ -259,6 +247,5 @@ def market_status() -> dict:
         Dict containing current market status information.
     """
     params = {}
-    
-    return _make_api_request("MARKET_STATUS", params)
 
+    return _make_api_request("MARKET_STATUS", params)

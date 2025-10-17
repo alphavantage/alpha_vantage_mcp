@@ -1,0 +1,8 @@
+{
+  "enabledMcpjsonServers": [
+    "alpaca",
+    "alphavantage",
+    "financial-datasets",
+    "context7"
+  ]
+}

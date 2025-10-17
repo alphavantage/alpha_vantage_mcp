@@ -7,39 +7,39 @@ via stdio transport, suitable for use with local MCP clients.
 
 Usage:
     python stdio_server.py [API_KEY]
-    
+
 Environment Variables:
     ALPHA_VANTAGE_API_KEY: Your Alpha Vantage API key
 """
 
+import asyncio
 import os
 import sys
-import asyncio
-import click
 from typing import Any
-from loguru import logger
 
+import click
 import mcp.server.stdio
 import mcp.types as types
+from loguru import logger
 from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
 from .context import set_api_key
-from .tools.registry import get_all_tools, TOOL_MODULES
+from .tools.registry import TOOL_MODULES, get_all_tools
 
 
 class StdioMCPServer:
     """Stdio MCP Server for Alpha Vantage"""
-    
+
     def __init__(self, api_key: str, categories: list[str] = None, verbose: bool = False):
         self.api_key = api_key
         self.categories = categories
         self.verbose = verbose
         self.server = Server("alphavantage-mcp")
-        
+
         # Set up the API key context
         set_api_key(api_key)
-        
+
         # Get all tools for the specified categories
         if categories:
             if verbose:
@@ -53,18 +53,18 @@ class StdioMCPServer:
             if verbose:
                 logger.info("Loading all tools")
             self.tools = get_all_tools()
-        
+
         # Register handlers
         self._register_handlers()
-    
+
     def _register_handlers(self):
         """Register MCP protocol handlers"""
-        
+
         @self.server.list_tools()
         async def handle_list_tools() -> list[types.Tool]:
             """List available tools."""
             return [tool_def for tool_def, _ in self.tools]
-        
+
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
             """Handle tool calls."""
@@ -76,19 +76,19 @@ class StdioMCPServer:
                             result = await tool_func(**arguments)
                         else:
                             result = tool_func(**arguments)
-                        
+
                         # Convert result to text content
                         if isinstance(result, str):
                             return [types.TextContent(type="text", text=result)]
                         else:
                             return [types.TextContent(type="text", text=str(result))]
-                    
+
                     except Exception as e:
                         logger.error(f"Error calling tool {name}: {e}")
                         return [types.TextContent(type="text", text=f"Error: {str(e)}")]
-            
+
             raise ValueError(f"Unknown tool: {name}")
-    
+
     async def run(self):
         """Run the low-level server"""
         async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
@@ -107,22 +107,30 @@ class StdioMCPServer:
 
 
 @click.command()
-@click.argument('api_key', required=False)
-@click.option('--api-key', 'api_key_option', help='Alpha Vantage API key (alternative to positional argument)')
-@click.option('--categories', multiple=True, help='Tool categories to include (default: all categories)')
-@click.option('--list-categories', is_flag=True, help='List available tool categories and exit')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@click.argument("api_key", required=False)
+@click.option(
+    "--api-key", "api_key_option", help="Alpha Vantage API key (alternative to positional argument)"
+)
+@click.option(
+    "--categories", multiple=True, help="Tool categories to include (default: all categories)"
+)
+@click.option("--list-categories", is_flag=True, help="List available tool categories and exit")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 def cli(api_key, api_key_option, categories, list_categories, verbose):
-    """Alpha Vantage MCP Server (stdio transport)
+    (
+        """Alpha Vantage MCP Server (stdio transport)
 
     Available tool categories:
-    """ + "\n".join(f"  - {cat}" for cat in TOOL_MODULES.keys()) + """
+    """
+        + "\n".join(f"  - {cat}" for cat in TOOL_MODULES.keys())
+        + """
 
     Examples:
       av-mcp YOUR_API_KEY
       av-mcp YOUR_API_KEY --categories core_stock_apis forex
       av-mcp --api-key YOUR_API_KEY --categories technical_indicators
     """
+    )
     # Configure logging based on verbose flag
     if not verbose:
         logger.remove()
@@ -136,10 +144,12 @@ def cli(api_key, api_key_option, categories, list_categories, verbose):
         return
 
     # Get API key from args or environment
-    api_key = api_key or api_key_option or os.getenv('ALPHA_VANTAGE_API_KEY')
+    api_key = api_key or api_key_option or os.getenv("ALPHA_VANTAGE_API_KEY")
 
     if not api_key:
-        logger.error("API key required. Provide via argument or ALPHA_VANTAGE_API_KEY environment variable")
+        logger.error(
+            "API key required. Provide via argument or ALPHA_VANTAGE_API_KEY environment variable"
+        )
         print("Error: API key required", file=sys.stderr)
         print("Usage: av-mcp YOUR_API_KEY", file=sys.stderr)
         print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp", file=sys.stderr)
@@ -158,7 +168,9 @@ def cli(api_key, api_key_option, categories, list_categories, verbose):
 
     # Create and run server
     if verbose:
-        logger.info(f"Starting Alpha Vantage MCP Server (stdio) with {len(categories or TOOL_MODULES)} categories")
+        logger.info(
+            f"Starting Alpha Vantage MCP Server (stdio) with {len(categories or TOOL_MODULES)} categories"
+        )
     server = StdioMCPServer(api_key, list(categories), verbose)
 
     try:

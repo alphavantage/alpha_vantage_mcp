@@ -1,11 +1,9 @@
 from src.common import _make_api_request
 from src.tools.registry import tool
 
+
 @tool
-def wti(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def wti(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the West Texas Intermediate (WTI) crude oil prices in daily, weekly, and monthly horizons.
 
@@ -22,15 +20,12 @@ def wti(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("WTI", params)
 
 
 @tool
-def brent(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def brent(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the Brent (Europe) crude oil prices in daily, weekly, and monthly horizons.
 
@@ -47,15 +42,12 @@ def brent(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("BRENT", params)
 
 
 @tool
-def natural_gas(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def natural_gas(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the Henry Hub natural gas spot prices in daily, weekly, and monthly horizons.
 
@@ -72,15 +64,12 @@ def natural_gas(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("NATURAL_GAS", params)
 
 
 @tool
-def copper(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def copper(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of copper in monthly, quarterly, and annual horizons.
 
@@ -97,15 +86,12 @@ def copper(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("COPPER", params)
 
 
 @tool
-def aluminum(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def aluminum(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of aluminum in monthly, quarterly, and annual horizons.
 
@@ -122,15 +108,12 @@ def aluminum(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("ALUMINUM", params)
 
 
 @tool
-def wheat(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def wheat(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of wheat in monthly, quarterly, and annual horizons.
 
@@ -147,15 +130,12 @@ def wheat(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("WHEAT", params)
 
 
 @tool
-def corn(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def corn(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of corn in monthly, quarterly, and annual horizons.
 
@@ -172,15 +152,12 @@ def corn(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("CORN", params)
 
 
 @tool
-def cotton(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def cotton(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of cotton in monthly, quarterly, and annual horizons.
 
@@ -197,15 +174,12 @@ def cotton(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("COTTON", params)
 
 
 @tool
-def sugar(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def sugar(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of sugar in monthly, quarterly, and annual horizons.
 
@@ -222,15 +196,12 @@ def sugar(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("SUGAR", params)
 
 
 @tool
-def coffee(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def coffee(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price of coffee in monthly, quarterly, and annual horizons.
 
@@ -247,15 +218,12 @@ def coffee(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("COFFEE", params)
 
 
 @tool
-def all_commodities(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def all_commodities(interval: str = "monthly", datatype: str = "csv") -> dict[str, str] | str:
     """
     This API returns the global price index of all commodities in monthly, quarterly, and annual temporal dimensions.
 
@@ -272,5 +240,5 @@ def all_commodities(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("ALL_COMMODITIES", params)
