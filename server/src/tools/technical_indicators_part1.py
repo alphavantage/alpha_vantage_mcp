@@ -1,6 +1,7 @@
 from src.common import _make_api_request
 from src.tools.registry import tool
 
+
 @tool
 def sma(
     symbol: str,
@@ -8,7 +9,7 @@ def sma(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the simple moving average (SMA) values.
@@ -41,7 +42,7 @@ def sma(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("SMA", params)
 
 
@@ -52,7 +53,7 @@ def ema(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the exponential moving average (EMA) values.
@@ -85,7 +86,7 @@ def ema(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("EMA", params)
 
 
@@ -96,7 +97,7 @@ def wma(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the weighted moving average (WMA) values.
@@ -129,7 +130,7 @@ def wma(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("WMA", params)
 
 
@@ -140,7 +141,7 @@ def dema(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the double exponential moving average (DEMA) values.
@@ -173,7 +174,7 @@ def dema(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("DEMA", params)
 
 
@@ -184,7 +185,7 @@ def tema(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the triple exponential moving average (TEMA) values.
@@ -217,7 +218,7 @@ def tema(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("TEMA", params)
 
 
@@ -228,7 +229,7 @@ def trima(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the triangular moving average (TRIMA) values.
@@ -261,7 +262,7 @@ def trima(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("TRIMA", params)
 
 
@@ -272,7 +273,7 @@ def kama(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the Kaufman adaptive moving average (KAMA) values.
@@ -305,7 +306,7 @@ def kama(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("KAMA", params)
 
 
@@ -317,7 +318,7 @@ def mama(
     month: str = None,
     fastlimit: float = 0.01,
     slowlimit: float = 0.01,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the MESA adaptive moving average (MAMA) values.
@@ -353,16 +354,13 @@ def mama(
         params["fastlimit"] = str(fastlimit)
     if slowlimit != 0.01:
         params["slowlimit"] = str(slowlimit)
-    
+
     return _make_api_request("MAMA", params)
 
 
 @tool
 def vwap(
-    symbol: str,
-    interval: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
     Returns the volume weighted average price (VWAP) for intraday time series.
@@ -390,7 +388,7 @@ def vwap(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("VWAP", params)
 
 
@@ -401,7 +399,7 @@ def t3(
     time_period: int,
     series_type: str,
     month: str = None,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the triple exponential moving average (T3) values.
@@ -434,7 +432,7 @@ def t3(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("T3", params)
 
 
@@ -447,7 +445,7 @@ def macd(
     fastperiod: int = 12,
     slowperiod: int = 26,
     signalperiod: int = 9,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the moving average convergence / divergence (MACD) values.
@@ -486,7 +484,7 @@ def macd(
         params["slowperiod"] = str(slowperiod)
     if signalperiod != 9:
         params["signalperiod"] = str(signalperiod)
-    
+
     return _make_api_request("MACD", params)
 
 
@@ -502,7 +500,7 @@ def macdext(
     fastmatype: int = 0,
     slowmatype: int = 0,
     signalmatype: int = 0,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the moving average convergence / divergence values with controllable moving average type.
@@ -565,7 +563,7 @@ def macdext(
         params["slowmatype"] = str(slowmatype)
     if signalmatype != 0:
         params["signalmatype"] = str(signalmatype)
-    
+
     return _make_api_request("MACDEXT", params)
 
 
@@ -579,7 +577,7 @@ def stoch(
     slowdperiod: int = 3,
     slowkmatype: int = 0,
     slowdmatype: int = 0,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the stochastic oscillator (STOCH) values.
@@ -632,7 +630,7 @@ def stoch(
         params["slowkmatype"] = str(slowkmatype)
     if slowdmatype != 0:
         params["slowdmatype"] = str(slowdmatype)
-    
+
     return _make_api_request("STOCH", params)
 
 
@@ -644,7 +642,7 @@ def stochf(
     fastkperiod: int = 5,
     fastdperiod: int = 3,
     fastdmatype: int = 0,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """
     Returns the stochastic fast (STOCHF) values.
@@ -686,5 +684,5 @@ def stochf(
         params["fastdperiod"] = str(fastdperiod)
     if fastdmatype != 0:
         params["fastdmatype"] = str(fastdmatype)
-    
+
     return _make_api_request("STOCHF", params)

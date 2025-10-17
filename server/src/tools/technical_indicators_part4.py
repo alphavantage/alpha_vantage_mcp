@@ -1,12 +1,10 @@
 from src.common import _make_api_request
 from src.tools.registry import tool
 
+
 @tool
 def ad(
-    symbol: str,
-    interval: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Chaikin A/D line (AD) values.
 
@@ -35,7 +33,7 @@ def ad(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("AD", params)
 
 
@@ -46,7 +44,7 @@ def adosc(
     month: str = None,
     fastperiod: int = 3,
     slowperiod: int = 10,
-    datatype: str = "csv"
+    datatype: str = "csv",
 ) -> dict[str, str] | str:
     """Returns the Chaikin A/D oscillator (ADOSC) values.
 
@@ -81,16 +79,13 @@ def adosc(
         params["fastperiod"] = str(fastperiod)
     if slowperiod != 10:
         params["slowperiod"] = str(slowperiod)
-    
+
     return _make_api_request("ADOSC", params)
 
 
 @tool
 def obv(
-    symbol: str,
-    interval: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the on balance volume (OBV) values.
 
@@ -119,17 +114,13 @@ def obv(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("OBV", params)
 
 
 @tool
 def ht_trendline(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, instantaneous trendline (HT_TRENDLINE) values.
 
@@ -160,17 +151,13 @@ def ht_trendline(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_TRENDLINE", params)
 
 
 @tool
 def ht_sine(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, sine wave (HT_SINE) values.
 
@@ -201,17 +188,13 @@ def ht_sine(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_SINE", params)
 
 
 @tool
 def ht_trendmode(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, trend vs cycle mode (HT_TRENDMODE) values.
 
@@ -242,17 +225,13 @@ def ht_trendmode(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_TRENDMODE", params)
 
 
 @tool
 def ht_dcperiod(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, dominant cycle period (HT_DCPERIOD) values.
 
@@ -283,17 +262,13 @@ def ht_dcperiod(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_DCPERIOD", params)
 
 
 @tool
 def ht_dcphase(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, dominant cycle phase (HT_DCPHASE) values.
 
@@ -324,17 +299,13 @@ def ht_dcphase(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_DCPHASE", params)
 
 
 @tool
 def ht_phasor(
-    symbol: str,
-    interval: str,
-    series_type: str,
-    month: str = None,
-    datatype: str = "csv"
+    symbol: str, interval: str, series_type: str, month: str = None, datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the Hilbert transform, phasor components (HT_PHASOR) values.
 
@@ -365,5 +336,5 @@ def ht_phasor(
     }
     if month:
         params["month"] = month
-    
+
     return _make_api_request("HT_PHASOR", params)

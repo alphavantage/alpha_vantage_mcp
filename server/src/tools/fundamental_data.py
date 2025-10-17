@@ -1,12 +1,11 @@
 from src.common import _make_api_request
 from src.tools.registry import tool
 
+
 @tool
-def company_overview(
-    symbol: str
-) -> dict[str, str] | str:
+def company_overview(symbol: str) -> dict[str, str] | str:
     """Returns company information, financial ratios, and key metrics for the specified equity.
-    
+
     Data is generally refreshed on the same day a company reports its latest earnings and financials.
 
     Args:
@@ -19,16 +18,14 @@ def company_overview(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("OVERVIEW", params)
 
 
 @tool
-def etf_profile(
-    symbol: str
-) -> dict[str, str] | str:
+def etf_profile(symbol: str) -> dict[str, str] | str:
     """Returns key ETF metrics and holdings with allocation by asset types and sectors.
-    
+
     Includes net assets, expense ratio, turnover, and corresponding ETF holdings/constituents.
 
     Args:
@@ -41,15 +38,12 @@ def etf_profile(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("ETF_PROFILE", params)
 
 
 @tool
-def dividends(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def dividends(symbol: str, datatype: str = "csv") -> dict[str, str] | str:
     """Returns historical and future (declared) dividend distributions.
 
     Args:
@@ -65,15 +59,12 @@ def dividends(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("DIVIDENDS", params)
 
 
 @tool
-def splits(
-    symbol: str,
-    datatype: str = "csv"
-) -> dict[str, str] | str:
+def splits(symbol: str, datatype: str = "csv") -> dict[str, str] | str:
     """Returns historical split events.
 
     Args:
@@ -89,17 +80,15 @@ def splits(
         "symbol": symbol,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("SPLITS", params)
 
 
 @tool
-def income_statement(
-    symbol: str
-) -> dict[str, str] | str:
+def income_statement(symbol: str) -> dict[str, str] | str:
     """Returns annual and quarterly income statements with normalized fields.
-    
-    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed 
+
+    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed
     on the same day a company reports its latest earnings and financials.
 
     Args:
@@ -112,17 +101,15 @@ def income_statement(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("INCOME_STATEMENT", params)
 
 
 @tool
-def balance_sheet(
-    symbol: str
-) -> dict[str, str] | str:
+def balance_sheet(symbol: str) -> dict[str, str] | str:
     """Returns annual and quarterly balance sheets with normalized fields.
-    
-    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed 
+
+    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed
     on the same day a company reports its latest earnings and financials.
 
     Args:
@@ -135,17 +122,15 @@ def balance_sheet(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("BALANCE_SHEET", params)
 
 
 @tool
-def cash_flow(
-    symbol: str
-) -> dict[str, str] | str:
+def cash_flow(symbol: str) -> dict[str, str] | str:
     """Returns annual and quarterly cash flow with normalized fields.
-    
-    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed 
+
+    Fields are mapped to GAAP and IFRS taxonomies of the SEC. Data is generally refreshed
     on the same day a company reports its latest earnings and financials.
 
     Args:
@@ -158,16 +143,14 @@ def cash_flow(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("CASH_FLOW", params)
 
 
 @tool
-def earnings(
-    symbol: str
-) -> dict[str, str] | str:
+def earnings(symbol: str) -> dict[str, str] | str:
     """Returns annual and quarterly earnings (EPS) for the company.
-    
+
     Quarterly data also includes analyst estimates and surprise metrics.
 
     Args:
@@ -180,16 +163,14 @@ def earnings(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("EARNINGS", params)
 
 
 @tool
-def earnings_estimates(
-    symbol: str
-) -> dict[str, str] | str:
+def earnings_estimates(symbol: str) -> dict[str, str] | str:
     """Returns annual and quarterly EPS and revenue estimates with analyst data.
-    
+
     Includes analyst count and revision history.
 
     Args:
@@ -202,17 +183,14 @@ def earnings_estimates(
     params = {
         "symbol": symbol,
     }
-    
+
     return _make_api_request("EARNINGS_ESTIMATES", params)
 
 
 @tool
-def listing_status(
-    date: str = None,
-    state: str = "active"
-) -> dict[str, str] | str:
+def listing_status(date: str = None, state: str = "active") -> dict[str, str] | str:
     """Returns a list of active or delisted US stocks and ETFs.
-    
+
     Can return data as of the latest trading day or at a specific time in history.
     Facilitates equity research on asset lifecycle and survivorship.
 
@@ -232,15 +210,12 @@ def listing_status(
     }
     if date:
         params["date"] = date
-    
+
     return _make_api_request("LISTING_STATUS", params)
 
 
 @tool
-def earnings_calendar(
-    symbol: str = None,
-    horizon: str = "3month"
-) -> dict[str, str] | str:
+def earnings_calendar(symbol: str = None, horizon: str = "3month") -> dict[str, str] | str:
     """Returns a list of company earnings expected in the next 3, 6, or 12 months.
 
     Args:
@@ -258,7 +233,7 @@ def earnings_calendar(
     }
     if symbol:
         params["symbol"] = symbol
-    
+
     return _make_api_request("EARNINGS_CALENDAR", params)
 
 
@@ -271,5 +246,5 @@ def ipo_calendar() -> dict[str, str] | str:
     """
 
     params = {}
-    
+
     return _make_api_request("IPO_CALENDAR", params)
