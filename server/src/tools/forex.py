@@ -2,32 +2,6 @@ from src.common import _make_api_request
 from src.tools.registry import tool
 
 @tool
-def currency_exchange_rate(
-    from_currency: str,
-    to_currency: str
-) -> dict[str, str] | str:
-    """
-    This API returns the realtime exchange rate for a pair of digital currency (e.g., Bitcoin) and physical currency (e.g., USD).
-
-    Args:
-        from_currency: The currency you would like to get the exchange rate for. It can either be a physical currency 
-                      or digital/crypto currency. For example: from_currency=USD or from_currency=BTC.
-        to_currency: The destination currency for the exchange rate. It can either be a physical currency 
-                    or digital/crypto currency. For example: to_currency=USD or to_currency=BTC.
-
-    Returns:
-        Realtime exchange rate data as a dictionary or string.
-    """
-
-    params = {
-        "from_currency": from_currency,
-        "to_currency": to_currency,
-    }
-    
-    return _make_api_request("CURRENCY_EXCHANGE_RATE", params)
-
-
-@tool
 def fx_intraday(
     from_symbol: str,
     to_symbol: str,
