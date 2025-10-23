@@ -25,7 +25,7 @@ uvx av-mcp YOUR_API_KEY
 
 &nbsp;
 
-### Platform Setup Instructions by Use Case
+### Setup Instructions by Use Case
 💬📊 _Power your chatbot with financial data_
 
 
