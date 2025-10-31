@@ -123,6 +123,7 @@ See [OpenAI Codex](https://github.com/openai/codex) for more information.
 📺 Watch the **setup tutorial**. (Click image below.) This video additionally provides guidance on handling setup errors and building complete end-to-end applications which are empowered to fetch market data to power dynamic, data-driven visualizations.
 
 [![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
+
 - [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
 - For additional support links, please check the video description on YouTube."
 

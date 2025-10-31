@@ -248,7 +248,8 @@ function parseShortcodes(content: string): string {
   });
   
   // Convert YouTube image links to iframe embeds
-  const youtubePattern = /\[!\[([^\]]*)\]\(https:\/\/img\.youtube\.com\/vi\/([^\/]+)\/[^)]+\)\]\(https:\/\/www\.youtube\.com\/watch\?v=([^)]+)\)/g;
+  // Support both img.youtube.com and i3.ytimg.com (and other ytimg subdomains)
+  const youtubePattern = /\[!\[([^\]]*)\]\(https?:\/\/(?:img\.youtube\.com|i\d*\.ytimg\.com)\/vi\/([^\/]+)\/[^)]+\)\]\(https:\/\/www\.youtube\.com\/watch\?v=([^)]+)\)/g;
   processedContent = processedContent.replace(youtubePattern, '<div class="youtube-embed mb-6 text-center"><iframe width="560" height="315" src="https://www.youtube.com/embed/$3" frameborder="0" allowfullscreen class="w-full max-w-2xl mx-auto rounded-lg"></iframe></div>');
   
   return processedContent;
