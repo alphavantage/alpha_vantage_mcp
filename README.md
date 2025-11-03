@@ -125,7 +125,7 @@ See [OpenAI Codex](https://github.com/openai/codex) for more information.
 [![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
 
 - [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
-- For additional support links, please check the video description on YouTube."
+- For additional support links, please check the video description on YouTube.
 
 Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
 
