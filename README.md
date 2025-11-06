@@ -132,9 +132,10 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
      Explicitly request a return value from the tool response to verify what the server outputs.
      ```
    - Typically, this gets ChatGPT to ask you to **Confirm** or **Deny** the call. Click **Confirm**.
+   - Sometimes, ChatGPT will insist it has no active connection to Alpha Vantage MCP Server. Just tell it to "try again".
    - If payloads still fail to appear, start a New Chat and try Step #2 again.
 
-3. **Force JSON Pasthrough with large payload**
+3. **Force JSON Passthrough with large payload**
    - Once step #2 has been successful, repeat step #2 with the larger call:
      ```
      Run TIME_SERIES_DAILY using NVDA, and then show the JSON response.
