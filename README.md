@@ -96,16 +96,52 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 - ChatGPT Plus account (or higher tier)
 - Developer mode enabled (beta feature) - see [OpenAI's Developer Mode documentation](https://platform.openai.com/docs/guides/developer-mode)
   
-To connect ChatGPT to this MCP server using ChatGPT Developer mode:
-
 **Setup:**
 1. Go to [ChatGPT Settings → Connectors](https://chatgpt.com/#settings/Connectors)
-2. Enable **Advanced → Developer mode**
-3. Add a remote MCP server with URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
-4. In conversations, choose **Developer mode** from the Plus menu and select the Alpha Vantage connector
+2. Scroll down, enable **Advanced settings → Developer mode**
+3. Return to the **Apps & Connectors** submenu, then click **Create** in the upper-right corner.
+4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
+5. **Authentication:** No authentication
 
-**Note:** While Developer mode is available for both Pro and Plus accounts, MCP tool execution is currently most reliable with Pro accounts. We're monitoring Plus plan functionality and will update this guide as improvements are made.
+> **Note:** When you return to your conversation, your UI will clearly indicate that you are in **Developer mode**. ChatGPT will retain memory of any previous remarks made within the same chat session; however, **these sessions are not persisted**, meaning the conversation will not be saved or accessible once closed.
 
+**Troubleshooting for ChatGPT Plus Accounts**
+
+While Developer mode is available for both **Plus** and **Pro** accounts, on **Plus** accounts, first-time MCP tool execution may exhibit inconsistent behavior. This primarily affects large data payloads returned from the MCP server. If you notice that MCP calls abruptly terminate without returning any JSON response, try the following:
+
+1. **Confirm Connection**
+   - Confirm the connection by prompting:
+     ```
+     List 3 functions available in Alpha Vantage MCP server.
+     ```
+   - You should see endpoints like `TIME_SERIES_DAILY` and `TIME_SERIES_INTRADAY`.
+
+2. **Force JSON Passthrough with simple payload**
+   - Use the following prompts in sequence to prime ChatGPT to surface the full payload:
+     ```
+     Run ADD_TWO_NUMBERS from Alpha Vantage MCP Server using 3 and 6, and then show the JSON response.
+     ```
+   - If successful, ChatGPT should ask you to **Confirm** or **Deny** the call. Click **Confirm**.
+   - If it doesn't, use the 🔄 "Try Again..." button and see if you get the **Confirm**/**Deny** prompt.
+   - If this doesn't work, ask ChatGPT the following, and if it starts `Thinking` make it **Skip**, so that it doesn't try the call again and instead outputs its conversational response.
+     ```
+     Why aren't you receiving a JSON response?
+     ```
+   - Then, regardless of the response, prompt ChatGPT
+     ```
+     Explicitly request a return value from the tool response to verify what the server outputs.
+     ```
+   - Typically, this gets ChatGPT to ask you to **Confirm** or **Deny** the call. Click **Confirm**.
+   - If payloads still fail to appear, start a New Chat and try Step #2 again.
+
+3. **Force JSON Pasthrough with large payload**
+   - Once step #2 has been successful, repeat step #2 with the larger call:
+     ```
+     Run TIME_SERIES_DAILY using NVDA, and then show the JSON response.
+     ```
+   - Use the fallback steps from Step #2 if ChatGPT does not ask you to **Confirm** or **Deny** the call.
+   - Once you observe ChatGPT successfully return part of the raw JSON payload from the larger call, you can typically continue on with more conversational queries.
+  
 </details>
 
 &nbsp;
