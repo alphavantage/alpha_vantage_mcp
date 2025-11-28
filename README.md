@@ -425,17 +425,18 @@ If the `mcpServers` object does not exist, create it.
 To connect OpenAI Agent Builder to this MCP server:
 
 1. Do not add a separate MCP Server object. Instead, click on your agent in OpenAI Agent Builder to add the MCP Server directly to the agent.
-2. Click on the **Tools** section of the agent.
-3. Click the **+** button to add a new tool
-4. Select **MCP Server** → **+ Server**
-5. Configure the MCP server with the following settings:
-   - **URL**: `https://mcp.alphavantage.co/mcp`
-   - **Label**: `Alpha Vantage MCP Server` (or any name you prefer)
-   - **Description**: `Financial market data and technical indicators` (or any description you prefer)
-   - **Authentication**: Select "Access token / API key" (should be default)
-   - **Access Token**: Enter your Alpha Vantage API key
-6. Click **Save**
-7. On the next prompt which displays all the tools, scroll to the bottom and click **Apply**
+2. Click on the Tools section of the agent.
+3. Click the + button to add a new tool
+4. Select MCP Server
+5. Click "+ Server"
+6. Configure the MCP server with the following settings:
+   - URL: `https://mcp.alphavantage.co/mcp`
+   - Label: `Alpha Vantage MCP Server` (or any name you prefer)
+   - Description: `Financial market data and technical indicators` (or any description you prefer)
+   - Authentication: Select "Access token / API key" (should be default)
+   - Access Token: Enter your Alpha Vantage API key
+7. Click Save
+8. On the next prompt which displays all the tools, scroll to the bottom and click Apply
 
 **Recommended Agent Instruction:**
 
