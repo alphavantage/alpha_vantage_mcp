@@ -147,6 +147,57 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 
 &nbsp;
 
+🤖📈 _Create agentic workflows for quantitative investing_
+
+<details>
+<summary><b>Configure in OpenAI Agent Builder</b></summary>
+
+**Requirements:**
+- OpenAI account with [access to Agent Builder](https://platform.openai.com/docs/guides/agents) (e.g., billing details added, organization verified)
+
+#### OpenAI Agent Builder Connection
+
+To connect OpenAI Agent Builder to this MCP server:
+
+1. Do not add a separate MCP Server object. Instead, click on your agent in OpenAI Agent Builder to add the MCP Server directly to the agent.
+2. Find the Tools section of the agent and click the + button to add a new tool
+3. Select MCP Server
+4. Click "+ Server" in the upper right of the "Add MCP server" menu
+5. Configure the MCP server with the following settings:
+   - URL: `https://mcp.alphavantage.co/mcp`
+   - Label: `Alpha Vantage MCP Server` (or any name you prefer)
+   - Description: `Financial market data and technical indicators` (or any description you prefer)
+   - Authentication: Select "Access token / API key" (should be default)
+   - Access Token: Enter your Alpha Vantage API key
+6. Click Connect
+7. If successful, the next prompt will display all the tools. Scroll to the bottom and click Add.
+
+**Recommended Agent Instructions:**
+
+Add the following instruction to your agent's configuration to optimize performance:
+
+```
+You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
+When retrieving financial data, examine the Alpha Vantage MCP Server function definitions directly rather than using the SEARCH endpoint.
+```
+</details>
+
+<details>
+<summary><b>Install in OpenAI Agents SDK</b></summary>
+
+To use the Alpha Vantage MCP server with OpenAI Agents SDK, see our [example agent](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/examples/agent/README.md) that demonstrates:
+
+- Interactive financial analysis agent
+- Session management for conversation continuity
+- Real-time tool execution with Alpha Vantage data
+- Support for both HTTP and stdio MCP connections
+
+The example includes a complete setup guide and configuration templates.
+
+</details>
+
+&nbsp;
+
 💻💵 _Code up fintech apps_
 
 <details>
@@ -407,57 +458,6 @@ Or, for a local server (replace `YOUR_API_KEY` with your actual Alpha Vantage AP
 ```
 
 If the `mcpServers` object does not exist, create it.
-
-</details>
-
-&nbsp;
-
-🤖📈 _Create agentic workflows for quantitative investing_
-
-<details>
-<summary><b>Configure in OpenAI Agent Builder</b></summary>
-
-**Requirements:**
-- OpenAI account with [access to Agent Builder](https://platform.openai.com/docs/guides/agents) (e.g., billing details added, organization verified)
-
-#### OpenAI Agent Builder Connection
-
-To connect OpenAI Agent Builder to this MCP server:
-
-1. Do not add a separate MCP Server object. Instead, click on your agent in OpenAI Agent Builder to add the MCP Server directly to the agent.
-2. Find the Tools section of the agent and click the + button to add a new tool
-3. Select MCP Server
-4. Click "+ Server" in the upper right of the "Add MCP server" menu
-5. Configure the MCP server with the following settings:
-   - URL: `https://mcp.alphavantage.co/mcp`
-   - Label: `Alpha Vantage MCP Server` (or any name you prefer)
-   - Description: `Financial market data and technical indicators` (or any description you prefer)
-   - Authentication: Select "Access token / API key" (should be default)
-   - Access Token: Enter your Alpha Vantage API key
-6. Click Connect
-7. If successful, the next prompt will display all the tools. Scroll to the bottom and click Add.
-
-**Recommended Agent Instructions:**
-
-Add the following instruction to your agent's configuration to optimize performance:
-
-```
-You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
-When retrieving financial data, examine the Alpha Vantage MCP Server function definitions directly rather than using the SEARCH endpoint.
-```
-</details>
-
-<details>
-<summary><b>Install in OpenAI Agents SDK</b></summary>
-
-To use the Alpha Vantage MCP server with OpenAI Agents SDK, see our [example agent](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/examples/agent/README.md) that demonstrates:
-
-- Interactive financial analysis agent
-- Session management for conversation continuity
-- Real-time tool execution with Alpha Vantage data
-- Support for both HTTP and stdio MCP connections
-
-The example includes a complete setup guide and configuration templates.
 
 </details>
 
