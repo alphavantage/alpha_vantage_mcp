@@ -155,6 +155,11 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 **Requirements:**
 - OpenAI account with [access to Agent Builder](https://platform.openai.com/docs/guides/agents) (e.g., billing details added, organization verified)
 
+📺 Watch the **setup tutorial**. (Click image below.)
+
+[![Configure Alpha Vantage MCP Server + OpenAI Agent Builder](http://i3.ytimg.com/vi/2Rsvzjn8hwE/hqdefault.jpg)](https://www.youtube.com/watch?v=2Rsvzjn8hwE)
+
+
 #### OpenAI Agent Builder Connection
 
 To connect OpenAI Agent Builder to this MCP server:
