@@ -103,7 +103,7 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
 5. **Authentication:** No authentication
 
-> **Note:** When you return to your conversation, your UI will clearly indicate that you are in **Developer mode**. ChatGPT will retain memory of any previous remarks made within the same chat session; however, **these sessions are not persisted**, meaning the conversation will not be saved or accessible once closed.
+> **Note:** When you return to your conversation, your UI will clearly indicate that you are in **Developer mode**. ChatGPT will retain memory of any previous remarks made within the same chat session; however, **these sessions may not be persisted**, meaning the conversation generated while Developer mode is active may not be saved or accessible once closed.
 
 **Troubleshooting for ChatGPT Plus Accounts**
 
