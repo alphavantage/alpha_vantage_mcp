@@ -259,7 +259,7 @@ Then connect with:
 </details>
 
 <details>
-<summary><b>Install in Visual Studio Code</b></summary>
+<summary><b>Install in VS Code (Visual Studio Code)</b></summary>
 
 See [VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) for more info.
 
