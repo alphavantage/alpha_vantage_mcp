@@ -70,7 +70,7 @@ wheels = [
 
 [[package]]
 name = "av-mcp"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "server" }
 dependencies = [
     { name = "awslabs-mcp-lambda-handler" },

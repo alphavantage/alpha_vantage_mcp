@@ -22,23 +22,13 @@ Parameters:
     Type: String
     Default: alphavantage-mcp-web
     Description: S3 bucket name for static files (web assets)
-  R2Bucket:
+  CdnBucketName:
     Type: String
     Default: alphavantage-mcp-responses
-    Description: Cloudflare R2 bucket name
-  R2PublicDomain:
+    Description: S3 bucket name for CDN storage
+  CdnDomain:
     Type: String
-    Description: R2 public domain for CDN access
-  R2EndpointUrl:
-    Type: String
-    Description: R2 endpoint URL
-  R2AccessKeyId:
-    Type: String
-    Description: R2 access key ID
-  R2SecretAccessKey:
-    Type: String
-    NoEcho: true
-    Description: R2 secret access key
+    Description: CDN domain for public access
   SubnetIds:
     Type: CommaDelimitedList
     Description: Comma-delimited list of subnet IDs for Lambda VPC deployment (optional)
@@ -203,11 +193,8 @@ Resources:
           PYTHONPATH: /var/runtime
           MAX_RESPONSE_TOKENS: '50000'
           DOMAIN_NAME: !Ref DomainName
-          R2_BUCKET: !Ref R2Bucket
-          R2_PUBLIC_DOMAIN: !Ref R2PublicDomain
-          R2_ENDPOINT_URL: !Ref R2EndpointUrl
-          R2_ACCESS_KEY_ID: !Ref R2AccessKeyId
-          R2_SECRET_ACCESS_KEY: !Ref R2SecretAccessKey
+          CDN_BUCKET_NAME: !Ref CdnBucketName
+          CDN_DOMAIN: !Ref CdnDomain
 
 Outputs:
   MCPApi:

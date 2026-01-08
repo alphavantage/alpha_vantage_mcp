@@ -48,11 +48,8 @@ if [ -f "samconfig.toml" ]; then
     # Add parameters if environment variables are set
     add_param "CertificateArn" "CERTIFICATE_ARN"
     add_param "DomainName" "DOMAIN_NAME"
-    add_param "R2Bucket" "R2_BUCKET"
-    add_param "R2PublicDomain" "R2_PUBLIC_DOMAIN"
-    add_param "R2EndpointUrl" "R2_ENDPOINT_URL"
-    add_param "R2AccessKeyId" "R2_ACCESS_KEY_ID"
-    add_param "R2SecretAccessKey" "R2_SECRET_ACCESS_KEY"
+    add_param "CdnBucketName" "CDN_BUCKET_NAME"
+    add_param "CdnDomain" "CDN_DOMAIN"
     add_param "StaticFilesBucket" "STATIC_FILES_BUCKET"
     add_param "AnalyticsLogsBucket" "ANALYTICS_LOGS_BUCKET"
     add_param "SubnetIds" "SUBNET_IDS"

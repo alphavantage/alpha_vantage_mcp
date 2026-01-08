@@ -3,6 +3,7 @@ import json
 import hashlib
 import time
 from typing import Any
+from loguru import logger
 
 def parse_token_from_request(event: dict) -> str:
     """Parse API key from request body, query params, or Authorization header. Priority: body > query > header."""
@@ -112,66 +113,52 @@ def estimate_tokens(data: Any) -> int:
     else:
         return len(str(data)) // 4
 
-def generate_r2_key(data: str) -> str:
-    """Generate a unique R2 key for temporary data storage."""
+def generate_storage_key(data: str, datatype: str = "json") -> str:
+    """Generate a unique storage key for temporary data storage."""
     data_hash = hashlib.sha256(data.encode()).hexdigest()[:8]
     timestamp = int(time.time())
-    return f"alphavantage-responses/{timestamp}-{data_hash}.json"
+    extension = "csv" if datatype == "csv" else "json"
+    return f"mcp-responses/{timestamp}-{data_hash}.{extension}"
 
-def upload_to_r2(data: str, bucket_name: str = None) -> str | None:
-    """Upload data to Cloudflare R2 and return a public URL.
-    
+def upload_to_object_storage(data: str, datatype: str = "json") -> str | None:
+    """Upload data to S3 object storage and return a CDN URL.
+
     Args:
         data: The data to upload (as string)
-        bucket_name: R2 bucket name (uses environment variable if not provided)
-        
+        datatype: Data format - "csv" or "json" (affects file extension and content type)
+
     Returns:
-        Public URL to access the data, or None if upload fails
+        CDN URL to access the data, or None if upload fails
     """
     import os
+    import boto3
+
     try:
-        import boto3
-    except ImportError:
-        return None
-    
-    try:
-        # Get bucket name from environment or use default
-        bucket = bucket_name or os.environ.get('R2_BUCKET', 'alphavantage-mcp-responses')
-        
-        # Get R2 public domain from environment
-        r2_domain = os.environ.get('R2_PUBLIC_DOMAIN', 'https://data.alphavantage-mcp.com')
-        
-        # Initialize R2 client using S3-compatible API
-        # R2 requires specific endpoint and credentials
-        r2_client = boto3.client(
-            's3',
-            endpoint_url=os.environ.get('R2_ENDPOINT_URL'),
-            aws_access_key_id=os.environ.get('R2_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.environ.get('R2_SECRET_ACCESS_KEY'),
-            region_name='auto'
-        )
-        
-        # Generate unique key
-        key = generate_r2_key(data)
-        
-        # Upload to R2 with public access
-        r2_client.put_object(
-            Bucket=bucket,
+        bucket_name = os.getenv("CDN_BUCKET_NAME")
+        cdn_domain = os.getenv("CDN_DOMAIN")
+
+        if not bucket_name or not cdn_domain:
+            logger.warning("CDN storage not configured: CDN_BUCKET_NAME or CDN_DOMAIN environment variable not set")
+            return None
+
+        s3_client = boto3.client('s3', region_name=os.getenv("AWS_REGION", "us-east-1"))
+        key = generate_storage_key(data, datatype)
+        content_type = "text/csv" if datatype == "csv" else "application/json"
+
+        s3_client.put_object(
+            Bucket=bucket_name,
             Key=key,
-            Body=data,
-            ContentType='application/json',
-            CacheControl='public, max-age=3600',  # 1 hour cache
-            Metadata={
-                'created': str(int(time.time()))
-            }
+            Body=data.encode('utf-8'),
+            ContentType=content_type,
+            CacheControl='public, max-age=3600',
+            Metadata={'created': str(int(time.time()))},
+            Tagging='AutoDelete=true'
         )
-        
-        # Return R2 public URL
-        url = f"{r2_domain}/{key}"
-        
-        return url
-    except Exception:
-        # If any error occurs during upload, return None to trigger fallback
+
+        return f"https://{cdn_domain}/{key}"
+
+    except Exception as e:
+        logger.error(f"Failed to upload to object storage: {e}")
         return None
 
 def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
@@ -181,7 +168,6 @@ def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
         
     try:
         import json
-        from loguru import logger
         
         parsed_body = json.loads(body)
         if "method" in parsed_body:
@@ -192,7 +178,6 @@ def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
             tool_args = mcp_params.get("arguments", {})
             logger.info(f"MCP_ANALYTICS: method={mcp_method}, api_key={token}, platform={platform}, tool_name={tool_name}, arguments={json.dumps(tool_args)}")
     except (json.JSONDecodeError, Exception) as e:
-        from loguru import logger
         logger.debug(f"Could not parse body for MCP analytics: {e}")
 
 def create_oauth_error_response(error_dict: dict, status_code: int = 401) -> dict:

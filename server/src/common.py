@@ -2,7 +2,7 @@ import httpx
 import json
 import os
 from src.context import get_api_key
-from src.utils import estimate_tokens, upload_to_r2
+from src.utils import estimate_tokens, upload_to_object_storage
 
 API_BASE_URL = "https://www.alphavantage.co/query"
 
@@ -93,10 +93,9 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
             else:
                 return response_text
             
-        # For large responses, upload to R2 and return preview
+        # For large responses, upload to object storage and return preview
         try:
-            # Upload raw response to R2
-            data_url = upload_to_r2(response_text)
+            data_url = upload_to_object_storage(response_text, datatype=datatype)
             
             # Create preview with data URL
             preview = _create_preview(response_text, datatype, estimated_tokens)
@@ -105,5 +104,5 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
             return preview
             
         except Exception as e:
-            # If R2 upload fails, return error with preview
+            # If upload fails, return error with preview
             return _create_preview(response_text, datatype, estimated_tokens, str(e))
