@@ -15,6 +15,58 @@ Both the Lambda and stdio servers use progressive discovery mode, exposing only 
 **Cons:**
 - Requires 2 additional LLM round trips (TOOL_LIST → TOOL_GET → TOOL_CALL)
 
+## Example: Three Round Trips in Action
+
+User request: "give me aapl price"
+
+### Step 1: TOOL_LIST
+Discover available tools (only names and descriptions):
+```
+TOOL_LIST() → Returns list of 50+ tools with names like:
+- TIME_SERIES_INTRADAY: Get intraday time series data
+- GLOBAL_QUOTE: Returns the latest price and volume information for a ticker
+- TIME_SERIES_DAILY: Get daily time series data
+...
+```
+
+### Step 2: TOOL_GET
+Get full schema for the relevant tool:
+```json
+TOOL_GET(tool_name: "GLOBAL_QUOTE") → {
+  "name": "GLOBAL_QUOTE",
+  "description": "Returns the latest price and volume information for a ticker.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "symbol": {"type": "string", "description": "The symbol of the global ticker"},
+      "datatype": {"type": "string", "description": "json or csv"}
+    },
+    "required": ["symbol"]
+  }
+}
+```
+
+### Step 3: TOOL_CALL
+Execute the tool with appropriate arguments:
+```json
+TOOL_CALL(tool_name: "GLOBAL_QUOTE", arguments: {"symbol": "AAPL", "datatype": "json"}) → {
+  "Global Quote": {
+    "01. symbol": "AAPL",
+    "02. open": "258.72",
+    "03. high": "261.81",
+    "04. low": "258.39",
+    "05. price": "261.05",
+    "06. volume": "45730847",
+    "07. latest trading day": "2026-01-13",
+    "08. previous close": "260.25",
+    "09. change": "0.80",
+    "10. change percent": "0.31%"
+  }
+}
+```
+
+**Result:** Only ~500 tokens used for GLOBAL_QUOTE schema instead of ~25,000 tokens if all 50+ tools were exposed upfront.
+
 ## Approach Comparison
 
 ### 1. Direct Mode (Not Used)
