@@ -28,37 +28,6 @@ def parse_token_from_request(event: dict) -> str:
         return auth_header[7:]  # Remove 'Bearer ' prefix
     return ""
 
-def parse_tool_categories_from_request(event: dict) -> list[str] | None:
-    """Parse tool categories from request path or query parameters."""
-    path = event.get("path", "/")
-    query_params = event.get("queryStringParameters") or {}
-    
-    # Check for categories in query parameters first (new method)
-    if "categories" in query_params and query_params["categories"]:
-        categories = [cat.strip() for cat in query_params["categories"].split(",") if cat.strip()]
-        return categories if categories else None
-    
-    # Don't parse categories from OpenAI paths
-    if path.startswith("/openai"):
-        return None
-    
-    # Fallback to path-based parsing (backwards compatibility)
-    if not path or path == "/" or path == "/mcp":
-        return None
-    
-    # Remove leading slash and extract path segments
-    path_parts = path.lstrip("/").split("/")
-    
-    # Handle /mcp root path - category is second segment
-    if len(path_parts) >= 2 and path_parts[0] == "mcp" and path_parts[1]:
-        return [path_parts[1]]
-    
-    # Handle direct category path (backwards compatibility)
-    if len(path_parts) > 0 and path_parts[0] and path_parts[0] != "mcp":
-        return [path_parts[0]]
-    
-    return None
-
 def extract_client_platform(event: dict) -> str:
     """Extract client platform information from request headers."""
     headers = event.get("headers", {})

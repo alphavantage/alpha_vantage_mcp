@@ -468,26 +468,6 @@ If the `mcpServers` object does not exist, create it.
 
 &nbsp;
 
-### Category Filtering
-Optionally filter available tools by category using:
-- **Query parameter**: `?categories=core_stock_apis,alpha_intelligence`
-
-Available categories:
-- `core_stock_apis` - Core stock market data APIs
-- `options_data_apis` - Options data APIs  
-- `alpha_intelligence` - News sentiment and intelligence APIs
-- `fundamental_data` - Company fundamentals and financial data
-- `forex` - Foreign exchange rates and data
-- `cryptocurrencies` - Digital and crypto currencies data
-- `commodities` - Commodities and precious metals data
-- `economic_indicators` - Economic indicators and market data
-- `technical_indicators` - Technical analysis indicators and calculations
-- `ping` - Health check and utility tools
-
-If no categories are specified, all tools will be available.
-
-&nbsp;
-
 ## Tools Reference
 
 | Category | Tools |

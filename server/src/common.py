@@ -7,7 +7,7 @@ from src.utils import estimate_tokens, upload_to_object_storage
 API_BASE_URL = "https://www.alphavantage.co/query"
 
 # Maximum token size for responses (configurable via environment variable)
-MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '50000'))
+MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '8192'))
 
 
 def _create_preview(response_text: str, datatype: str, estimated_tokens: int, error: str = None) -> dict:

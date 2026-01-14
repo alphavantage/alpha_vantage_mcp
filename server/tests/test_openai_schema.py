@@ -65,41 +65,6 @@ def test_tool_execution():
     
     print("✓ Tool execution working correctly")
 
-def test_category_filtering():
-    """Test category-based tool filtering."""
-    print("\nTesting category filtering...")
-    
-    # Test schema with specific category
-    schema_all = generate_openapi_schema()
-    all_tools_count = len(schema_all["paths"])
-    print(f"  Total tools available: {all_tools_count}")
-    
-    # Test filtering by category (using "core_stock_apis" as example)
-    schema_stocks = generate_openapi_schema(categories=["core_stock_apis"])
-    stocks_tools_count = len(schema_stocks["paths"])
-    print(f"  Tools in 'core_stock_apis' category: {stocks_tools_count}")
-    
-    # Verify filtering worked
-    assert stocks_tools_count <= all_tools_count
-    assert stocks_tools_count > 0  # Should have at least some tools
-    print("✓ Category filtering reduces available tools")
-    
-    # Test multiple categories
-    schema_multi = generate_openapi_schema(categories=["core_stock_apis", "forex"])
-    multi_tools_count = len(schema_multi["paths"])
-    print(f"  Tools in 'core_stock_apis' + 'forex' categories: {multi_tools_count}")
-    
-    # Verify combined categories have more tools than single category
-    assert multi_tools_count >= stocks_tools_count
-    
-    # Test with just ping category to verify small result set
-    schema_ping = generate_openapi_schema(categories=["ping"])
-    ping_tools_count = len(schema_ping["paths"])
-    print(f"  Tools in 'ping' category: {ping_tools_count}")
-    assert ping_tools_count == 2  # Should only have ping and add_two_numbers
-    
-    print("✓ Category filtering working correctly")
-
 
 def main():
     """Run all tests."""
@@ -111,7 +76,6 @@ def main():
         # Run tests
         schema = test_schema_generation()
         test_tool_execution()
-        test_category_filtering()
         
         print("\n" + "=" * 60)
         print("All tests passed! ✅")

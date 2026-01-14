@@ -21,9 +21,10 @@ TOOL_MODULES = {
 # Categories that should have entitlement parameter added
 ENTITLEMENT_CATEGORIES = {"core_stock_apis", "options_data_apis", "technical_indicators"}
 
-# Registry for decorated tools by category
-_tool_registries = {}
-_all_tools_registry = []
+# Tool registries
+_tool_registries = {}  # Maps module name to list of tools in that module
+_all_tools_registry = []  # List of all tools across all modules
+_tools_by_name = {}  # Maps uppercase tool name to function
 
 import inspect
 import functools
@@ -124,9 +125,10 @@ def tool(func):
     
     if module_name not in _tool_registries:
         _tool_registries[module_name] = []
-    
+
     _tool_registries[module_name].append(func)
     _all_tools_registry.append(func)
+    _tools_by_name[func.__name__.upper()] = func
     return func
 
 def register_all_tools(mcp):
@@ -144,76 +146,37 @@ def register_all_tools(mcp):
     for func in _all_tools_registry:
         mcp.tool()(func)
 
-def get_tools_by_categories(categories=None):
-    """Get tools filtered by categories, importing modules as needed"""
+def load_all_tools():
+    """Load all tools by importing all tool modules"""
     import importlib
-    
-    if not categories:
-        # Import all modules and return all tools
-        for module_spec in TOOL_MODULES.values():
-            if isinstance(module_spec, list):
-                for module_name in module_spec:
-                    importlib.import_module(module_name)
-            else:
-                importlib.import_module(module_spec)
-        return _all_tools_registry
-    
-    # Validate all categories first
-    invalid_categories = [cat for cat in categories if cat not in TOOL_MODULES]
-    if invalid_categories:
-        raise ValueError(f"Unknown tool categories: {', '.join(invalid_categories)}")
-    
-    # Import specified category modules to trigger decoration
-    for category in categories:
-        if category in TOOL_MODULES:
-            module_spec = TOOL_MODULES[category]
-            if isinstance(module_spec, list):
-                for module_name in module_spec:
-                    importlib.import_module(module_name)
-            else:
-                importlib.import_module(module_spec)
-    
-    # Collect tools from specified categories
-    filtered_tools = []
-    for category in categories:
-        # Map category to module name(s) and get tools from registry
-        if category in TOOL_MODULES:
-            module_spec = TOOL_MODULES[category]
-            if isinstance(module_spec, list):
-                # For technical_indicators which has multiple modules
-                for module_path in module_spec:
-                    module_name = module_path.split('.')[-1]
-                    if module_name in _tool_registries:
-                        filtered_tools.extend(_tool_registries[module_name])
-            else:
-                # For single module categories
-                module_name = module_spec.split('.')[-1]
-                if module_name in _tool_registries:
-                    filtered_tools.extend(_tool_registries[module_name])
-    
-    return filtered_tools
 
-def register_tools_by_categories(mcp, categories):
-    """Register tools from multiple categories"""
-    tools = get_tools_by_categories(categories)
+    # Import all modules and return all tools
+    for module_spec in TOOL_MODULES.values():
+        if isinstance(module_spec, list):
+            for module_name in module_spec:
+                importlib.import_module(module_name)
+        else:
+            importlib.import_module(module_spec)
+    return _all_tools_registry
+
+def register_all_tools_lazy(mcp):
+    """Register all tools with lazy import"""
+    tools = load_all_tools()
     for func in tools:
         mcp.tool()(func)
 
-def get_all_tools(categories=None):
+def get_all_tools():
     """Get all tools with their MCP tool definitions
-    
-    Args:
-        categories: Optional list of categories to filter by
-        
+
     Returns:
         List of tuples containing (tool_definition, tool_function)
     """
     import mcp.types as types
     import inspect
     from typing import get_type_hints
-    
-    # Get the tools from specified categories
-    tools = get_tools_by_categories(categories)
+
+    # Get all tools
+    tools = load_all_tools()
     
     result = []
     for func in tools:
@@ -286,5 +249,221 @@ def get_all_tools(categories=None):
         )
         
         result.append((tool_def, func))
-    
+
     return result
+
+
+def _ensure_tools_loaded():
+    """Ensure all tool modules are imported so tools are registered."""
+    import importlib
+
+    for module_spec in TOOL_MODULES.values():
+        if isinstance(module_spec, list):
+            for module_name in module_spec:
+                importlib.import_module(module_name)
+        else:
+            importlib.import_module(module_spec)
+
+
+def _extract_description(func) -> str:
+    """Extract the first line/paragraph of a docstring as description."""
+    if not func.__doc__:
+        return f"Execute {func.__name__}"
+
+    # Get first non-empty line or paragraph
+    lines = func.__doc__.strip().split('\n')
+    description_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('Args:') or stripped.startswith('Returns:'):
+            break
+        if stripped:
+            description_lines.append(stripped)
+        elif description_lines:
+            # Empty line after content means end of first paragraph
+            break
+
+    return ' '.join(description_lines) if description_lines else f"Execute {func.__name__}"
+
+
+def get_tool_list() -> list[dict]:
+    """Get list of all tools with names and descriptions only (no schema).
+
+    Returns:
+        List of dicts with 'name' and 'description' fields
+    """
+    _ensure_tools_loaded()
+
+    tools = _all_tools_registry
+
+    return [
+        {
+            "name": func.__name__.upper(),
+            "description": _extract_description(func)
+        }
+        for func in tools
+    ]
+
+
+def _build_parameter_schema(func) -> dict:
+    """Build JSON schema for function parameters."""
+    sig = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    properties = {}
+    required = []
+
+    for param_name, param in sig.parameters.items():
+        param_type = type_hints.get(param_name, str)
+
+        # Convert Python types to JSON schema types
+        if param_type == str or param_type == 'str':
+            schema_type = "string"
+        elif param_type == int or param_type == 'int':
+            schema_type = "integer"
+        elif param_type == float or param_type == 'float':
+            schema_type = "number"
+        elif param_type == bool or param_type == 'bool':
+            schema_type = "boolean"
+        elif hasattr(param_type, '__origin__') and param_type.__origin__ is Union:
+            # Handle Optional types (Union with None)
+            args = param_type.__args__
+            if len(args) == 2 and type(None) in args:
+                non_none_type = args[0] if args[1] is type(None) else args[1]
+                if non_none_type == str:
+                    schema_type = "string"
+                elif non_none_type == int:
+                    schema_type = "integer"
+                elif non_none_type == float:
+                    schema_type = "number"
+                elif non_none_type == bool:
+                    schema_type = "boolean"
+                else:
+                    schema_type = "string"
+            else:
+                schema_type = "string"
+        else:
+            schema_type = "string"
+
+        properties[param_name] = {"type": schema_type}
+
+        # Add description from docstring if available
+        if func.__doc__:
+            lines = func.__doc__.split('\n')
+            for line in lines:
+                if param_name in line and ':' in line:
+                    desc = line.split(':', 1)[1].strip()
+                    if desc:
+                        properties[param_name]["description"] = desc
+                    break
+
+        # Mark as required if no default value
+        if param.default == inspect.Parameter.empty:
+            required.append(param_name)
+
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": required
+    }
+
+
+def get_tool_schema(tool_name: str) -> dict:
+    """Get full schema for a specific tool.
+
+    Args:
+        tool_name: The uppercase name of the tool (e.g., "TIME_SERIES_DAILY")
+
+    Returns:
+        Dict with 'name', 'description', and 'parameters' (JSON schema)
+
+    Raises:
+        ValueError: If tool not found
+    """
+    _ensure_tools_loaded()
+
+    tool_name_upper = tool_name.upper()
+
+    if tool_name_upper not in _tools_by_name:
+        available = list(_tools_by_name.keys())[:10]
+        raise ValueError(f"Tool '{tool_name}' not found. Available tools include: {available}...")
+
+    func = _tools_by_name[tool_name_upper]
+
+    return {
+        "name": tool_name_upper,
+        "description": func.__doc__ or f"Execute {func.__name__}",
+        "parameters": _build_parameter_schema(func)
+    }
+
+
+def get_tool_schemas(tool_names: list[str]) -> list[dict]:
+    """Get full schemas for multiple tools.
+
+    Args:
+        tool_names: List of uppercase tool names (e.g., ["TIME_SERIES_DAILY", "TIME_SERIES_INTRADAY"])
+
+    Returns:
+        List of dicts, each with 'name', 'description', and 'parameters' (JSON schema)
+
+    Raises:
+        ValueError: If any tool not found
+    """
+    _ensure_tools_loaded()
+
+    schemas = []
+    not_found = []
+
+    for tool_name in tool_names:
+        tool_name_upper = tool_name.upper()
+
+        if tool_name_upper not in _tools_by_name:
+            not_found.append(tool_name)
+            continue
+
+        func = _tools_by_name[tool_name_upper]
+        schemas.append({
+            "name": tool_name_upper,
+            "description": func.__doc__ or f"Execute {func.__name__}",
+            "parameters": _build_parameter_schema(func)
+        })
+
+    if not_found:
+        available = list(_tools_by_name.keys())[:10]
+        raise ValueError(f"Tools not found: {', '.join(not_found)}. Available tools include: {available}...")
+
+    return schemas
+
+
+def call_tool(tool_name: str, arguments: dict):
+    """Execute a tool by name with provided arguments.
+
+    Args:
+        tool_name: The uppercase name of the tool (e.g., "TIME_SERIES_DAILY")
+        arguments: Dict of arguments to pass to the tool
+
+    Returns:
+        Result from the tool execution
+
+    Raises:
+        ValueError: If tool not found
+    """
+    _ensure_tools_loaded()
+
+    tool_name_upper = tool_name.upper()
+
+    if tool_name_upper not in _tools_by_name:
+        available = list(_tools_by_name.keys())[:10]
+        raise ValueError(f"Tool '{tool_name}' not found. Available tools include: {available}...")
+
+    func = _tools_by_name[tool_name_upper]
+    return func(**arguments)
+
+
+def register_meta_tools(mcp):
+    """Register only the meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) for progressive discovery."""
+    from src.tools.meta_tools import tool_list, tool_get, tool_call
+
+    mcp.tool()(tool_list)
+    mcp.tool()(tool_get)
+    mcp.tool()(tool_call)

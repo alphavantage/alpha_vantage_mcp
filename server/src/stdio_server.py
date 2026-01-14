@@ -5,9 +5,13 @@ Stdio MCP server for Alpha Vantage API.
 This server provides MCP (Model Context Protocol) access to Alpha Vantage financial data
 via stdio transport, suitable for use with local MCP clients.
 
+Uses progressive discovery mode: only meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) are
+exposed, allowing LLMs to discover and call specific tools on-demand without flooding
+the context window.
+
 Usage:
     python stdio_server.py [API_KEY]
-    
+
 Environment Variables:
     ALPHA_VANTAGE_API_KEY: Your Alpha Vantage API key
 """
@@ -15,6 +19,7 @@ Environment Variables:
 import os
 import sys
 import asyncio
+import json
 import click
 from typing import Any
 from loguru import logger
@@ -25,69 +30,118 @@ from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
 from .context import set_api_key
-from .tools.registry import get_all_tools, TOOL_MODULES
+from .tools.meta_tools import tool_list, tool_get, tool_call
+
+
+# Meta-tool definitions for progressive discovery
+META_TOOLS = [
+    types.Tool(
+        name="TOOL_LIST",
+        description="List all available Alpha Vantage API tools with their names and descriptions. Use this tool first to discover what tools are available, then use TOOL_GET to retrieve the full schema for a specific tool before calling it.",
+        inputSchema={
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    ),
+    types.Tool(
+        name="TOOL_GET",
+        description="Get the full schema for one or more tools including all parameters. After discovering tools via TOOL_LIST, use this to get the complete parameter schema before calling the tool. You can provide either a single tool name or a list of tool names if you're unsure which one to use.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "tool_name": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "The name of the tool to get schema for (e.g., 'TIME_SERIES_DAILY')"
+                        },
+                        {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "A list of tool names to get schemas for (e.g., ['TIME_SERIES_DAILY', 'TIME_SERIES_INTRADAY'])"
+                        }
+                    ]
+                }
+            },
+            "required": ["tool_name"]
+        }
+    ),
+    types.Tool(
+        name="TOOL_CALL",
+        description="Execute a tool by name with the provided arguments. After getting the schema via TOOL_GET, use this to actually call the tool.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "tool_name": {
+                    "type": "string",
+                    "description": "The name of the tool to call (e.g., 'TIME_SERIES_DAILY')"
+                },
+                "arguments": {
+                    "type": "object",
+                    "description": "Dictionary of arguments matching the tool's parameter schema"
+                }
+            },
+            "required": ["tool_name", "arguments"]
+        }
+    )
+]
 
 
 class StdioMCPServer:
-    """Stdio MCP Server for Alpha Vantage"""
-    
-    def __init__(self, api_key: str, categories: list[str] = None, verbose: bool = False):
+    """Stdio MCP Server for Alpha Vantage with progressive discovery"""
+
+    def __init__(self, api_key: str, verbose: bool = False):
         self.api_key = api_key
-        self.categories = categories
         self.verbose = verbose
         self.server = Server("alphavantage-mcp")
-        
+
         # Set up the API key context
         set_api_key(api_key)
-        
-        # Get all tools for the specified categories
-        if categories:
-            if verbose:
-                logger.info(f"Loading tools for categories: {', '.join(categories)}")
-            try:
-                self.tools = get_all_tools(categories)
-            except ValueError as e:
-                logger.warning(f"Error with categories {categories}: {e}, loading all tools")
-                self.tools = get_all_tools()
-        else:
-            if verbose:
-                logger.info("Loading all tools")
-            self.tools = get_all_tools()
-        
+
+        if verbose:
+            logger.info("Registering meta-tools for progressive discovery")
+
         # Register handlers
         self._register_handlers()
-    
+
     def _register_handlers(self):
-        """Register MCP protocol handlers"""
-        
+        """Register MCP protocol handlers for meta-tools only"""
+
         @self.server.list_tools()
         async def handle_list_tools() -> list[types.Tool]:
-            """List available tools."""
-            return [tool_def for tool_def, _ in self.tools]
-        
+            """List available meta-tools."""
+            return META_TOOLS
+
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
-            """Handle tool calls."""
-            for tool_def, tool_func in self.tools:
-                if tool_def.name == name:
-                    try:
-                        # Call the tool function with provided arguments
-                        if asyncio.iscoroutinefunction(tool_func):
-                            result = await tool_func(**arguments)
-                        else:
-                            result = tool_func(**arguments)
-                        
-                        # Convert result to text content
-                        if isinstance(result, str):
-                            return [types.TextContent(type="text", text=result)]
-                        else:
-                            return [types.TextContent(type="text", text=str(result))]
-                    
-                    except Exception as e:
-                        logger.error(f"Error calling tool {name}: {e}")
-                        return [types.TextContent(type="text", text=f"Error: {str(e)}")]
-            
-            raise ValueError(f"Unknown tool: {name}")
+            """Handle meta-tool calls."""
+            try:
+                if name == "TOOL_LIST":
+                    result = tool_list()
+                elif name == "TOOL_GET":
+                    tool_name = arguments.get("tool_name")
+                    if not tool_name:
+                        raise ValueError("tool_name is required")
+                    result = tool_get(tool_name)
+                elif name == "TOOL_CALL":
+                    tool_name = arguments.get("tool_name")
+                    tool_args = arguments.get("arguments", {})
+                    if not tool_name:
+                        raise ValueError("tool_name is required")
+                    result = tool_call(tool_name, tool_args)
+                else:
+                    raise ValueError(f"Unknown tool: {name}")
+
+                # Convert result to text content
+                if isinstance(result, str):
+                    return [types.TextContent(type="text", text=result)]
+                else:
+                    return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+            except Exception as e:
+                logger.error(f"Error calling tool {name}: {e}")
+                return [types.TextContent(type="text", text=f"Error: {str(e)}")]
     
     async def run(self):
         """Run the low-level server"""
@@ -109,31 +163,22 @@ class StdioMCPServer:
 @click.command()
 @click.argument('api_key', required=False)
 @click.option('--api-key', 'api_key_option', help='Alpha Vantage API key (alternative to positional argument)')
-@click.option('--categories', multiple=True, help='Tool categories to include (default: all categories)')
-@click.option('--list-categories', is_flag=True, help='List available tool categories and exit')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
-def cli(api_key, api_key_option, categories, list_categories, verbose):
+def cli(api_key, api_key_option, verbose):
     """Alpha Vantage MCP Server (stdio transport)
 
-    Available tool categories:
-    """ + "\n".join(f"  - {cat}" for cat in TOOL_MODULES.keys()) + """
+    Uses progressive discovery mode with meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL).
+    LLMs can discover and call specific tools on-demand without flooding the context.
 
     Examples:
       av-mcp YOUR_API_KEY
-      av-mcp YOUR_API_KEY --categories core_stock_apis forex
-      av-mcp --api-key YOUR_API_KEY --categories technical_indicators
+      av-mcp --api-key YOUR_API_KEY
+      ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp
     """
     # Configure logging based on verbose flag
     if not verbose:
         logger.remove()
         logger.add(sys.stderr, level="WARNING")
-
-    # List categories and exit if requested
-    if list_categories:
-        print("Available tool categories:")
-        for category in TOOL_MODULES.keys():
-            print(f"  - {category}")
-        return
 
     # Get API key from args or environment
     api_key = api_key or api_key_option or os.getenv('ALPHA_VANTAGE_API_KEY')
@@ -145,21 +190,10 @@ def cli(api_key, api_key_option, categories, list_categories, verbose):
         print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp", file=sys.stderr)
         sys.exit(1)
 
-    # Validate categories if provided
-    if categories:
-        invalid_categories = [cat for cat in categories if cat not in TOOL_MODULES]
-        if invalid_categories:
-            logger.error(f"Invalid categories: {', '.join(invalid_categories)}")
-            print(f"Error: Invalid categories: {', '.join(invalid_categories)}", file=sys.stderr)
-            print("\\nAvailable categories:", file=sys.stderr)
-            for cat in TOOL_MODULES.keys():
-                print(f"  - {cat}", file=sys.stderr)
-            sys.exit(1)
-
-    # Create and run server
+    # Create and run server with progressive discovery
     if verbose:
-        logger.info(f"Starting Alpha Vantage MCP Server (stdio) with {len(categories or TOOL_MODULES)} categories")
-    server = StdioMCPServer(api_key, list(categories), verbose)
+        logger.info("Starting Alpha Vantage MCP Server (stdio) with progressive discovery")
+    server = StdioMCPServer(api_key, verbose)
 
     try:
         asyncio.run(server.run())

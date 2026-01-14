@@ -2,7 +2,7 @@ import json
 import inspect
 from typing import get_type_hints, Union, List, Dict, Any
 from loguru import logger
-from src.tools.registry import get_tools_by_categories
+from src.tools.registry import load_all_tools
 
 def python_type_to_openapi_type(python_type):
     """Convert Python type hints to OpenAPI types."""
@@ -32,13 +32,9 @@ def python_type_to_openapi_type(python_type):
     # Default mapping
     return type_mapping.get(python_type, ("string", None))
 
-def load_all_tools(categories: list[str] | None = None):
-    """Load all tools and return them as a list, optionally filtered by categories."""
-    return get_tools_by_categories(categories)
-
-def generate_openapi_schema(base_url: str = "https://your-api-gateway-url.amazonaws.com", categories: list[str] | None = None) -> dict:
-    """Generate OpenAPI schema for all MCP tools, optionally filtered by categories."""
-    tools = load_all_tools(categories)
+def generate_openapi_schema(base_url: str = "https://your-api-gateway-url.amazonaws.com") -> dict:
+    """Generate OpenAPI schema for all MCP tools."""
+    tools = load_all_tools()
     
     paths = {}
     
@@ -177,9 +173,9 @@ def generate_openapi_schema(base_url: str = "https://your-api-gateway-url.amazon
     
     return schema
 
-def execute_tool(function_name: str, params: dict, categories: list[str] | None = None) -> Any:
-    """Execute a tool function by name with given parameters, optionally filtered by categories."""
-    tools = load_all_tools(categories)
+def execute_tool(function_name: str, params: dict) -> Any:
+    """Execute a tool function by name with given parameters."""
+    tools = load_all_tools()
     
     # Find the function (case-insensitive comparison)
     for func in tools:
@@ -194,18 +190,18 @@ def execute_tool(function_name: str, params: dict, categories: list[str] | None 
     
     raise ValueError(f"Function {function_name} not found")
 
-def handle_openai_request(event: dict, categories: list[str] | None = None) -> dict:
+def handle_openai_request(event: dict) -> dict:
     """Handle OpenAI Actions API requests."""
     path = event.get("path", "/")
     method = event.get("httpMethod", "GET")
-    
+
     # Handle /openai endpoint - return schema
     if path == "/openai" and method == "GET":
         # Get base URL from event
         domain = event.get("requestContext", {}).get("domainName", "your-api-gateway-url.amazonaws.com")
         base_url = f"https://{domain}"
-        
-        schema = generate_openapi_schema(base_url, categories)
+
+        schema = generate_openapi_schema(base_url)
         
         return {
             "statusCode": 200,
@@ -226,9 +222,9 @@ def handle_openai_request(event: dict, categories: list[str] | None = None) -> d
             
             # Remove apikey from body params if present (it's for auth, not a tool param)
             params = {k: v for k, v in body.items() if k != "apikey"}
-            
-            # Execute the tool with category filtering
-            result = execute_tool(function_name, params, categories)
+
+            # Execute the tool
+            result = execute_tool(function_name, params)
             
             # Format response
             response_body = {

@@ -191,7 +191,7 @@ Resources:
         Variables:
           ENVIRONMENT: !Ref Environment
           PYTHONPATH: /var/runtime
-          MAX_RESPONSE_TOKENS: '50000'
+          MAX_RESPONSE_TOKENS: '8192'
           DOMAIN_NAME: !Ref DomainName
           CDN_BUCKET_NAME: !Ref CdnBucketName
           CDN_DOMAIN: !Ref CdnDomain
