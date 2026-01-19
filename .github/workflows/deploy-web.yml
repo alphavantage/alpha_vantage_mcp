@@ -6,61 +6,66 @@ on:
       - test
       - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'default'
+        type: choice
+        options:
+          - default
+          - prod
+
+env:
+  AWS_REGION: us-east-1
+
+# Required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    
+    # GitHub Environment - secrets are pulled from here automatically
+    environment: ${{ inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || 'default' }}
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
         cache: 'npm'
         cache-dependency-path: web/package-lock.json
-        
+
     - name: Install dependencies
       run: cd web && npm ci
-        
-    - name: Configure AWS credentials for test
-      if: github.ref == 'refs/heads/test'
+
+    - name: Configure AWS credentials (OIDC)
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN_TEST }}
-        aws-region: ${{ secrets.AWS_REGION_TEST }}
-        
-    - name: Configure AWS credentials for production
-      if: github.ref == 'refs/heads/main'
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_ARN_PROD }}
-        aws-region: ${{ secrets.AWS_REGION_PROD }}
-        
-    - name: Set environment variables for test
-      if: github.ref == 'refs/heads/test'
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Parse config
+      id: config
       run: |
-        echo "BUCKET_NAME=${{ secrets.S3_BUCKET_NAME_TEST }}" >> $GITHUB_ENV
-        echo "CLOUDFRONT_DISTRIBUTION_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_TEST }}" >> $GITHUB_ENV
-        echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID_TEST }}" >> $GITHUB_ENV
-        
-    - name: Set environment variables for production
-      if: github.ref == 'refs/heads/main'
-      run: |
-        echo "BUCKET_NAME=${{ secrets.S3_BUCKET_NAME_PROD }}" >> $GITHUB_ENV
-        echo "CLOUDFRONT_DISTRIBUTION_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD }}" >> $GITHUB_ENV
-        echo "NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID_PROD }}" >> $GITHUB_ENV
-        
+        # Parse JSON config secret and export as env vars
+        CONFIG='${{ secrets.CONFIG }}'
+        echo "$CONFIG" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
+        # Mask all config values to prevent them from appearing in subsequent step logs
+        echo "$CONFIG" | jq -r '.[]' | while read -r value; do
+          [ -n "$value" ] && echo "::add-mask::$value"
+        done
+
     - name: Make deploy script executable
       run: chmod +x scripts/deploy-web.sh
-      
+
     - name: Deploy to S3
-      run: ./scripts/deploy-web.sh ${{ env.BUCKET_NAME }}
+      run: ./scripts/deploy-web.sh ${{ env.STATIC_FILES_BUCKET }}
       env:
         CLOUDFRONT_DISTRIBUTION_ID: ${{ env.CLOUDFRONT_DISTRIBUTION_ID }}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ env.NEXT_PUBLIC_GA_MEASUREMENT_ID }}

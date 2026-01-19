@@ -1,3 +1,6 @@
+# GitHub Actions config secrets
+.github/config-*.json
+
 .gemini
 .vscode
 *.DS_Store

@@ -272,5 +272,89 @@ def all_commodities(
         "interval": interval,
         "datatype": datatype,
     }
-    
+
     return _make_api_request("ALL_COMMODITIES", params)
+
+
+@tool
+def gold_spot() -> dict[str, str]:
+    """
+    This API returns the live spot price of gold.
+
+    Returns:
+        Current gold spot price data.
+    """
+
+    params = {
+        "symbol": "GOLD",
+    }
+
+    return _make_api_request("GOLD_SILVER_SPOT", params)
+
+
+@tool
+def silver_spot() -> dict[str, str]:
+    """
+    This API returns the live spot price of silver.
+
+    Returns:
+        Current silver spot price data.
+    """
+
+    params = {
+        "symbol": "SILVER",
+    }
+
+    return _make_api_request("GOLD_SILVER_SPOT", params)
+
+
+@tool
+def gold_history(
+    interval: str = "monthly",
+    datatype: str = "csv"
+) -> dict[str, str] | str:
+    """
+    This API returns the historical gold prices in daily, weekly, and monthly horizons.
+
+    Args:
+        interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
+        datatype: By default, csv. Strings json and csv are accepted with the following specifications:
+                 json returns the time series in JSON format; csv returns the time series as a CSV (comma separated value) file.
+
+    Returns:
+        Historical gold price data in the specified format.
+    """
+
+    params = {
+        "symbol": "GOLD",
+        "interval": interval,
+        "datatype": datatype,
+    }
+
+    return _make_api_request("GOLD_SILVER_HISTORY", params)
+
+
+@tool
+def silver_history(
+    interval: str = "monthly",
+    datatype: str = "csv"
+) -> dict[str, str] | str:
+    """
+    This API returns the historical silver prices in daily, weekly, and monthly horizons.
+
+    Args:
+        interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
+        datatype: By default, csv. Strings json and csv are accepted with the following specifications:
+                 json returns the time series in JSON format; csv returns the time series as a CSV (comma separated value) file.
+
+    Returns:
+        Historical silver price data in the specified format.
+    """
+
+    params = {
+        "symbol": "SILVER",
+        "interval": interval,
+        "datatype": datatype,
+    }
+
+    return _make_api_request("GOLD_SILVER_HISTORY", params)
