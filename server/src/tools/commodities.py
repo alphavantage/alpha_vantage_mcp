@@ -277,82 +277,45 @@ def all_commodities(
 
 
 @tool
-def gold_spot() -> dict[str, str]:
+def gold_silver_spot(symbol: str) -> dict[str, str] | str:
     """
-    This API returns the live spot price of gold.
+    This API returns the live spot prices of gold and silver metals.
+
+    Args:
+        symbol: For gold, strings GOLD and XAU are accepted. For silver, strings SILVER and XAG are accepted.
 
     Returns:
-        Current gold spot price data.
+        Current spot price data for the specified metal.
     """
 
     params = {
-        "symbol": "GOLD",
+        "symbol": symbol,
     }
 
     return _make_api_request("GOLD_SILVER_SPOT", params)
 
 
 @tool
-def silver_spot() -> dict[str, str]:
-    """
-    This API returns the live spot price of silver.
-
-    Returns:
-        Current silver spot price data.
-    """
-
-    params = {
-        "symbol": "SILVER",
-    }
-
-    return _make_api_request("GOLD_SILVER_SPOT", params)
-
-
-@tool
-def gold_history(
+def gold_silver_history(
+    symbol: str,
     interval: str = "monthly",
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the historical gold prices in daily, weekly, and monthly horizons.
+    This API returns the historical gold and silver prices in daily, weekly, and monthly horizons.
 
     Args:
+        symbol: For gold, strings GOLD and XAU are accepted. For silver, strings SILVER and XAG are accepted.
         interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
         datatype: By default, csv. Strings json and csv are accepted with the following specifications:
                  json returns the time series in JSON format; csv returns the time series as a CSV (comma separated value) file.
 
     Returns:
-        Historical gold price data in the specified format.
+        Historical price data for the specified metal in the specified format.
     """
 
     params = {
-        "symbol": "GOLD",
-        "interval": interval,
-        "datatype": datatype,
-    }
-
-    return _make_api_request("GOLD_SILVER_HISTORY", params)
-
-
-@tool
-def silver_history(
-    interval: str = "monthly",
-    datatype: str = "csv"
-) -> dict[str, str] | str:
-    """
-    This API returns the historical silver prices in daily, weekly, and monthly horizons.
-
-    Args:
-        interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
-        datatype: By default, csv. Strings json and csv are accepted with the following specifications:
-                 json returns the time series in JSON format; csv returns the time series as a CSV (comma separated value) file.
-
-    Returns:
-        Historical silver price data in the specified format.
-    """
-
-    params = {
-        "symbol": "SILVER",
+        "symbol": symbol,
         "interval": interval,
         "datatype": datatype,
     }
