@@ -149,6 +149,10 @@ def add_return_url_parameter(func):
         # Extract return_url if provided
         return_url = kwargs.pop('return_url', None)
 
+        # Handle string "true" from MCP JSON (becomes string, not boolean)
+        if isinstance(return_url, str):
+            return_url = return_url.lower() == 'true'
+
         # If return_url is True, set global variable for _make_api_request to check
         if return_url is True:
             import src.common
