@@ -47,30 +47,41 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
     return preview
 
 
-def _make_api_request(function_name: str, params: dict) -> dict | str:
-    """Helper function to make API requests and handle responses.
-    
-    For large responses exceeding MAX_RESPONSE_TOKENS, returns a preview
-    with a URL to the full data stored in temporary storage.
-    """
-    # Create a copy of params to avoid modifying the original
+def _build_api_params(function_name: str, params: dict) -> dict:
+    """Build API parameters dict with function name, API key, and entitlement."""
     api_params = params.copy()
     api_params.update({
         "function": function_name,
         "apikey": get_api_key(),
         "source": "alphavantagemcp"
     })
-    
-    # Handle entitlement parameter if present in params or global variable
+
+    # Handle entitlement parameter
     current_entitlement = globals().get('_current_entitlement')
     entitlement = api_params.get("entitlement") or current_entitlement
-    
+
     if entitlement:
         api_params["entitlement"] = entitlement
     elif "entitlement" in api_params:
-        # Remove entitlement if it's None or empty
         api_params.pop("entitlement", None)
-    
+
+    return api_params
+
+
+def _make_api_request(function_name: str, params: dict) -> dict | str:
+    """Helper function to make API requests and handle responses.
+
+    For large responses exceeding MAX_RESPONSE_TOKENS, returns a preview
+    with a URL to the full data stored in temporary storage.
+    """
+    api_params = _build_api_params(function_name, params)
+
+    # Check if return_url is True - return URL without making request
+    current_return_url = globals().get('_current_return_url')
+    if current_return_url is True:
+        from urllib.parse import urlencode
+        return {"api_url": f"{API_BASE_URL}?{urlencode(api_params)}"}
+
     with httpx.Client() as client:
         response = client.get(API_BASE_URL, params=api_params)
         response.raise_for_status()

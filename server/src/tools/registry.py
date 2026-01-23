@@ -96,8 +96,77 @@ def add_entitlement_parameter(func):
     # Apply the new signature to the wrapper
     wrapper.__signature__ = new_sig
     wrapper.__annotations__ = {**type_hints, 'entitlement': 'str | None'}
-    
+
     return wrapper
+
+
+def add_return_url_parameter(func):
+    """Decorator that adds return_url parameter to a function"""
+
+    # Get existing signature and type hints
+    sig = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    # Create new parameter for return_url
+    return_url_param = inspect.Parameter(
+        'return_url',
+        inspect.Parameter.KEYWORD_ONLY,
+        default=None,
+        annotation='bool | None'
+    )
+
+    # Add return_url parameter to the signature
+    params = list(sig.parameters.values())
+    params.append(return_url_param)
+    new_sig = sig.replace(parameters=params)
+
+    # Update docstring to include return_url parameter
+    docstring = func.__doc__ or ""
+    if "Args:" in docstring and "return_url" not in docstring:
+        lines = docstring.split('\n')
+        args_idx = None
+        returns_idx = None
+
+        for i, line in enumerate(lines):
+            if "Args:" in line:
+                args_idx = i
+            elif "Returns:" in line and args_idx is not None:
+                returns_idx = i
+                break
+
+        if args_idx is not None:
+            return_url_doc = '        return_url: If True, return the API URL instead of making the request'
+            if returns_idx is not None:
+                lines.insert(returns_idx, return_url_doc)
+                lines.insert(returns_idx, "")
+            else:
+                lines.append(return_url_doc)
+
+            func.__doc__ = '\n'.join(lines)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Extract return_url if provided
+        return_url = kwargs.pop('return_url', None)
+
+        # If return_url is True, set global variable for _make_api_request to check
+        if return_url is True:
+            import src.common
+            src.common._current_return_url = True
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                src.common._current_return_url = None
+            return result
+
+        return func(*args, **kwargs)
+
+    # Apply the new signature to the wrapper
+    wrapper.__signature__ = new_sig
+    wrapper.__annotations__ = {**type_hints, 'return_url': 'bool | None'}
+
+    return wrapper
+
 
 def tool(func):
     """Decorator to mark functions as MCP tools"""
@@ -122,7 +191,10 @@ def tool(func):
     # Apply entitlement decorator if this category needs it
     if category in ENTITLEMENT_CATEGORIES:
         func = add_entitlement_parameter(func)
-    
+
+    # Apply return_url decorator to all tools
+    func = add_return_url_parameter(func)
+
     if module_name not in _tool_registries:
         _tool_registries[module_name] = []
 
