@@ -491,7 +491,7 @@ If the `mcpServers` object does not exist, create it.
 
 ## Tools Reference
 
-**Note:** The tools listed below are accessed through the MCP server's `TOOL_CALL` wrapper function. See the Agent Instructions sections above for implementation examples.
+**Note:** The tools listed below are accessed through the MCP server's `TOOL_CALL` wrapper function.
 
 | Category | Tools |
 |----------|-------|
