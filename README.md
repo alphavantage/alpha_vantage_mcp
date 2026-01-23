@@ -4,6 +4,23 @@ The official Alpha Vantage API MCP server enables LLMs and agentic workflows to 
 
 ## Quickstart
 
+---
+
+### ⚠️ Important: MCP Tool Structure Update (January 2026)
+
+**For existing integrations:** The Alpha Vantage MCP server has updated its tool structure to reduce token usage. If your system was built before January 2026, you may need to update your prompts.
+
+**What changed:**
+- Previously: All 115+ Alpha Vantage functions were exposed as individual MCP tools
+- Now: Functions are accessed through wrapper tools (TOOL_LIST, TOOL_GET, TOOL_CALL)
+
+**Impact on multi-agent systems:**
+If your agents have hardcoded references to specific tool names (e.g., "TIME_SERIES_DAILY"), you'll need to update your system prompts to use the wrapper pattern shown above.
+
+**Need help migrating?** Contact support@alphavantage.co
+
+---
+
 To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
 
 👉 Any questions? Please contact support@alphavantage.co
@@ -183,7 +200,11 @@ Add the following instruction to your agent's configuration to optimize performa
 
 ```
 You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
-When retrieving financial data, examine the Alpha Vantage MCP Server function definitions directly rather than using the SEARCH endpoint.
+
+IMPORTANT: Alpha Vantage functions are accessed via wrapper tools:
+- Use TOOL_LIST to see available functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.)
+- Use TOOL_CALL with the format: TOOL_CALL(tool_name="FUNCTION_NAME", arguments={...})
+- Example: TOOL_CALL(tool_name="TIME_SERIES_DAILY", arguments={"symbol": "AAPL", "outputsize": "compact"})
 ```
 </details>
 
@@ -469,6 +490,8 @@ If the `mcpServers` object does not exist, create it.
 &nbsp;
 
 ## Tools Reference
+
+**Note:** The tools listed below are accessed through the MCP server's `TOOL_CALL` wrapper function. See the Agent Instructions sections above for implementation examples.
 
 | Category | Tools |
 |----------|-------|
