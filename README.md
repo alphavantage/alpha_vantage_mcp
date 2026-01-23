@@ -2,13 +2,14 @@
 
 The official Alpha Vantage API MCP server enables LLMs and agentic workflows to seamlessly interact with real-time and historical stock market data through the Model Context Protocol (MCP). Add this server to your favorite apps such as Claude, Claude Code, Cursor, VS Code, and many more to give them access to comprehensive financial data.
 
-## Quickstart
 
 ---
 
-### ⚠️ Important: MCP Tool Structure Update (January 2026)
+### 📝 Changelog: MCP Tool Structure Update (January 2026)
 
-**For existing integrations:** The Alpha Vantage MCP server has updated its tool structure to reduce token usage. If your system was built before January 2026, you may need to update your prompts.
+**If this is your first time working with the Alpha Vantage MCP server:** please feel free to skip this section.
+
+**If you created integration with the Alpha Vantage MCP server before January 2026:** The Alpha Vantage MCP server has updated its tool structure to reduce token usage. Please see below for more details. 
 
 **What changed:**
 - Previously: All 115+ Alpha Vantage functions were exposed as individual MCP tools
@@ -20,6 +21,8 @@ If your agents have hardcoded references to specific tool names (e.g., "TIME_SER
 **Need help migrating?** Contact support@alphavantage.co
 
 ---
+
+### Quickstart
 
 To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
 
