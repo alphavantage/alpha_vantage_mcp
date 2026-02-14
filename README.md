@@ -2,33 +2,17 @@
 
 The official Alpha Vantage API MCP server enables LLMs and agentic workflows to seamlessly interact with real-time and historical stock market data through the Model Context Protocol (MCP). Add this server to your favorite apps such as Claude, Claude Code, Cursor, VS Code, and many more to give them access to comprehensive financial data.
 
-
----
-
-### 📝 Changelog: MCP Tool Structure Update (January 2026)
-
-**If this is your first time working with the Alpha Vantage MCP server:** please feel free to skip this section.
-
-**If you created integration with the Alpha Vantage MCP server before January 2026:** The Alpha Vantage MCP server has updated its tool structure to reduce token usage. Please see below for more details. 
-
-**What changed:**
-- Previously: All 115+ Alpha Vantage functions were exposed as individual MCP tools
-- Now: Functions are accessed through wrapper tools (TOOL_LIST, TOOL_GET, TOOL_CALL)
-
-**Impact on multi-agent systems:**
-If your agents have hardcoded references to specific tool names (e.g., "TIME_SERIES_DAILY"), you'll need to update your system prompts to use the wrapper pattern shown above.
-
-**Need help migrating?** Contact support@alphavantage.co
-
 ---
 
 ### Quickstart
 
 To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
 
-👉 Any questions? Please contact support@alphavantage.co
+⚡ We use an optimization technique called **Progressive Tool Discovery** to minimize the number of tokens consumed (hence the cost incurred) while preserving the superb response quality when the MCP server is invoked. You can learn more about this technique [here](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/docs/progressive-discovery.md)
 
 ⭐ View MCP source code on [Github](https://github.com/alphavantage/alpha_vantage_mcp)
+
+👉 Any questions? Please contact support@alphavantage.co
 
 
 ### Connection Examples
