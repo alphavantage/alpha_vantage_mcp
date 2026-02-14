@@ -14,6 +14,7 @@ To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclic
 
 👉 Any questions? Please contact support@alphavantage.co
 
+&nbsp;
 
 ### Connection Examples
 
