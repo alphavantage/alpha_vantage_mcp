@@ -4,12 +4,7 @@
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from lambda_function import lambda_handler
-import sys
-import os
-
-# Add the project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from .lambda_function import lambda_handler
 
 class LambdaRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
