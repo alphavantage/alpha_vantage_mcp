@@ -1,6 +1,6 @@
 [project]
 name = "av-cli"
-version = "0.1.4"
+version = "0.1.5"
 description = "CLI wrapper for Alpha Vantage APIs"
 requires-python = ">=3.10"
 dependencies = [
@@ -8,6 +8,7 @@ dependencies = [
     "click",
     "httpx",
     "loguru",
+    "python-dotenv",
 ]
 
 [project.scripts]

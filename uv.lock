@@ -83,13 +83,14 @@ wheels = [
 
 [[package]]
 name = "av-cli"
-version = "0.1.1"
+version = "0.1.4"
 source = { editable = "cli" }
 dependencies = [
     { name = "alphavantage-core" },
     { name = "click" },
     { name = "httpx" },
     { name = "loguru" },
+    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -98,6 +99,7 @@ requires-dist = [
     { name = "click" },
     { name = "httpx" },
     { name = "loguru" },
+    { name = "python-dotenv" },
 ]
 
 [[package]]

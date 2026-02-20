@@ -5,6 +5,9 @@ import sys
 from typing import Union, get_type_hints
 
 import click
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from av_cli import __version__
 
