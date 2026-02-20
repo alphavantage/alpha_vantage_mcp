@@ -1,0 +1,49 @@
+name: Publish Alpha Vantage CLI to PyPI
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        default: 'cli'
+        type: choice
+        options:
+        - cli
+
+jobs:
+  deploy-cli:
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'cli')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/av-cli
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Build and publish cli package
+      working-directory: ./cli
+      run: |
+        uv venv
+        . .venv/bin/activate
+        uv pip install build twine
+        python -m build
+        twine upload dist/*
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

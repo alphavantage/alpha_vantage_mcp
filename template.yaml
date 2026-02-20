@@ -29,14 +29,6 @@ Parameters:
   CdnDomain:
     Type: String
     Description: CDN domain for public access
-  SubnetIds:
-    Type: CommaDelimitedList
-    Description: Comma-delimited list of subnet IDs for Lambda VPC deployment (optional)
-    Default: ""
-  LambdaSecurityGroupId:
-    Type: String
-    Description: Security Group ID for Lambda function (optional)
-    Default: ""
 
 Resources:
   # S3 bucket for static files
@@ -172,10 +164,6 @@ Resources:
       Architectures:
         - x86_64
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/mcp-server-lambda-execution-role'
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref LambdaSecurityGroupId
-        SubnetIds: !Ref SubnetIds
       Events:
         RootApi:
           Type: Api

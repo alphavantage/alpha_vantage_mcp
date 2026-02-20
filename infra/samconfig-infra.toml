@@ -1,8 +1,0 @@
-version = 0.1
-
-[default.deploy.parameters]
-stack_name = "alphavantage-mcp-server-infra"
-resolve_s3 = true
-s3_prefix = "alphavantage-mcp-server-infra"
-region = "us-east-1"
-confirm_changeset = true
