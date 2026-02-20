@@ -47,6 +47,9 @@ def _make_tool_command(func, tool_name):
                 short_map[pname] = f'-{ch}'
                 break
 
+    # Check if function has a 'symbol' parameter
+    has_symbol = 'symbol' in sig.parameters and sig.parameters['symbol'].default is inspect.Parameter.empty
+
     params = []
     # Add --api-key/-k to each subcommand so it can appear after the command name
     params.append(
@@ -58,6 +61,11 @@ def _make_tool_command(func, tool_name):
             expose_value=True,
         )
     )
+    # Add optional positional argument for symbol (e.g., av-cli global_quote AAPL)
+    if has_symbol:
+        params.append(
+            click.Argument(['_symbol'], required=False, default=None, metavar='SYMBOL')
+        )
     for pname, param in sig.parameters.items():
         ptype = hints.get(pname, str)
         click_type = _python_type_to_click(ptype)
@@ -73,6 +81,9 @@ def _make_tool_command(func, tool_name):
             )
         else:
             required = param.default is inspect.Parameter.empty
+            # symbol is no longer required as option since it can come from positional arg
+            if pname == 'symbol' and has_symbol:
+                required = False
             decls = [f'--{pname}']
             if short:
                 decls.append(short)
@@ -81,7 +92,7 @@ def _make_tool_command(func, tool_name):
                     decls,
                     type=click_type,
                     required=required,
-                    default=None if required else param.default,
+                    default=None if (required or (pname == 'symbol' and has_symbol)) else param.default,
                     help=pname,
                 )
             )
@@ -95,6 +106,14 @@ def _make_tool_command(func, tool_name):
         api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHA_VANTAGE_API_KEY')
         if not api_key:
             click.echo('Error: API key required. Use -k/--api-key or set ALPHA_VANTAGE_API_KEY.', err=True)
+            sys.exit(1)
+
+        # Positional _symbol takes precedence over --symbol option
+        positional_symbol = kwargs.pop('_symbol', None)
+        if positional_symbol:
+            kwargs['symbol'] = positional_symbol
+        if has_symbol and not kwargs.get('symbol'):
+            click.echo('Error: SYMBOL is required. Usage: av-cli <command> AAPL or --symbol AAPL', err=True)
             sys.exit(1)
 
         set_api_key(api_key)
