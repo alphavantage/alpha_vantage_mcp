@@ -7,8 +7,6 @@ from typing import Union, get_type_hints
 import click
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from av_cli import __version__
 
 
@@ -58,7 +56,7 @@ def _make_tool_command(func, tool_name):
     params.append(
         click.Option(
             ['--api-key', '-k'],
-            envvar='ALPHA_VANTAGE_API_KEY',
+            envvar=['ALPHAVANTAGE_API_KEY', 'ALPHA_VANTAGE_API_KEY'],
             help='Alpha Vantage API key (required)',
             is_eager=True,
             expose_value=True,
@@ -105,9 +103,9 @@ def _make_tool_command(func, tool_name):
 
         local_api_key = kwargs.pop('api_key', None)
         ctx = click.get_current_context()
-        api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHA_VANTAGE_API_KEY')
+        api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHAVANTAGE_API_KEY') or os.getenv('ALPHA_VANTAGE_API_KEY')
         if not api_key:
-            click.echo('Error: API key required. Set ALPHA_VANTAGE_API_KEY or use -k. Get a free key at https://www.alphavantage.co/support/#api-key', err=True)
+            click.echo('Error: API key required. Set ALPHAVANTAGE_API_KEY or use -k. Get a free key at https://www.alphavantage.co/support/#api-key', err=True)
             sys.exit(1)
 
         # Map positional _symbol to symbol kwarg
@@ -174,7 +172,7 @@ class ToolGroup(click.Group):
     max_content_width=200,
 ))
 @click.version_option(version=__version__, prog_name="av-cli")
-@click.option('--api-key', '-k', envvar='ALPHA_VANTAGE_API_KEY', hidden=True)
+@click.option('--api-key', '-k', envvar=['ALPHAVANTAGE_API_KEY', 'ALPHA_VANTAGE_API_KEY'], hidden=True)
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.pass_context
 def cli(ctx, api_key, verbose):
@@ -183,10 +181,11 @@ def cli(ctx, api_key, verbose):
     \b
     Quick start:
       1. Get a free API key at https://www.alphavantage.co/support/#api-key
-      2. export ALPHA_VANTAGE_API_KEY=your_key
+      2. export ALPHAVANTAGE_API_KEY=your_key
       3. av-cli global_quote AAPL
     Or use -k for single use: av-cli global_quote AAPL -k your_key
     """
+    load_dotenv(os.path.join(os.getcwd(), '.env'))
     ctx.ensure_object(dict)
     ctx.obj['api_key'] = api_key
     ctx.obj['verbose'] = verbose
