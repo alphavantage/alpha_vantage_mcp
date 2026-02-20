@@ -265,12 +265,11 @@ def _ensure_tools_loaded():
             importlib.import_module(module_spec)
 
 
-def _extract_description(func) -> str:
-    """Extract the first line/paragraph of a docstring as description."""
+def extract_description(func) -> str:
+    """Extract docstring content before Args:/Returns: as the description."""
     if not func.__doc__:
         return f"Execute {func.__name__}"
 
-    # Get first non-empty line or paragraph
     lines = func.__doc__.strip().split('\n')
     description_lines = []
     for line in lines:
@@ -279,9 +278,6 @@ def _extract_description(func) -> str:
             break
         if stripped:
             description_lines.append(stripped)
-        elif description_lines:
-            # Empty line after content means end of first paragraph
-            break
 
     return ' '.join(description_lines) if description_lines else f"Execute {func.__name__}"
 
@@ -299,7 +295,7 @@ def get_tool_list() -> list[dict]:
     return [
         {
             "name": func.__name__.upper(),
-            "description": _extract_description(func)
+            "description": extract_description(func)
         }
         for func in tools
     ]

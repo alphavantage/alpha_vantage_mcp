@@ -31,13 +31,15 @@ from mcp.server.models import InitializationOptions
 
 from .context import set_api_key
 from .tools.meta_tools import tool_list, tool_get, tool_call
+from .tools.registry import extract_description
 
 
 # Meta-tool definitions for progressive discovery
+# Descriptions are derived from meta_tools.py docstrings
 META_TOOLS = [
     types.Tool(
         name="TOOL_LIST",
-        description="List all available Alpha Vantage API tools with their names and descriptions. Use this tool first to discover what tools are available, then use TOOL_GET to retrieve the full schema for a specific tool before calling it.",
+        description=extract_description(tool_list),
         inputSchema={
             "type": "object",
             "properties": {},
@@ -46,7 +48,7 @@ META_TOOLS = [
     ),
     types.Tool(
         name="TOOL_GET",
-        description="Get the full schema for one or more tools including all parameters. After discovering tools via TOOL_LIST, use this to get the complete parameter schema before calling the tool. You can provide either a single tool name or a list of tool names if you're unsure which one to use.",
+        description=extract_description(tool_get),
         inputSchema={
             "type": "object",
             "properties": {
@@ -69,7 +71,7 @@ META_TOOLS = [
     ),
     types.Tool(
         name="TOOL_CALL",
-        description="Execute a tool by name with the provided arguments. After getting the schema via TOOL_GET, use this to actually call the tool.",
+        description=extract_description(tool_call),
         inputSchema={
             "type": "object",
             "properties": {
@@ -79,7 +81,7 @@ META_TOOLS = [
                 },
                 "arguments": {
                     "type": "object",
-                    "description": "Dictionary of arguments matching the tool's parameter schema"
+                    "description": "Dictionary of arguments matching the tool's parameter schema from TOOL_GET"
                 }
             },
             "required": ["tool_name", "arguments"]
