@@ -8,18 +8,18 @@ on:
       package:
         description: 'Package to publish'
         required: true
-        default: 'server'
+        default: 'mcp'
         type: choice
         options:
-        - server
+        - mcp
 
 jobs:
-  deploy-server:
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'server')
+  deploy-mcp:
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.package == 'mcp')
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/alphavantage-mcp-server
+      url: https://pypi.org/p/av-mcp
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
@@ -36,8 +36,8 @@ jobs:
         curl -LsSf https://astral.sh/uv/install.sh | sh
         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-    - name: Build and publish server package
-      working-directory: ./server
+    - name: Build and publish mcp package
+      working-directory: ./mcp
       run: |
         uv venv
         . .venv/bin/activate

@@ -64,7 +64,7 @@ jobs:
 
       - name: Export dependencies
         run: |
-          cd server
+          cd mcp
           uv export --format=requirements-txt --no-hashes | grep -v "^-e \." > requirements.txt
           cd ..
 
@@ -79,9 +79,6 @@ jobs:
           [ -n "$STATIC_FILES_BUCKET" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES StaticFilesBucket=$STATIC_FILES_BUCKET"
           [ -n "$CDN_BUCKET_NAME" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES CdnBucketName=$CDN_BUCKET_NAME"
           [ -n "$CDN_DOMAIN" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES CdnDomain=$CDN_DOMAIN"
-          [ -n "$SUBNET_IDS" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES SubnetIds=$SUBNET_IDS"
-          [ -n "$LAMBDA_SECURITY_GROUP_ID" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES LambdaSecurityGroupId=$LAMBDA_SECURITY_GROUP_ID"
-
           if [ -n "$PARAM_OVERRIDES" ]; then
             sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides $PARAM_OVERRIDES
           else
