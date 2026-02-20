@@ -1,13 +1,34 @@
 # GitHub Actions config secrets
 .github/config-*.json
 
+# Editor / IDE
 .gemini
 .vscode
+
+# OS
 *.DS_Store
+
+# Environment
 .venv
-dev_docs
-.env.bak
 .env
+.env.bak
+.env*
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
 # AWS SAM build artifacts
 .aws-sam/
+
+# Dev docs
+dev_docs
+
+# Generated / local files
+requirements.txt
+sessions.db
+mcp.json

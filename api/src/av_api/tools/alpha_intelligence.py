@@ -1,5 +1,5 @@
-from src.common import _make_api_request
-from src.tools.registry import tool
+from av_api.client import _make_api_request
+from av_api.registry import tool
 
 @tool
 def news_sentiment(

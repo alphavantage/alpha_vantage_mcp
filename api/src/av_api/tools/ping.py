@@ -1,4 +1,4 @@
-from src.tools.registry import tool
+from av_api.registry import tool
 
 @tool
 def ping() -> str:
