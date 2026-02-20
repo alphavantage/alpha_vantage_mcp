@@ -11,11 +11,16 @@ def tool_list() -> list[dict]:
     """
     List all available Alpha Vantage API tools with their names and descriptions.
 
-    Use this tool first to discover what tools are available, then use TOOL_GET
-    to retrieve the full schema for a specific tool before calling it.
+    IMPORTANT: This returns only tool names and descriptions, NOT parameter schemas.
+    You MUST call TOOL_GET(tool_name) to retrieve the full inputSchema (required
+    parameters, types, descriptions) before calling TOOL_CALL. Calling TOOL_CALL
+    without first calling TOOL_GET will fail because you won't know the required
+    parameters.
+
+    Workflow: TOOL_LIST -> TOOL_GET(tool_name) -> TOOL_CALL(tool_name, arguments)
 
     Returns:
-        List of tools with 'name' and 'description' fields.
+        List of tools with 'name' and 'description' fields only (no parameter schemas).
     """
     return get_tool_list()
 
@@ -45,11 +50,16 @@ def tool_call(tool_name: str, arguments: str) -> dict | str:
     """
     Execute a tool by name with the provided arguments.
 
-    After getting the schema via TOOL_GET, use this to actually call the tool.
+    IMPORTANT: You MUST call TOOL_GET(tool_name) first to retrieve the full parameter
+    schema before calling this tool. The arguments must match the schema returned by
+    TOOL_GET, including all required parameters. Calling without the correct arguments
+    will result in errors.
+
+    Workflow: TOOL_LIST -> TOOL_GET(tool_name) -> TOOL_CALL(tool_name, arguments)
 
     Args:
         tool_name: The name of the tool to call (e.g., "TIME_SERIES_DAILY")
-        arguments: Dictionary of arguments matching the tool's parameter schema
+        arguments: Dictionary of arguments matching the tool's parameter schema from TOOL_GET
 
     Returns:
         The result from the tool execution.
