@@ -56,7 +56,7 @@ def _make_tool_command(func, tool_name):
         click.Option(
             ['--api-key', '-k'],
             envvar='ALPHA_VANTAGE_API_KEY',
-            help='Alpha Vantage API key',
+            help='Alpha Vantage API key (required)',
             is_eager=True,
             expose_value=True,
         )
@@ -64,9 +64,12 @@ def _make_tool_command(func, tool_name):
     # Add optional positional argument for symbol (e.g., av-cli global_quote AAPL)
     if has_symbol:
         params.append(
-            click.Argument(['_symbol'], required=False, default=None, metavar='SYMBOL')
+            click.Argument(['_symbol'], required=True, metavar='SYMBOL')
         )
     for pname, param in sig.parameters.items():
+        # Skip symbol as option — it's handled by positional argument
+        if pname == 'symbol' and has_symbol:
+            continue
         ptype = hints.get(pname, str)
         click_type = _python_type_to_click(ptype)
         short = short_map.get(pname)
@@ -81,9 +84,6 @@ def _make_tool_command(func, tool_name):
             )
         else:
             required = param.default is inspect.Parameter.empty
-            # symbol is no longer required as option since it can come from positional arg
-            if pname == 'symbol' and has_symbol:
-                required = False
             decls = [f'--{pname}']
             if short:
                 decls.append(short)
@@ -92,7 +92,7 @@ def _make_tool_command(func, tool_name):
                     decls,
                     type=click_type,
                     required=required,
-                    default=None if (required or (pname == 'symbol' and has_symbol)) else param.default,
+                    default=None if required else param.default,
                     help=pname,
                 )
             )
@@ -100,21 +100,19 @@ def _make_tool_command(func, tool_name):
     def callback(**kwargs):
         from av_api.context import set_api_key
 
-        # api_key can come from subcommand --api-key, parent group, or env var
         local_api_key = kwargs.pop('api_key', None)
         ctx = click.get_current_context()
         api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHA_VANTAGE_API_KEY')
         if not api_key:
-            click.echo('Error: API key required. Use -k/--api-key or set ALPHA_VANTAGE_API_KEY.', err=True)
+            click.echo('Error: API key required. Set ALPHA_VANTAGE_API_KEY or use -k. Get a free key at https://www.alphavantage.co/support/#api-key', err=True)
             sys.exit(1)
 
-        # Positional _symbol takes precedence over --symbol option
-        positional_symbol = kwargs.pop('_symbol', None)
-        if positional_symbol:
-            kwargs['symbol'] = positional_symbol
-        if has_symbol and not kwargs.get('symbol'):
-            click.echo('Error: SYMBOL is required. Usage: av-cli <command> AAPL or --symbol AAPL', err=True)
-            sys.exit(1)
+        # Map positional _symbol to symbol kwarg
+        if has_symbol:
+            kwargs['symbol'] = kwargs.pop('_symbol', None)
+            if not kwargs['symbol']:
+                click.echo('Error: SYMBOL is required. Usage: av-cli <command> AAPL', err=True)
+                sys.exit(1)
 
         set_api_key(api_key)
         result = func(**kwargs)
@@ -173,11 +171,19 @@ class ToolGroup(click.Group):
     max_content_width=200,
 ))
 @click.version_option(version=__version__, prog_name="av-cli")
-@click.option('--api-key', '-k', envvar='ALPHA_VANTAGE_API_KEY', help='Alpha Vantage API key')
+@click.option('--api-key', '-k', envvar='ALPHA_VANTAGE_API_KEY', hidden=True)
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.pass_context
 def cli(ctx, api_key, verbose):
-    """Alpha Vantage CLI - direct access to all Alpha Vantage API tools."""
+    """Alpha Vantage CLI - direct access to all Alpha Vantage API.
+
+    \b
+    Quick start:
+      1. Get a free API key at https://www.alphavantage.co/support/#api-key
+      2. export ALPHA_VANTAGE_API_KEY=your_key
+      3. av-cli global_quote AAPL
+    Or use -k for single use: av-cli global_quote AAPL -k your_key
+    """
     ctx.ensure_object(dict)
     ctx.obj['api_key'] = api_key
     ctx.obj['verbose'] = verbose
