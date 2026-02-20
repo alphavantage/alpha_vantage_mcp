@@ -26,6 +26,7 @@ def _python_type_to_click(param_type):
     return click.STRING
 
 
+
 def _make_tool_command(func, tool_name):
     """Build a Click command for a single tool function."""
     from av_api.registry import extract_description
@@ -36,8 +37,8 @@ def _make_tool_command(func, tool_name):
     except Exception:
         hints = {}
 
-    # Build short option flags, skipping conflicts with -h (help)
-    used_shorts = {'h'}
+    # Build short option flags, skipping conflicts with -h (help) and -k (api-key)
+    used_shorts = {'h', 'k'}
     short_map = {}
     for pname in sig.parameters:
         for ch in pname.lower():
@@ -47,6 +48,16 @@ def _make_tool_command(func, tool_name):
                 break
 
     params = []
+    # Add --api-key/-k to each subcommand so it can appear after the command name
+    params.append(
+        click.Option(
+            ['--api-key', '-k'],
+            envvar='ALPHA_VANTAGE_API_KEY',
+            help='Alpha Vantage API key',
+            is_eager=True,
+            expose_value=True,
+        )
+    )
     for pname, param in sig.parameters.items():
         ptype = hints.get(pname, str)
         click_type = _python_type_to_click(ptype)
@@ -78,10 +89,12 @@ def _make_tool_command(func, tool_name):
     def callback(**kwargs):
         from av_api.context import set_api_key
 
+        # api_key can come from subcommand --api-key, parent group, or env var
+        local_api_key = kwargs.pop('api_key', None)
         ctx = click.get_current_context()
-        api_key = ctx.obj.get('api_key') or os.getenv('ALPHA_VANTAGE_API_KEY')
+        api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHA_VANTAGE_API_KEY')
         if not api_key:
-            click.echo('Error: API key required. Use --api-key or set ALPHA_VANTAGE_API_KEY.', err=True)
+            click.echo('Error: API key required. Use -k/--api-key or set ALPHA_VANTAGE_API_KEY.', err=True)
             sys.exit(1)
 
         set_api_key(api_key)
@@ -117,8 +130,13 @@ class ToolGroup(click.Group):
 
         ensure_tools_loaded()
 
+        # Skip utility/internal tools not meant for CLI usage
+        _SKIP_TOOLS = {'ping', 'add_two_numbers', 'search', 'fetch'}
+
         for func in _all_tools_registry:
             name = func.__name__
+            if name in _SKIP_TOOLS:
+                continue
             cmd = _make_tool_command(func, name)
             self.add_command(cmd)
 
@@ -131,7 +149,10 @@ class ToolGroup(click.Group):
         return super().get_command(ctx, cmd_name.lower())
 
 
-@click.group(cls=ToolGroup, context_settings=dict(help_option_names=['-h', '--help']))
+@click.group(cls=ToolGroup, context_settings=dict(
+    help_option_names=['-h', '--help'],
+    max_content_width=200,
+))
 @click.version_option(version=__version__, prog_name="av-cli")
 @click.option('--api-key', '-k', envvar='ALPHA_VANTAGE_API_KEY', help='Alpha Vantage API key')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')

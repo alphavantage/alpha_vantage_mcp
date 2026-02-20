@@ -7,7 +7,7 @@ def wti(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the West Texas Intermediate (WTI) crude oil prices in daily, weekly, and monthly horizons.
+    Returns the West Texas Intermediate (WTI) crude oil prices in daily, weekly, and monthly horizons.
 
     Args:
         interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
@@ -32,7 +32,7 @@ def brent(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the Brent (Europe) crude oil prices in daily, weekly, and monthly horizons.
+    Returns the Brent (Europe) crude oil prices in daily, weekly, and monthly horizons.
 
     Args:
         interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
@@ -57,7 +57,7 @@ def natural_gas(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the Henry Hub natural gas spot prices in daily, weekly, and monthly horizons.
+    Returns the Henry Hub natural gas spot prices in daily, weekly, and monthly horizons.
 
     Args:
         interval: By default, monthly. Strings daily, weekly, and monthly are accepted.
@@ -82,7 +82,7 @@ def copper(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of copper in monthly, quarterly, and annual horizons.
+    Returns the global price of copper in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -107,7 +107,7 @@ def aluminum(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of aluminum in monthly, quarterly, and annual horizons.
+    Returns the global price of aluminum in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -132,7 +132,7 @@ def wheat(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of wheat in monthly, quarterly, and annual horizons.
+    Returns the global price of wheat in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -157,7 +157,7 @@ def corn(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of corn in monthly, quarterly, and annual horizons.
+    Returns the global price of corn in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -182,7 +182,7 @@ def cotton(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of cotton in monthly, quarterly, and annual horizons.
+    Returns the global price of cotton in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -207,7 +207,7 @@ def sugar(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of sugar in monthly, quarterly, and annual horizons.
+    Returns the global price of sugar in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -232,7 +232,7 @@ def coffee(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price of coffee in monthly, quarterly, and annual horizons.
+    Returns the global price of coffee in monthly, quarterly, and annual horizons.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -257,7 +257,7 @@ def all_commodities(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the global price index of all commodities in monthly, quarterly, and annual temporal dimensions.
+    Returns the global price index of all commodities in monthly, quarterly, and annual temporal dimensions.
 
     Args:
         interval: By default, monthly. Strings monthly, quarterly, and annual are accepted.
@@ -279,7 +279,7 @@ def all_commodities(
 @tool
 def gold_silver_spot(symbol: str) -> dict[str, str] | str:
     """
-    This API returns the live spot prices of gold and silver metals.
+    Returns the live spot prices of gold and silver metals.
 
     Args:
         symbol: For gold, strings GOLD and XAU are accepted. For silver, strings SILVER and XAG are accepted.
@@ -302,7 +302,7 @@ def gold_silver_history(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the historical gold and silver prices in daily, weekly, and monthly horizons.
+    Returns the historical gold and silver prices in daily, weekly, and monthly horizons.
 
     Args:
         symbol: For gold, strings GOLD and XAU are accepted. For silver, strings SILVER and XAG are accepted.

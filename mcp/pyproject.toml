@@ -5,7 +5,7 @@ description = "Alpha Vantage MCP Server - Financial data APIs via Model Context 
 requires-python = ">=3.13"
 license = {text = "MIT"}
 dependencies = [
-    "av-api",
+    "alphavantage-core",
     "awslabs-mcp-lambda-handler>=0.1.8",
     "click",
     "loguru>=0.7.3",
@@ -35,4 +35,4 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-av-api = { workspace = true }
+alphavantage-core = { workspace = true }

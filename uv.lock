@@ -5,7 +5,7 @@ requires-python = ">=3.13"
 [manifest]
 members = [
     "alpha-vantage-agent",
-    "av-api",
+    "alphavantage-core",
     "av-cli",
     "av-mcp",
 ]
@@ -40,6 +40,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "alphavantage-core"
+version = "0.1.0"
+source = { editable = "api" }
+dependencies = [
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "httpx" }]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -71,22 +82,11 @@ wheels = [
 ]
 
 [[package]]
-name = "av-api"
-version = "0.1.0"
-source = { editable = "api" }
-dependencies = [
-    { name = "httpx" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "httpx" }]
-
-[[package]]
 name = "av-cli"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "cli" }
 dependencies = [
-    { name = "av-api" },
+    { name = "alphavantage-core" },
     { name = "click" },
     { name = "httpx" },
     { name = "loguru" },
@@ -94,7 +94,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "av-api", editable = "api" },
+    { name = "alphavantage-core", editable = "api" },
     { name = "click" },
     { name = "httpx" },
     { name = "loguru" },
@@ -105,7 +105,7 @@ name = "av-mcp"
 version = "0.3.1"
 source = { editable = "mcp" }
 dependencies = [
-    { name = "av-api" },
+    { name = "alphavantage-core" },
     { name = "awslabs-mcp-lambda-handler" },
     { name = "click" },
     { name = "loguru" },
@@ -122,7 +122,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "av-api", editable = "api" },
+    { name = "alphavantage-core", editable = "api" },
     { name = "awslabs-mcp-lambda-handler", specifier = ">=0.1.8" },
     { name = "click" },
     { name = "loguru", specifier = ">=0.7.3" },

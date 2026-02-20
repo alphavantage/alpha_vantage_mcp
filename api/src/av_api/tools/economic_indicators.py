@@ -7,7 +7,7 @@ def real_gdp(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the annual and quarterly Real GDP of the United States.
+    Returns the annual and quarterly Real GDP of the United States.
 
     Args:
         interval: By default, interval=annual. Strings quarterly and annual are accepted.
@@ -31,7 +31,7 @@ def real_gdp_per_capita(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the quarterly Real GDP per Capita data of the United States.
+    Returns the quarterly Real GDP per Capita data of the United States.
 
     Args:
         datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications: 
@@ -55,7 +55,7 @@ def treasury_yield(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the daily, weekly, and monthly US treasury yield of a given maturity timeline (e.g., 5 year, 30 year, etc).
+    Returns the daily, weekly, and monthly US treasury yield of a given maturity timeline (e.g., 5 year, 30 year, etc).
 
     Args:
         interval: By default, interval=monthly. Strings daily, weekly, and monthly are accepted.
@@ -82,7 +82,7 @@ def federal_funds_rate(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the daily, weekly, and monthly federal funds rate (interest rate) of the United States.
+    Returns the daily, weekly, and monthly federal funds rate (interest rate) of the United States.
 
     Args:
         interval: By default, interval=monthly. Strings daily, weekly, and monthly are accepted.
@@ -107,7 +107,7 @@ def cpi(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly and semiannual consumer price index (CPI) of the United States. 
+    Returns the monthly and semiannual consumer price index (CPI) of the United States. 
     CPI is widely regarded as the barometer of inflation levels in the broader economy.
 
     Args:
@@ -132,7 +132,7 @@ def inflation(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the annual inflation rates (consumer prices) of the United States.
+    Returns the annual inflation rates (consumer prices) of the United States.
 
     Args:
         datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications: 
@@ -154,7 +154,7 @@ def retail_sales(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly Advance Retail Sales: Retail Trade data of the United States.
+    Returns the monthly Advance Retail Sales: Retail Trade data of the United States.
 
     Args:
         datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications: 
@@ -176,7 +176,7 @@ def durables(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly manufacturers' new orders of durable goods in the United States.
+    Returns the monthly manufacturers' new orders of durable goods in the United States.
 
     Args:
         datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications: 
@@ -198,7 +198,7 @@ def unemployment(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly unemployment data of the United States. The unemployment rate represents the number of 
+    Returns the monthly unemployment data of the United States. The unemployment rate represents the number of 
     unemployed as a percentage of the labor force. Labor force data are restricted to people 16 years of age and older, 
     who currently reside in 1 of the 50 states or the District of Columbia, who do not reside in institutions 
     (e.g., penal and mental facilities, homes for the aged), and who are not on active duty in the Armed Forces.
@@ -223,7 +223,7 @@ def nonfarm_payroll(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly US All Employees: Total Nonfarm (commonly known as Total Nonfarm Payroll), 
+    Returns the monthly US All Employees: Total Nonfarm (commonly known as Total Nonfarm Payroll), 
     a measure of the number of U.S. workers in the economy that excludes proprietors, private household employees, 
     unpaid volunteers, farm employees, and the unincorporated self-employed.
 
