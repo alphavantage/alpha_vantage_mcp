@@ -1,6 +1,6 @@
 import os
 from av_api.client import _make_api_request, set_response_processor, MAX_RESPONSE_TOKENS  # noqa: F401
-from src.utils import upload_to_object_storage
+from av_mcp.utils import upload_to_object_storage
 
 
 def _create_preview(response_text: str, datatype: str, estimated_tokens: int, error: str = None) -> dict:

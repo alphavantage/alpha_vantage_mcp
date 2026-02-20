@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Stdio MCP server for Alpha Vantage API.
 
@@ -8,19 +7,9 @@ via stdio transport, suitable for use with local MCP clients.
 Uses progressive discovery mode: only meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) are
 exposed, allowing LLMs to discover and call specific tools on-demand without flooding
 the context window.
-
-Usage:
-    python stdio_server.py [API_KEY]
-
-Environment Variables:
-    ALPHA_VANTAGE_API_KEY: Your Alpha Vantage API key
 """
 
-import os
-import sys
-import asyncio
 import json
-import click
 from typing import Any
 from loguru import logger
 
@@ -29,7 +18,7 @@ import mcp.types as types
 from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from .context import set_api_key
+from av_api.context import set_api_key
 from .tools.meta_tools import tool_list, tool_get, tool_call
 from .tools.registry import extract_description
 
@@ -162,55 +151,3 @@ class StdioMCPServer:
             )
 
 
-@click.command()
-@click.argument('api_key', required=False)
-@click.option('--api-key', 'api_key_option', help='Alpha Vantage API key (alternative to positional argument)')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
-def cli(api_key, api_key_option, verbose):
-    """Alpha Vantage MCP Server (stdio transport)
-
-    Uses progressive discovery mode with meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL).
-    LLMs can discover and call specific tools on-demand without flooding the context.
-
-    Examples:
-      av-mcp YOUR_API_KEY
-      av-mcp --api-key YOUR_API_KEY
-      ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp
-    """
-    # Configure logging based on verbose flag
-    if not verbose:
-        logger.remove()
-        logger.add(sys.stderr, level="WARNING")
-
-    # Get API key from args or environment
-    api_key = api_key or api_key_option or os.getenv('ALPHA_VANTAGE_API_KEY')
-
-    if not api_key:
-        logger.error("API key required. Provide via argument or ALPHA_VANTAGE_API_KEY environment variable")
-        print("Error: API key required", file=sys.stderr)
-        print("Usage: av-mcp YOUR_API_KEY", file=sys.stderr)
-        print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp", file=sys.stderr)
-        sys.exit(1)
-
-    # Create and run server with progressive discovery
-    if verbose:
-        logger.info("Starting Alpha Vantage MCP Server (stdio) with progressive discovery")
-    server = StdioMCPServer(api_key, verbose)
-
-    try:
-        asyncio.run(server.run())
-    except KeyboardInterrupt:
-        if verbose:
-            logger.info("Server stopped by user")
-    except Exception as e:
-        logger.error(f"Server error: {e}")
-        sys.exit(1)
-
-
-def main():
-    """Main entry point"""
-    cli()
-
-
-if __name__ == "__main__":
-    main()
