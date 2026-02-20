@@ -158,7 +158,7 @@ Resources:
   MCPLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: server
+      CodeUri: mcp
       Handler: lambda_function.lambda_handler
       Runtime: python3.13
       Architectures:
