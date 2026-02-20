@@ -62,11 +62,10 @@ jobs:
             [ -n "$value" ] && echo "::add-mask::$value"
           done
 
-      - name: Export dependencies
+      - name: Export dependencies and bundle workspace packages
         run: |
-          cd mcp
-          uv export --format=requirements-txt --no-hashes | grep -v "^-e \." > requirements.txt
-          cd ..
+          uv export --package av-mcp --format=requirements-txt --no-hashes | grep -v "^-e \." > mcp/requirements.txt
+          cp -r api/src/av_api mcp/av_api
 
       - name: Build SAM application
         run: sam build
