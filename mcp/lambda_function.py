@@ -1,6 +1,7 @@
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
 from av_api.context import set_api_key
+from av_mcp.decorators import setup_custom_tool_decorator
 from av_mcp.tools.registry import register_meta_tools
 from av_mcp.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
 from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
@@ -9,6 +10,9 @@ from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request
 def create_mcp_handler() -> MCPLambdaHandler:
     """Create and configure MCP handler with meta-tools for progressive discovery."""
     mcp = MCPLambdaHandler(name="mcp-lambda-server", version="1.0.0")
+
+    # Set up custom tool decorator for UPPER_SNAKE_CASE tool names
+    setup_custom_tool_decorator(mcp)
 
     # Progressive discovery mode: only register meta-tools
     logger.info("Registering meta-tools for progressive discovery")

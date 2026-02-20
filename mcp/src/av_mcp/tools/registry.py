@@ -18,10 +18,3 @@ def register_meta_tools(mcp):
 
     for func in [tool_list, tool_get, tool_call]:
         mcp.tool()(func)
-
-    # MCPLambdaHandler.tool() only uses the first paragraph of the docstring.
-    # Patch descriptions to include the full docstring (before Args:/Returns:).
-    for tool_schema in mcp.tools.values():
-        name = tool_schema["name"]
-        impl = mcp.tool_implementations[name]
-        tool_schema["description"] = extract_description(impl)
