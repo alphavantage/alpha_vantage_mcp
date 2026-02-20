@@ -4,7 +4,7 @@ These tools allow LLMs to discover available tools without flooding
 the context window with full schemas upfront.
 """
 import json
-from src.tools.registry import get_tool_list, get_tool_schema, get_tool_schemas, call_tool
+from av_api.registry import get_tool_list, get_tool_schema, get_tool_schemas, call_tool
 
 
 def tool_list() -> list[dict]:

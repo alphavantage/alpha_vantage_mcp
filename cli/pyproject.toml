@@ -1,0 +1,23 @@
+[project]
+name = "av-cli"
+version = "0.1.0"
+description = "CLI wrapper for Alpha Vantage APIs"
+requires-python = ">=3.10"
+dependencies = [
+    "av-api",
+    "click",
+    "httpx",
+]
+
+[project.scripts]
+av-cli = "av_cli.main:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/av_cli"]
+
+[tool.uv.sources]
+av-api = { workspace = true }

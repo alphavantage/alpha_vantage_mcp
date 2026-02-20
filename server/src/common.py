@@ -1,13 +1,6 @@
-import httpx
-import json
 import os
-from src.context import get_api_key
-from src.utils import estimate_tokens, upload_to_object_storage
-
-API_BASE_URL = "https://www.alphavantage.co/query"
-
-# Maximum token size for responses (configurable via environment variable)
-MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '8192'))
+from av_api.client import _make_api_request, set_response_processor, MAX_RESPONSE_TOKENS  # noqa: F401
+from src.utils import upload_to_object_storage
 
 
 def _create_preview(response_text: str, datatype: str, estimated_tokens: int, error: str = None) -> dict:
@@ -37,72 +30,31 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
             ]
         }
     }
-    
+
     # Filter out None values from important_notes
     preview["usage_instructions"]["important_notes"] = [note for note in preview["usage_instructions"]["important_notes"] if note is not None]
-    
+
     if error:
         preview["error"] = f"Failed to upload large response: {error}"
-    
+
     return preview
 
 
-def _make_api_request(function_name: str, params: dict) -> dict | str:
-    """Helper function to make API requests and handle responses.
-    
-    For large responses exceeding MAX_RESPONSE_TOKENS, returns a preview
-    with a URL to the full data stored in temporary storage.
-    """
-    # Create a copy of params to avoid modifying the original
-    api_params = params.copy()
-    api_params.update({
-        "function": function_name,
-        "apikey": get_api_key(),
-        "source": "alphavantagemcp"
-    })
-    
-    # Handle entitlement parameter if present in params or global variable
-    current_entitlement = globals().get('_current_entitlement')
-    entitlement = api_params.get("entitlement") or current_entitlement
-    
-    if entitlement:
-        api_params["entitlement"] = entitlement
-    elif "entitlement" in api_params:
-        # Remove entitlement if it's None or empty
-        api_params.pop("entitlement", None)
-    
-    with httpx.Client() as client:
-        response = client.get(API_BASE_URL, params=api_params)
-        response.raise_for_status()
-        
-        response_text = response.text
-        
-        # Determine datatype from params (default to csv if not specified)
-        datatype = api_params.get("datatype", "csv")
-        
-        # Check response size (works for both JSON and CSV)
-        estimated_tokens = estimate_tokens(response_text)
-        
-        # If response is within limits, return normally
-        if estimated_tokens <= MAX_RESPONSE_TOKENS:
-            if datatype == "json":
-                try:
-                    return json.loads(response_text)
-                except json.JSONDecodeError:
-                    return response_text
-            else:
-                return response_text
-            
-        # For large responses, upload to object storage and return preview
-        try:
-            data_url = upload_to_object_storage(response_text, datatype=datatype)
-            
-            # Create preview with data URL
-            preview = _create_preview(response_text, datatype, estimated_tokens)
-            preview["data_url"] = data_url
-            
-            return preview
-            
-        except Exception as e:
-            # If upload fails, return error with preview
-            return _create_preview(response_text, datatype, estimated_tokens, str(e))
+def _server_response_processor(response_text: str, datatype: str, estimated_tokens: int) -> dict:
+    """Process large responses: upload to S3 and return a preview."""
+    try:
+        data_url = upload_to_object_storage(response_text, datatype=datatype)
+
+        # Create preview with data URL
+        preview = _create_preview(response_text, datatype, estimated_tokens)
+        preview["data_url"] = data_url
+
+        return preview
+
+    except Exception as e:
+        # If upload fails, return error with preview
+        return _create_preview(response_text, datatype, estimated_tokens, str(e))
+
+
+# Install the server-specific response processor at import time
+set_response_processor(_server_response_processor)

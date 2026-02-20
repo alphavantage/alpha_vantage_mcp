@@ -1,5 +1,5 @@
 from typing import Dict, List, Any
-from src.tools.registry import tool
+from av_api.registry import tool
 
 @tool
 def search(query: str) -> Dict[str, List[Dict[str, Any]]]:
