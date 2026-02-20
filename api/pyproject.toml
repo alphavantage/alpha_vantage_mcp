@@ -1,5 +1,5 @@
 [project]
-name = "av-api"
+name = "alphavantage-core"
 version = "0.1.0"
 description = "Alpha Vantage API client library - shared tool definitions and HTTP client"
 requires-python = ">=3.10"

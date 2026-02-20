@@ -8,7 +8,7 @@ def currency_exchange_rate(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the realtime exchange rate for any pair of digital currency (e.g., Bitcoin) or physical currency (e.g., USD).
+    Returns the realtime exchange rate for any pair of digital currency (e.g., Bitcoin) or physical currency (e.g., USD).
 
     Args:
         from_currency: The currency you would like to get the exchange rate for. It can either be a physical currency or digital/crypto currency. For example: from_currency=USD or from_currency=BTC.
@@ -37,7 +37,7 @@ def crypto_intraday(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns intraday time series (timestamp, open, high, low, close, volume) of the cryptocurrency specified, updated realtime.
+    Returns intraday time series (timestamp, open, high, low, close, volume) of the cryptocurrency specified, updated realtime.
 
     Args:
         symbol: The digital/crypto currency of your choice. It can be any of the currencies in the digital currency list. For example: symbol=ETH.
@@ -68,7 +68,7 @@ def digital_currency_daily(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the daily historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
+    Returns the daily historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
 
     Args:
         symbol: The digital/crypto currency of your choice. It can be any of the currencies in the digital currency list. For example: symbol=BTC.
@@ -95,7 +95,7 @@ def digital_currency_weekly(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the weekly historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
+    Returns the weekly historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
 
     Args:
         symbol: The digital/crypto currency of your choice. It can be any of the currencies in the digital currency list. For example: symbol=BTC.
@@ -122,7 +122,7 @@ def digital_currency_monthly(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
+    Returns the monthly historical time series for a digital currency (e.g., BTC) traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC). Prices and volumes are quoted in both the market-specific currency and USD.
 
     Args:
         symbol: The digital/crypto currency of your choice. It can be any of the currencies in the digital currency list. For example: symbol=BTC.

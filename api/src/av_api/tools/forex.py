@@ -10,7 +10,7 @@ def fx_intraday(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns intraday time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
+    Returns intraday time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
 
     Args:
         from_symbol: A three-letter symbol from the forex currency list. For example: from_symbol=EUR
@@ -45,7 +45,7 @@ def fx_daily(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the daily time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
+    Returns the daily time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
 
     Args:
         from_symbol: A three-letter symbol from the forex currency list. For example: from_symbol=EUR
@@ -77,7 +77,7 @@ def fx_weekly(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the weekly time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
+    Returns the weekly time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
     The latest data point is the price information for the week (or partial week) containing the current trading day, updated realtime.
 
     Args:
@@ -106,7 +106,7 @@ def fx_monthly(
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """
-    This API returns the monthly time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
+    Returns the monthly time series (timestamp, open, high, low, close) of the FX currency pair specified, updated realtime.
     The latest data point is the prices information for the month (or partial month) containing the current trading day, updated realtime.
 
     Args:
