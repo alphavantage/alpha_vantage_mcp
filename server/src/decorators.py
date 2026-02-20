@@ -5,16 +5,16 @@ from typing import get_type_hints, Any
 def setup_custom_tool_decorator(mcp):
     """Set up custom tool decorator that converts function names to UPPERCASE_WITH_UNDERSCORES"""
     
-    def custom_tool_decorator(self):
+    def custom_tool_decorator(self, description=None):
         """Custom decorator that converts function names to UPPERCASE_WITH_UNDERSCORES"""
         def decorator(func):
             # Get function name and convert to UPPERCASE_WITH_UNDERSCORES
             func_name = func.__name__
             tool_name = func_name.upper()
-            
+
             # Get docstring and parse into description
             doc = inspect.getdoc(func) or ''
-            description = doc.split('\n\n')[0]  # First paragraph is description
+            tool_description = description or doc.split('\n\n')[0]  # First paragraph is description
             
             # Get type hints
             hints = get_type_hints(func)
@@ -79,7 +79,7 @@ def setup_custom_tool_decorator(mcp):
             # Create tool schema
             tool_schema = {
                 'name': tool_name,
-                'description': description,
+                'description': tool_description,
                 'inputSchema': {'type': 'object', 'properties': properties, 'required': required},
             }
             
@@ -96,4 +96,4 @@ def setup_custom_tool_decorator(mcp):
         return decorator
     
     # Replace the original tool method
-    mcp.tool = lambda: custom_tool_decorator(mcp)
+    mcp.tool = lambda description=None: custom_tool_decorator(mcp, description=description)

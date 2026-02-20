@@ -460,6 +460,5 @@ def register_meta_tools(mcp):
     """Register only the meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) for progressive discovery."""
     from src.tools.meta_tools import tool_list, tool_get, tool_call
 
-    mcp.tool()(tool_list)
-    mcp.tool()(tool_get)
-    mcp.tool()(tool_call)
+    for func in [tool_list, tool_get, tool_call]:
+        mcp.tool(description=extract_description(func))(func)
