@@ -23,7 +23,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/av_mcp"]
 include = [
-    "lambda_function.py",
     "requirements.txt"
 ]
 

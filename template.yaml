@@ -166,8 +166,8 @@ Resources:
   MCPLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: server
-      Handler: lambda_function.lambda_handler
+      CodeUri: mcp
+      Handler: av_mcp.lambda_function.lambda_handler
       Runtime: python3.13
       Architectures:
         - x86_64
@@ -190,7 +190,7 @@ Resources:
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
-          PYTHONPATH: /var/runtime
+          PYTHONPATH: /var/task/src:/var/runtime
           MAX_RESPONSE_TOKENS: '8192'
           DOMAIN_NAME: !Ref DomainName
           CDN_BUCKET_NAME: !Ref CdnBucketName
