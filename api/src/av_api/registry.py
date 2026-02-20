@@ -1,34 +1,22 @@
-# Tool module mapping with lazy imports
-TOOL_MODULES = {
-    "core_stock_apis": "av_api.tools.core_stock_apis",
-    "options_data_apis": "av_api.tools.options_data_apis",
-    "alpha_intelligence": "av_api.tools.alpha_intelligence",
-    "commodities": "av_api.tools.commodities",
-    "cryptocurrencies": "av_api.tools.cryptocurrencies",
-    "economic_indicators": "av_api.tools.economic_indicators",
-    "forex": "av_api.tools.forex",
-    "fundamental_data": "av_api.tools.fundamental_data",
-    "technical_indicators": [
-        "av_api.tools.technical_indicators_part1",
-        "av_api.tools.technical_indicators_part2",
-        "av_api.tools.technical_indicators_part3",
-        "av_api.tools.technical_indicators_part4"
-    ],
-    "ping": "av_api.tools.ping",
-    "openai": "av_api.tools.openai"
+import importlib
+import inspect
+import functools
+from typing import Union, get_type_hints
+
+# Module names that should have entitlement parameter added
+_ENTITLEMENT_MODULES = {
+    "core_stock_apis",
+    "options_data_apis",
+    "technical_indicators_part1",
+    "technical_indicators_part2",
+    "technical_indicators_part3",
+    "technical_indicators_part4",
 }
 
-# Categories that should have entitlement parameter added
-ENTITLEMENT_CATEGORIES = {"core_stock_apis", "options_data_apis", "technical_indicators"}
-
 # Tool registries
-_tool_registries = {}  # Maps module name to list of tools in that module
 _all_tools_registry = []  # List of all tools across all modules
 _tools_by_name = {}  # Maps uppercase tool name to function
 
-import inspect
-import functools
-from typing import get_type_hints, Union
 
 def add_entitlement_parameter(func):
     """Decorator that adds entitlement parameter to a function"""
@@ -100,53 +88,46 @@ def add_entitlement_parameter(func):
 
 def tool(func):
     """Decorator to mark functions as tools"""
-    # Determine which module/category this function belongs to
-    module_name = func.__module__.split('.')[-1]  # Get last part of module name
+    module_name = func.__module__.split('.')[-1]
 
-    # Determine the category from the module name
-    category = None
-    for cat, module_spec in TOOL_MODULES.items():
-        if isinstance(module_spec, list):
-            # For technical_indicators which has multiple modules
-            for mod_path in module_spec:
-                if mod_path.split('.')[-1] == module_name:
-                    category = cat
-                    break
-        else:
-            # For single module categories
-            if module_spec.split('.')[-1] == module_name:
-                category = cat
-                break
-
-    # Apply entitlement decorator if this category needs it
-    if category in ENTITLEMENT_CATEGORIES:
+    # Apply entitlement decorator if this module needs it
+    if module_name in _ENTITLEMENT_MODULES:
         func = add_entitlement_parameter(func)
 
-    if module_name not in _tool_registries:
-        _tool_registries[module_name] = []
-
-    _tool_registries[module_name].append(func)
     _all_tools_registry.append(func)
     _tools_by_name[func.__name__.upper()] = func
     return func
 
 
-def _ensure_tools_loaded():
-    """Ensure all tool modules are imported so tools are registered."""
-    import importlib
+# Tool module mapping for lazy imports
+TOOL_MODULES = {
+    "core_stock_apis": "av_api.tools.core_stock_apis",
+    "options_data_apis": "av_api.tools.options_data_apis",
+    "alpha_intelligence": "av_api.tools.alpha_intelligence",
+    "commodities": "av_api.tools.commodities",
+    "cryptocurrencies": "av_api.tools.cryptocurrencies",
+    "economic_indicators": "av_api.tools.economic_indicators",
+    "forex": "av_api.tools.forex",
+    "fundamental_data": "av_api.tools.fundamental_data",
+    "technical_indicators": [
+        "av_api.tools.technical_indicators_part1",
+        "av_api.tools.technical_indicators_part2",
+        "av_api.tools.technical_indicators_part3",
+        "av_api.tools.technical_indicators_part4",
+    ],
+    "ping": "av_api.tools.ping",
+    "openai": "av_api.tools.openai",
+}
 
+
+def ensure_tools_loaded():
+    """Ensure all tool modules are imported so tools are registered."""
     for module_spec in TOOL_MODULES.values():
         if isinstance(module_spec, list):
             for module_name in module_spec:
                 importlib.import_module(module_name)
         else:
             importlib.import_module(module_spec)
-
-
-def load_all_tools():
-    """Load all tools by importing all tool modules"""
-    _ensure_tools_loaded()
-    return _all_tools_registry
 
 
 def extract_description(func) -> str:
@@ -164,23 +145,6 @@ def extract_description(func) -> str:
             description_lines.append(stripped)
 
     return ' '.join(description_lines) if description_lines else f"Execute {func.__name__}"
-
-
-def get_tool_list() -> list[dict]:
-    """Get list of all tools with names and descriptions only (no schema).
-
-    Returns:
-        List of dicts with 'name' and 'description' fields
-    """
-    _ensure_tools_loaded()
-
-    return [
-        {
-            "name": func.__name__.upper(),
-            "description": extract_description(func)
-        }
-        for func in _all_tools_registry
-    ]
 
 
 def _build_parameter_schema(func) -> dict:
@@ -204,7 +168,6 @@ def _build_parameter_schema(func) -> dict:
         elif param_type == bool or param_type == 'bool':
             schema_type = "boolean"
         elif hasattr(param_type, '__origin__') and param_type.__origin__ is Union:
-            # Handle Optional types (Union with None)
             args = param_type.__args__
             if len(args) == 2 and type(None) in args:
                 non_none_type = args[0] if args[1] is type(None) else args[1]
@@ -242,75 +205,8 @@ def _build_parameter_schema(func) -> dict:
     return {
         "type": "object",
         "properties": properties,
-        "required": required
+        "required": required,
     }
-
-
-def get_tool_schema(tool_name: str) -> dict:
-    """Get full schema for a specific tool.
-
-    Args:
-        tool_name: The uppercase name of the tool (e.g., "TIME_SERIES_DAILY")
-
-    Returns:
-        Dict with 'name', 'description', and 'parameters' (JSON schema)
-
-    Raises:
-        ValueError: If tool not found
-    """
-    _ensure_tools_loaded()
-
-    tool_name_upper = tool_name.upper()
-
-    if tool_name_upper not in _tools_by_name:
-        available = list(_tools_by_name.keys())[:10]
-        raise ValueError(f"Tool '{tool_name}' not found. Available tools include: {available}...")
-
-    func = _tools_by_name[tool_name_upper]
-
-    return {
-        "name": tool_name_upper,
-        "description": func.__doc__ or f"Execute {func.__name__}",
-        "parameters": _build_parameter_schema(func)
-    }
-
-
-def get_tool_schemas(tool_names: list[str]) -> list[dict]:
-    """Get full schemas for multiple tools.
-
-    Args:
-        tool_names: List of uppercase tool names
-
-    Returns:
-        List of dicts, each with 'name', 'description', and 'parameters' (JSON schema)
-
-    Raises:
-        ValueError: If any tool not found
-    """
-    _ensure_tools_loaded()
-
-    schemas = []
-    not_found = []
-
-    for tool_name in tool_names:
-        tool_name_upper = tool_name.upper()
-
-        if tool_name_upper not in _tools_by_name:
-            not_found.append(tool_name)
-            continue
-
-        func = _tools_by_name[tool_name_upper]
-        schemas.append({
-            "name": tool_name_upper,
-            "description": func.__doc__ or f"Execute {func.__name__}",
-            "parameters": _build_parameter_schema(func)
-        })
-
-    if not_found:
-        available = list(_tools_by_name.keys())[:10]
-        raise ValueError(f"Tools not found: {', '.join(not_found)}. Available tools include: {available}...")
-
-    return schemas
 
 
 def call_tool(tool_name: str, arguments: dict):
@@ -326,7 +222,7 @@ def call_tool(tool_name: str, arguments: dict):
     Raises:
         ValueError: If tool not found
     """
-    _ensure_tools_loaded()
+    ensure_tools_loaded()
 
     tool_name_upper = tool_name.upper()
 
@@ -336,3 +232,87 @@ def call_tool(tool_name: str, arguments: dict):
 
     func = _tools_by_name[tool_name_upper]
     return func(**arguments)
+
+
+def get_tool_list() -> list[dict]:
+    """Get list of all tools with names and descriptions only (no schema).
+
+    Returns:
+        List of dicts with 'name' and 'description' fields
+    """
+    ensure_tools_loaded()
+
+    return [
+        {
+            "name": func.__name__.upper(),
+            "description": extract_description(func),
+        }
+        for func in _all_tools_registry
+    ]
+
+
+def get_tool_schema(tool_name: str) -> dict:
+    """Get full schema for a specific tool.
+
+    Args:
+        tool_name: The uppercase name of the tool (e.g., "TIME_SERIES_DAILY")
+
+    Returns:
+        Dict with 'name', 'description', and 'parameters' (JSON schema)
+
+    Raises:
+        ValueError: If tool not found
+    """
+    ensure_tools_loaded()
+
+    tool_name_upper = tool_name.upper()
+
+    if tool_name_upper not in _tools_by_name:
+        available = list(_tools_by_name.keys())[:10]
+        raise ValueError(f"Tool '{tool_name}' not found. Available tools include: {available}...")
+
+    func = _tools_by_name[tool_name_upper]
+
+    return {
+        "name": tool_name_upper,
+        "description": func.__doc__ or f"Execute {func.__name__}",
+        "parameters": _build_parameter_schema(func),
+    }
+
+
+def get_tool_schemas(tool_names: list[str]) -> list[dict]:
+    """Get full schemas for multiple tools.
+
+    Args:
+        tool_names: List of uppercase tool names
+
+    Returns:
+        List of dicts, each with 'name', 'description', and 'parameters' (JSON schema)
+
+    Raises:
+        ValueError: If any tool not found
+    """
+    ensure_tools_loaded()
+
+    schemas = []
+    not_found = []
+
+    for tool_name in tool_names:
+        tool_name_upper = tool_name.upper()
+
+        if tool_name_upper not in _tools_by_name:
+            not_found.append(tool_name)
+            continue
+
+        func = _tools_by_name[tool_name_upper]
+        schemas.append({
+            "name": tool_name_upper,
+            "description": func.__doc__ or f"Execute {func.__name__}",
+            "parameters": _build_parameter_schema(func),
+        })
+
+    if not_found:
+        available = list(_tools_by_name.keys())[:10]
+        raise ValueError(f"Tools not found: {', '.join(not_found)}. Available tools include: {available}...")
+
+    return schemas

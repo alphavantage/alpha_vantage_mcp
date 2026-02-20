@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["api", "server", "examples/agent", "cli"]
+members = ["api", "mcp", "cli", "examples/agent"]
 
 [tool.uv]
 dev-dependencies = []

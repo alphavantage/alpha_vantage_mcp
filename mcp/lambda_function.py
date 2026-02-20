@@ -1,19 +1,14 @@
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
-from src.context import set_api_key
-from src.decorators import setup_custom_tool_decorator
-from src.tools.registry import register_meta_tools
-from src.openai_actions import handle_openai_request
-from src.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
-from src.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
+from av_api.context import set_api_key
+from av_mcp.tools.registry import register_meta_tools
+from av_mcp.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
+from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
 
 
 def create_mcp_handler() -> MCPLambdaHandler:
     """Create and configure MCP handler with meta-tools for progressive discovery."""
     mcp = MCPLambdaHandler(name="mcp-lambda-server", version="1.0.0")
-
-    # Set up custom tool decorator
-    setup_custom_tool_decorator(mcp)
 
     # Progressive discovery mode: only register meta-tools
     logger.info("Registering meta-tools for progressive discovery")
@@ -29,12 +24,12 @@ def lambda_handler(event, context):
     headers = event.get("headers", {})
     body = event.get("body", "")
     query_params = event.get("queryStringParameters", {})
-    
+
     logger.info(f"Incoming request: {method} {path}")
     logger.info(f"Headers: {headers}")
     logger.info(f"Query parameters: {query_params}")
     logger.info(f"Body: {body}")
-    
+
     # Handle OAuth 2.1 endpoints first (before token validation)
     if path == "/.well-known/oauth-authorization-server":
         return handle_metadata_discovery(event)
@@ -44,10 +39,10 @@ def lambda_handler(event, context):
         return handle_token_request(event)
     elif path == "/register":
         return handle_registration_request(event)
-    
+
     # Extract Bearer token from Authorization header
     token = parse_token_from_request(event)
-    
+
     # Validate token presence for MCP/API requests
     if not token:
         return create_oauth_error_response({
@@ -55,24 +50,18 @@ def lambda_handler(event, context):
             "error_description": "Missing access token",
             "error_uri": "https://tools.ietf.org/html/rfc6750#section-3.1"
         }, 401)
-    
+
     # Set token in context for tools to access
     set_api_key(token)
-    
+
     # Parse and log MCP method and params for analytics (after token parsing)
     if method == "POST":
         # Extract client platform information
         platform = extract_client_platform(event)
-    
+
         # Log MCP analytics
         parse_and_log_mcp_analytics(body, token, platform)
 
-    # Check if this is an OpenAI Actions request
-    if path.startswith("/openai"):
-        response = handle_openai_request(event)
-        if response:
-            return response
-    
     # Handle MCP requests
     mcp = create_mcp_handler()
 
