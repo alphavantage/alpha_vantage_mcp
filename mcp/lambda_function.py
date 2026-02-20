@@ -1,9 +1,9 @@
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
 from av_api.context import set_api_key
-from .tools.registry import register_meta_tools
-from .utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
-from .oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
+from av_mcp.tools.registry import register_meta_tools
+from av_mcp.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
+from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
 
 
 def create_mcp_handler() -> MCPLambdaHandler:
