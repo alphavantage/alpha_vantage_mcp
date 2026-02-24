@@ -102,9 +102,9 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 - Developer mode enabled (beta feature) - see [OpenAI's Developer Mode documentation](https://platform.openai.com/docs/guides/developer-mode)
   
 **Setup:**
-1. Go to [ChatGPT Settings → Connectors](https://chatgpt.com/#settings/Connectors)
-2. Scroll down, enable **Advanced settings → Developer mode**
-3. Return to the **Apps & Connectors** submenu, then click **Create** in the upper-right corner.
+1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
+2. Click on **Advanced settings →** enable **Developer mode**
+3. Return to the **Apps** submenu, then click **Create app**.
 4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
 5. **Authentication:** No authentication
 
