@@ -5,6 +5,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Alpha Vantage MCP for Stock Market Data',
   description: 'Alpha Vantage MCP for Stock Market Data',
+  icons: {
+    icon: 'https://cdn.alphavantage.co/logo.png',
+  },
 }
 
 export default function RootLayout({
