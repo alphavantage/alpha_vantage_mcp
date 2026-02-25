@@ -99,11 +99,77 @@ def add_entitlement_parameter(func):
     
     return wrapper
 
+def add_return_full_data_parameter(func):
+    """Decorator that adds return_full_data parameter to a function.
+
+    When return_full_data is True, the response will not be truncated/previewed,
+    useful for MCP clients (e.g. claude.ai) that have CSP restrictions and cannot
+    fetch data from external URLs.
+    """
+    sig = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    return_full_data_param = inspect.Parameter(
+        'return_full_data',
+        inspect.Parameter.KEYWORD_ONLY,
+        default=False,
+        annotation=bool
+    )
+
+    params = list(sig.parameters.values())
+    params.append(return_full_data_param)
+    new_sig = sig.replace(parameters=params)
+
+    # Update docstring
+    docstring = func.__doc__ or ""
+    if "Args:" in docstring and "return_full_data" not in docstring:
+        lines = docstring.split('\n')
+        args_idx = None
+        returns_idx = None
+
+        for i, line in enumerate(lines):
+            if "Args:" in line:
+                args_idx = i
+            elif "Returns:" in line and args_idx is not None:
+                returns_idx = i
+                break
+
+        if args_idx is not None:
+            rfd_doc = '        return_full_data: set to True to return the full response data without truncation (useful for MCP clients with CSP restrictions that cannot fetch data from URLs)'
+            if returns_idx is not None:
+                lines.insert(returns_idx, rfd_doc)
+                lines.insert(returns_idx, "")
+            else:
+                lines.append(rfd_doc)
+
+            func.__doc__ = '\n'.join(lines)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return_full_data = kwargs.pop('return_full_data', False)
+
+        if return_full_data:
+            import src.common
+            src.common._return_full_data = True
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                src.common._return_full_data = False
+            return result
+
+        return func(*args, **kwargs)
+
+    wrapper.__signature__ = new_sig
+    wrapper.__annotations__ = {**type_hints, 'return_full_data': bool}
+
+    return wrapper
+
+
 def tool(func):
     """Decorator to mark functions as MCP tools"""
     # Determine which module/category this function belongs to
     module_name = func.__module__.split('.')[-1]  # Get last part of module name
-    
+
     # Determine the category from the module name
     category = None
     for cat, module_spec in TOOL_MODULES.items():
@@ -118,11 +184,14 @@ def tool(func):
             if module_spec.split('.')[-1] == module_name:
                 category = cat
                 break
-    
+
     # Apply entitlement decorator if this category needs it
     if category in ENTITLEMENT_CATEGORIES:
         func = add_entitlement_parameter(func)
-    
+
+    # Apply return_full_data decorator to all tools
+    func = add_return_full_data_parameter(func)
+
     if module_name not in _tool_registries:
         _tool_registries[module_name] = []
 

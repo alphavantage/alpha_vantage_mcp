@@ -81,9 +81,12 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
         
         # Check response size (works for both JSON and CSV)
         estimated_tokens = estimate_tokens(response_text)
-        
-        # If response is within limits, return normally
-        if estimated_tokens <= MAX_RESPONSE_TOKENS:
+
+        # If return_full_data is set, skip truncation/preview
+        return_full_data = globals().get('_return_full_data', False)
+
+        # If response is within limits or full data requested, return normally
+        if return_full_data or estimated_tokens <= MAX_RESPONSE_TOKENS:
             if datatype == "json":
                 try:
                     return json.loads(response_text)
