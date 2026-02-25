@@ -34,6 +34,7 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
         "max_tokens_exceeded": True,
         "content_type": "text/csv" if datatype == "csv" else "application/json",
         "message": f"This is a preview ({MAX_RESPONSE_TOKENS} token limit). Full data ({estimated_tokens} tokens) {'unavailable.' if error else 'at data_url. Fetch it if needed for your task.'}",
+        "return_full_data_note": f"All tools support a return_full_data parameter. Set it to True to get the complete response without truncation. Only use when the user explicitly requests full data or when the preview is insufficient. WARNING: full data is {estimated_tokens} tokens — do NOT use return_full_data if it would exceed your context window.",
         "artifact_url": "https://mcp.alphavantage.co/artifacts",
         "artifact_note": "claude.ai artifacts can't fetch data_url due to CSP restrictions; users can paste artifact code into this page to render full data"
     }
