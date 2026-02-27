@@ -106,6 +106,26 @@ def insider_transactions(
 
 
 @tool
+def institutional_holdings(
+    symbol: str
+) -> dict[str, str] | str:
+    """Returns institutional ownership and holdings information for an equity.
+
+    Args:
+        symbol: Ticker symbol. Example: "IBM".
+
+    Returns:
+        Dictionary containing institutional holdings data or JSON string.
+    """
+
+    params = {
+        "symbol": symbol,
+    }
+
+    return _make_api_request("INSTITUTIONAL_HOLDINGS", params)
+
+
+@tool
 def analytics_fixed_window(
     symbols: str,
     range_param: str,
