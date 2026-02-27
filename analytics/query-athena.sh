@@ -11,7 +11,7 @@ if [ -f ".env" ]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
-QUERY="$1"
+QUERY_INPUT="$1"
 REGION="us-east-1"
 ANALYTICS_BUCKET_NAME="${ANALYTICS_LOGS_BUCKET:-alphavantage-mcp-analytics-logs}"
 OUTPUT_LOCATION="s3://$ANALYTICS_BUCKET_NAME/athena-results/"
@@ -23,10 +23,19 @@ if [ ! -z "$AWS_PROFILE" ]; then
     echo "Using AWS profile: $AWS_PROFILE"
 fi
 
-if [ -z "$QUERY" ]; then
+if [ -z "$QUERY_INPUT" ]; then
     echo "Usage: $0 \"SQL_QUERY\""
+    echo "       $0 sql/query-file.sql"
     echo "Example: $0 \"SELECT COUNT(*) FROM mcp_analytics.mcp_logs\""
     exit 1
+fi
+
+# If input is a .sql file, read its contents
+if [[ "$QUERY_INPUT" == *.sql ]] && [ -f "$QUERY_INPUT" ]; then
+    QUERY=$(cat "$QUERY_INPUT")
+    echo "📄 Reading query from: $QUERY_INPUT"
+else
+    QUERY="$QUERY_INPUT"
 fi
 
 echo "🔍 Executing query: $QUERY"

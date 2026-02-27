@@ -5,4 +5,4 @@ stack_name = "alphavantage-mcp-server-analytics"
 resolve_s3 = true
 s3_prefix = "alphavantage-mcp-server-analytics"
 region = "us-east-1"
-confirm_changeset = true
+confirm_changeset = false

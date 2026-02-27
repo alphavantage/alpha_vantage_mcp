@@ -38,12 +38,12 @@ EXISTING_ROLE=$(aws iam get-role $AWS_PROFILE_OPTION --role-name "$ROLE_NAME" --
 if [ ! -z "$EXISTING_ROLE" ] && [ "$EXISTING_ROLE" != "None" ]; then
     echo "Found existing role:"
     echo "Role ARN: $EXISTING_ROLE"
-    
+
     # Check if policies are attached
     echo "Checking policy attachments..."
     BASIC_POLICY_ATTACHED=$(aws iam list-attached-role-policies $AWS_PROFILE_OPTION --role-name "$ROLE_NAME" --query "AttachedPolicies[?PolicyArn=='$BASIC_EXECUTION_POLICY_ARN'].PolicyArn" --output text 2>/dev/null || echo "")
     S3_POLICY_ATTACHED=$(aws iam list-attached-role-policies $AWS_PROFILE_OPTION --role-name "$ROLE_NAME" --query "AttachedPolicies[?PolicyArn=='$S3_POLICY_ARN'].PolicyArn" --output text 2>/dev/null || echo "")
-    
+
     if [ ! -z "$BASIC_POLICY_ATTACHED" ] && [ ! -z "$S3_POLICY_ATTACHED" ]; then
         echo "✅ Role already exists with all policies attached!"
         echo "Role ARN: $EXISTING_ROLE"

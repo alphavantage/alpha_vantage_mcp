@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
 Description: CloudWatch Logs analytics pipeline for MCP logs using Lambda processing
 
 Parameters:
@@ -35,13 +36,13 @@ Resources:
             ExpirationInDays: 2555  # 7 years retention
   # Lambda function to process logs and write to S3
   LogsProcessorFunction:
-    Type: AWS::Lambda::Function
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: mcp-logs-processor
-      Runtime: python3.9
+      Runtime: python3.13
       Handler: logs_processor.lambda_handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LogsProcessorRole-mcp'
-      Code: src
+      CodeUri: src/
       Description: Process CloudWatch logs and write to S3
       Timeout: 300
       MemorySize: 256
@@ -57,6 +58,80 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: !Sub logs.${AWS::Region}.amazonaws.com
       SourceArn: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${LambdaLogGroupName}:*
+
+  # Compaction Lambda - merges small files hourly
+  CompactorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: mcp-logs-compactor
+      Runtime: python3.13
+      Handler: compactor.lambda_handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LogsProcessorRole-mcp'
+      CodeUri: src/
+      Description: Hourly compaction of small jsonl files into single files
+      Timeout: 300
+      MemorySize: 256
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref AnalyticsLogsBucketResource
+
+  # EventBridge rule to trigger compaction hourly
+  CompactorScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: mcp-logs-compactor-schedule
+      Description: Trigger log compaction every hour
+      ScheduleExpression: 'rate(1 hour)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt CompactorFunction.Arn
+          Id: CompactorTarget
+
+  # Permission for EventBridge to invoke compactor Lambda
+  CompactorInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CompactorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CompactorScheduleRule.Arn
+
+  # Migration Lambda - one-time migration from logs/ txt to jsonl/ compacted
+  MigratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: mcp-logs-migrator
+      Runtime: python3.13
+      Handler: migrator.lambda_handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/LogsProcessorRole-mcp'
+      CodeUri: src/
+      Description: Cron-driven migration of old txt logs to compacted jsonl
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref AnalyticsLogsBucketResource
+
+  # EventBridge rule to trigger migration hourly
+  MigratorScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: mcp-logs-migrator-schedule
+      Description: Trigger log migration every hour until complete
+      ScheduleExpression: 'rate(1 hour)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MigratorFunction.Arn
+          Id: MigratorTarget
+
+  # Permission for EventBridge to invoke migrator Lambda
+  MigratorInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MigratorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MigratorScheduleRule.Arn
 
   # CloudWatch Logs Subscription Filter
   MCPAnalyticsSubscriptionFilter:

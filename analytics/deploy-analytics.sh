@@ -14,7 +14,7 @@ set -e
 echo "🚀 Starting deployment of MCP Analytics CloudWatch Logs stack..."
 
 echo "🏗️  Building SAM application..."
-sam build --template analytics/analytics.yaml
+sam build --template analytics/analytics.yaml --build-dir .aws-sam/build-analytics
 
 # Function to add parameter overrides
 add_param() {
@@ -39,13 +39,13 @@ if [ -f "analytics/samconfig-analytics.toml" ]; then
     add_param "LambdaLogGroupName" "LAMBDA_LOG_GROUP_NAME"
     
     if [ -n "$PARAM_OVERRIDES" ]; then
-        sam deploy --template analytics/analytics.yaml --config-file $(pwd)/analytics/samconfig-analytics.toml --profile $AWS_PROFILE --parameter-overrides $PARAM_OVERRIDES
+        sam deploy --template-file .aws-sam/build-analytics/template.yaml --config-file $(pwd)/analytics/samconfig-analytics.toml --profile $AWS_PROFILE --parameter-overrides $PARAM_OVERRIDES
     else
-        sam deploy --template analytics/analytics.yaml --config-file $(pwd)/analytics/samconfig-analytics.toml --profile $AWS_PROFILE
+        sam deploy --template-file .aws-sam/build-analytics/template.yaml --config-file $(pwd)/analytics/samconfig-analytics.toml --profile $AWS_PROFILE
     fi
 else
     echo "📋 Running guided deployment (first time)..."
-    sam deploy --template analytics/analytics.yaml --guided --profile $AWS_PROFILE
+    sam deploy --template-file .aws-sam/build-analytics/template.yaml --guided --profile $AWS_PROFILE
 fi
 
 echo "✅ Analytics deployment complete!"
