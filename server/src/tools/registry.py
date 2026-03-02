@@ -19,7 +19,10 @@ TOOL_MODULES = {
 }
 
 # Categories that should have entitlement parameter added
-ENTITLEMENT_CATEGORIES = {"core_stock_apis", "options_data_apis", "technical_indicators"}
+ENTITLEMENT_CATEGORIES = {"core_stock_apis", "technical_indicators"}
+
+# Individual tools that should have entitlement parameter added (by function name)
+ENTITLEMENT_TOOLS = {"top_gainers_losers"}
 
 # Tool registries
 _tool_registries = {}  # Maps module name to list of tools in that module
@@ -185,8 +188,8 @@ def tool(func):
                 category = cat
                 break
 
-    # Apply entitlement decorator if this category needs it
-    if category in ENTITLEMENT_CATEGORIES:
+    # Apply entitlement decorator if this category or specific tool needs it
+    if category in ENTITLEMENT_CATEGORIES or func.__name__ in ENTITLEMENT_TOOLS:
         func = add_entitlement_parameter(func)
 
     # Apply return_full_data decorator to all tools
