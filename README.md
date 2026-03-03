@@ -33,7 +33,7 @@ uvx av-mcp YOUR_API_KEY
 ### Setup Instructions by Use Case
 💡💡 _I'm just exploring_
 
-Don't have a use case in mind and just exploring what to build? Check out the [Trading Agents stock analysis tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage market data with no setup required. 
+Don't have a use case in mind and just exploring what to build? Check out the [Trading Agents stock research tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage market data with no setup required. 
 
 &nbsp;
 
