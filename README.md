@@ -31,6 +31,12 @@ uvx av-mcp YOUR_API_KEY
 &nbsp;
 
 ### Setup Instructions by Use Case
+💡💡 _I'm just exploring_
+
+The best place to start is the [Trading Agents stock analysis tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage APIs with no setup required. 
+
+&nbsp;
+
 💬📊 _Power your chatbot with financial data_
 
 
