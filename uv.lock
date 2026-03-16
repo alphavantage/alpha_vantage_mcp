@@ -6,8 +6,8 @@ requires-python = ">=3.13"
 members = [
     "alpha-vantage-agent",
     "alphavantage-core",
-    "av-cli",
     "av-mcp",
+    "marketdata-cli",
 ]
 
 [[package]]
@@ -79,27 +79,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff8d63537de4f1177af4bff9f3e829baf7331f595bb24/attrs-25.3.0.tar.gz", hash = "sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b", size = 812032, upload-time = "2025-03-13T11:10:22.779Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3", size = 63815, upload-time = "2025-03-13T11:10:21.14Z" },
-]
-
-[[package]]
-name = "av-cli"
-version = "0.1.4"
-source = { editable = "cli" }
-dependencies = [
-    { name = "alphavantage-core" },
-    { name = "click" },
-    { name = "httpx" },
-    { name = "loguru" },
-    { name = "python-dotenv" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "alphavantage-core", editable = "api" },
-    { name = "click" },
-    { name = "httpx" },
-    { name = "loguru" },
-    { name = "python-dotenv" },
 ]
 
 [[package]]
@@ -451,6 +430,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5b/f5/4ec618ed16cc4f8fb3b701563655a69816155e79e24a17b651541804721d/markdown_it_py-4.0.0.tar.gz", hash = "sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3", size = 73070, upload-time = "2025-08-11T12:57:52.854Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl", hash = "sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147", size = 87321, upload-time = "2025-08-11T12:57:51.923Z" },
+]
+
+[[package]]
+name = "marketdata-cli"
+version = "0.1.7"
+source = { editable = "cli" }
+dependencies = [
+    { name = "alphavantage-core" },
+    { name = "click" },
+    { name = "httpx" },
+    { name = "loguru" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alphavantage-core", editable = "api" },
+    { name = "click" },
+    { name = "httpx" },
+    { name = "loguru" },
+    { name = "python-dotenv" },
 ]
 
 [[package]]

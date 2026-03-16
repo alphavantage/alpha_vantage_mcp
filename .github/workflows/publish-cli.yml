@@ -1,4 +1,4 @@
-name: Publish Alpha Vantage CLI to PyPI
+name: Publish Market Data CLI to PyPI
 
 on:
   release:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/av-cli
+      url: https://pypi.org/p/marketdata-cli
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 

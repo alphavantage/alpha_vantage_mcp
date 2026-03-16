@@ -62,7 +62,7 @@ def _make_tool_command(func, tool_name):
             expose_value=True,
         )
     )
-    # Add optional positional argument for symbol (e.g., av-cli global_quote AAPL)
+    # Add optional positional argument for symbol (e.g., marketdata-cli global_quote AAPL)
     if has_symbol:
         params.append(
             click.Argument(['_symbol'], required=True, metavar='SYMBOL')
@@ -112,7 +112,7 @@ def _make_tool_command(func, tool_name):
         if has_symbol:
             kwargs['symbol'] = kwargs.pop('_symbol', None)
             if not kwargs['symbol']:
-                click.echo('Error: SYMBOL is required. Usage: av-cli <command> AAPL', err=True)
+                click.echo('Error: SYMBOL is required. Usage: marketdata-cli <command> AAPL', err=True)
                 sys.exit(1)
 
         set_api_key(api_key)
@@ -171,19 +171,19 @@ class ToolGroup(click.Group):
     help_option_names=['-h', '--help'],
     max_content_width=200,
 ))
-@click.version_option(version=__version__, prog_name="av-cli")
+@click.version_option(version=__version__, prog_name="marketdata-cli")
 @click.option('--api-key', '-k', envvar=['ALPHAVANTAGE_API_KEY', 'ALPHA_VANTAGE_API_KEY'], hidden=True)
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
 @click.pass_context
 def cli(ctx, api_key, verbose):
-    """Alpha Vantage CLI - direct access to all Alpha Vantage API.
+    """Market Data CLI - stocks, forex, crypto, commodities & more from your terminal.
 
     \b
     Quick start:
       1. Get a free API key at https://www.alphavantage.co/support/#api-key
       2. export ALPHAVANTAGE_API_KEY=your_key
-      3. av-cli global_quote AAPL
-    Or use -k for single use: av-cli global_quote AAPL -k your_key
+      3. marketdata-cli global_quote AAPL
+    Or use -k for single use: marketdata-cli global_quote AAPL -k your_key
     """
     load_dotenv(os.path.join(os.getcwd(), '.env'))
     ctx.ensure_object(dict)

@@ -1,7 +1,8 @@
 [project]
-name = "av-cli"
-version = "0.1.7"
-description = "CLI wrapper for Alpha Vantage APIs"
+name = "marketdata-cli"
+version = "0.1.8"
+description = "Market Data CLI - stocks, forex, crypto, commodities & more from your terminal"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "alphavantage-core",
@@ -12,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-av-cli = "av_cli.main:cli"
+marketdata-cli = "av_cli.main:cli"
 
 [build-system]
 requires = ["hatchling"]
