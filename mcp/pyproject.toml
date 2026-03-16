@@ -1,7 +1,7 @@
 [project]
-name = "av-mcp"
-version = "0.3.2"
-description = "Alpha Vantage MCP Server - Financial data APIs via Model Context Protocol"
+name = "marketdata-mcp-server"
+version = "0.3.1"
+description = "Market Data MCP Server - stocks, forex, crypto, commodities & more via Model Context Protocol"
 requires-python = ">=3.13"
 license = {text = "MIT"}
 dependencies = [
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-av-mcp = "av_mcp.main:serve"
+marketdata-mcp-server = "av_mcp.main:serve"
 
 [build-system]
 requires = ["hatchling"]

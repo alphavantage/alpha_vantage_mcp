@@ -25,7 +25,7 @@ https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
 
 **Local Server Connection:**
 ```
-uvx av-mcp YOUR_API_KEY
+uvx marketdata-mcp-server YOUR_API_KEY
 ```
 
 &nbsp;
@@ -89,7 +89,7 @@ Open Claude Desktop developer settings and edit your `claude_desktop_config.json
   "mcpServers": {
     "alphavantage": {
       "command": "uvx",
-      "args": ["av-mcp", "YOUR_API_KEY"]
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
     }
   }
 }
@@ -259,7 +259,7 @@ Add the following configuration to your Codex MCP server settings by editing `~/
 ```toml
 [mcp_servers.alphavantage]
 command = "uvx"
-args = ["av-mcp", "YOUR_API_KEY"]
+args = ["marketdata-mcp-server", "YOUR_API_KEY"]
 ```
 
 Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
@@ -313,7 +313,7 @@ Then, paste the following into `.vscode/mcp.json`:
     "alphavantage": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["av-mcp", "YOUR_API_KEY"]
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
     }
   }
 }
@@ -364,7 +364,7 @@ Then, paste the following into your Cursor `~/.cursor/mcp.json` file:
   "mcpServers": {
     "alphavantage": {
       "command": "uvx",
-      "args": ["av-mcp", "YOUR_API_KEY"]
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
     }
   }
 }
@@ -404,7 +404,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Then run:
 
 ```bash
-claude mcp add alphavantage -- uvx av-mcp YOUR_API_KEY
+claude mcp add alphavantage -- uvx marketdata-mcp-server YOUR_API_KEY
 ```
 
 Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
@@ -445,7 +445,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Then run:
 
 ```bash
-gemini mcp add alphavantage uvx av-mcp YOUR_API_KEY
+gemini mcp add alphavantage uvx marketdata-mcp-server YOUR_API_KEY
 ```
 
 Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
@@ -471,7 +471,7 @@ Or, for a local server (replace `YOUR_API_KEY` with your actual Alpha Vantage AP
   "mcpServers": {
     "alphavantage": {
       "command": "uvx",
-      "args": ["av-mcp", "YOUR_API_KEY"]
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
     }
   }
 }

@@ -15,9 +15,9 @@ def serve(api_key, api_key_option, verbose):
     LLMs can discover and call specific tools on-demand without flooding the context.
 
     Examples:
-      av-mcp YOUR_API_KEY
-      av-mcp --api-key YOUR_API_KEY
-      ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp
+      marketdata-mcp-server YOUR_API_KEY
+      marketdata-mcp-server --api-key YOUR_API_KEY
+      ALPHA_VANTAGE_API_KEY=YOUR_KEY marketdata-mcp-server
     """
     import asyncio
     from loguru import logger
@@ -34,8 +34,8 @@ def serve(api_key, api_key_option, verbose):
     if not api_key:
         logger.error("API key required. Provide via argument or ALPHA_VANTAGE_API_KEY environment variable")
         print("Error: API key required", file=sys.stderr)
-        print("Usage: av-mcp YOUR_API_KEY", file=sys.stderr)
-        print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY av-mcp", file=sys.stderr)
+        print("Usage: marketdata-mcp-server YOUR_API_KEY", file=sys.stderr)
+        print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY marketdata-mcp-server", file=sys.stderr)
         sys.exit(1)
 
     # Create and run server with progressive discovery

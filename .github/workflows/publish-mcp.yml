@@ -1,4 +1,4 @@
-name: Publish Alpha Vantage MCP Server to PyPI
+name: Publish Market Data MCP Server to PyPI
 
 on:
   release:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/av-mcp
+      url: https://pypi.org/p/marketdata-mcp-server
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
