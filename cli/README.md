@@ -1,6 +1,6 @@
 # marketdata-cli
 
-CLI wrapper for Alpha Vantage APIs — access 100+ endpoints for stocks, forex, crypto, commodities, economic indicators, and technical analysis directly from your terminal.
+CLI wrapper for Alpha Vantage Financial Data APIs — built & optimized for AI agents. Access 100+ endpoints for stocks, forex, crypto, commodities, economic indicators, and technical analysis directly from your terminal.
 
 ## Install
 
@@ -30,7 +30,11 @@ echo "ALPHAVANTAGE_API_KEY=your_key" > .env
 marketdata-cli global_quote AAPL -k your_key
 ```
 
-## Usage
+## View All Commands
+
+Run `marketdata-cli --help` to see all available commands, or `marketdata-cli <command> --help` for details on a specific command.
+
+## Example Uses
 
 ```bash
 # Get latest quote
@@ -104,6 +108,3 @@ marketdata-cli realtime_options AAPL
 marketdata-cli historical_options AAPL
 ```
 
-## All Commands
-
-Run `marketdata-cli --help` to see all available commands, or `marketdata-cli <command> --help` for details on a specific command.
