@@ -1,0 +1,30 @@
+name: Publish Skill to ClawHub
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+  workflow_dispatch:
+
+jobs:
+  publish-skill:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Publish skill to ClawHub
+      run: |
+        npx clawhub@latest publish ./skills/global-stock-analysis \
+          --slug global-stock-analysis \
+          --name "Global Stock Analysis" \
+          --version "$(grep 'version:' skills/global-stock-analysis/SKILL.md | head -1 | sed 's/.*"\(.*\)".*/\1/')" \
+          --tags latest
+      env:
+        CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}

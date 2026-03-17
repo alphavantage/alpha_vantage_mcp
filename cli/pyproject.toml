@@ -1,8 +1,9 @@
 [project]
 name = "marketdata-cli"
-version = "0.1.8"
+version = "0.1.9"
 description = "Market Data CLI - stocks, forex, crypto, commodities & more from your terminal"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "alphavantage-core",
@@ -11,6 +12,10 @@ dependencies = [
     "loguru",
     "python-dotenv",
 ]
+
+[project.urls]
+Homepage = "https://www.alphavantage.co"
+Repository = "https://github.com/alphavantage/alpha_vantage_mcp"
 
 [project.scripts]
 marketdata-cli = "av_cli.main:cli"
