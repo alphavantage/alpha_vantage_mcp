@@ -19,6 +19,11 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Authenticate with ClawHub
+      run: npx clawhub@latest login --token "$CLAWHUB_TOKEN" --no-browser
+      env:
+        CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+
     - name: Publish skill to ClawHub
       run: |
         npx clawhub@latest publish ./skills/global-stock-analysis \
@@ -26,5 +31,3 @@ jobs:
           --name "Global Stock Analysis" \
           --version "$(grep 'version:' skills/global-stock-analysis/SKILL.md | head -1 | sed 's/.*"\(.*\)".*/\1/')" \
           --tags latest
-      env:
-        CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
