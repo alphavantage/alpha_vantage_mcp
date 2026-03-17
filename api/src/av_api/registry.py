@@ -6,12 +6,14 @@ from typing import Union, get_type_hints
 # Module names that should have entitlement parameter added
 _ENTITLEMENT_MODULES = {
     "core_stock_apis",
-    "options_data_apis",
     "technical_indicators_part1",
     "technical_indicators_part2",
     "technical_indicators_part3",
     "technical_indicators_part4",
 }
+
+# Individual tools that should have entitlement parameter added (by function name)
+_ENTITLEMENT_TOOLS = {"top_gainers_losers"}
 
 # Tool registries
 _all_tools_registry = []  # List of all tools across all modules
@@ -90,8 +92,8 @@ def tool(func):
     """Decorator to mark functions as tools"""
     module_name = func.__module__.split('.')[-1]
 
-    # Apply entitlement decorator if this module needs it
-    if module_name in _ENTITLEMENT_MODULES:
+    # Apply entitlement decorator if this module or specific tool needs it
+    if module_name in _ENTITLEMENT_MODULES or func.__name__ in _ENTITLEMENT_TOOLS:
         func = add_entitlement_parameter(func)
 
     _all_tools_registry.append(func)
