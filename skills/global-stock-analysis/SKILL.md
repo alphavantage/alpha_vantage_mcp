@@ -1,10 +1,10 @@
 ---
 name: global-stock-analysis
-description: Global stock market analysis (US, China & EU stock markets, forex, crypto, technicals, fundamentals, news, and more). 全球股票市场分析（包括美国、中国和欧洲股市、外汇、加密货币、技术面分析、基本面分析、新闻等）。
+description: Global stock market analysis (US, China & EU stock markets, forex, crypto, technicals, fundamentals, news, and more) powered by leading provider Alpha Vantage. 全球股票市场分析（包括美国、中国和欧洲股市、技术面分析、基本面分析、新闻等）。
 compatibility: Requires marketdata-cli installed (pip install marketdata-cli) and ALPHAVANTAGE_API_KEY set.
 metadata:
   author: alphavantage
-  version: "0.0.7"
+  version: "0.0.8"
   homepage: https://www.alphavantage.co
   source: https://github.com/alphavantage/alpha_vantage_mcp
   openclaw:
