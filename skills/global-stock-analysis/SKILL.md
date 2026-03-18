@@ -1,10 +1,10 @@
 ---
 name: global-stock-analysis
-description: Workflow-based stock and market analysis using marketdata-cli. Guides you through stock lookups, fundamental analysis, technical analysis, macro overviews, sector comparisons, and forex/crypto — step by step.
+description: Step-by-step stock and market analysis powered by marketdata-cli. Covers stock lookups, fundamentals, technicals, macro overviews, sector comparisons, and forex/crypto.
 compatibility: Requires marketdata-cli installed (pip install marketdata-cli) and ALPHAVANTAGE_API_KEY set.
 metadata:
   author: alphavantage
-  version: "0.0.3"
+  version: "0.0.4"
   homepage: https://www.alphavantage.co
   source: https://github.com/alphavantage/alpha_vantage_mcp
   openclaw:

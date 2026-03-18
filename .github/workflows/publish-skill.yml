@@ -1,15 +1,11 @@
 name: Publish Skill to ClawHub
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
   workflow_dispatch:
-    inputs:
-      skill:
-        description: 'Skill to publish'
-        required: true
-        default: 'global-stock-analysis'
-        type: choice
-        options:
-        - global-stock-analysis
 
 jobs:
   publish-skill:
