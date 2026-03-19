@@ -30,7 +30,15 @@ def _python_type_to_click(param_type):
 
 def _apply_limit(result, limit):
     """Slice the time-series portion of a response to `limit` entries."""
-    if not isinstance(result, dict) or limit is None:
+    if limit is None:
+        return result
+    if isinstance(result, str):
+        lines = result.splitlines()
+        # Keep header row + limit data rows
+        header = lines[0:1]
+        data = lines[1:limit + 1]
+        return '\n'.join(header + data)
+    if not isinstance(result, dict):
         return result
     for key, value in result.items():
         if isinstance(value, dict) and value:
