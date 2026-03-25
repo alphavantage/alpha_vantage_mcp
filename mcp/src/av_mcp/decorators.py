@@ -7,7 +7,7 @@ from av_api.registry import extract_description
 def setup_custom_tool_decorator(mcp):
     """Set up custom tool decorator that converts function names to UPPERCASE_WITH_UNDERSCORES"""
 
-    def custom_tool_decorator(self, description=None):
+    def custom_tool_decorator(self, description=None, annotations=None):
         """Custom decorator that converts function names to UPPERCASE_WITH_UNDERSCORES"""
         def decorator(func):
             # Get function name and convert to UPPERCASE_WITH_UNDERSCORES
@@ -84,6 +84,8 @@ def setup_custom_tool_decorator(mcp):
                 'description': tool_description,
                 'inputSchema': {'type': 'object', 'properties': properties, 'required': required},
             }
+            if annotations is not None:
+                tool_schema['annotations'] = annotations
 
             # Register the tool
             self.tools[tool_name] = tool_schema
@@ -98,4 +100,4 @@ def setup_custom_tool_decorator(mcp):
         return decorator
 
     # Replace the original tool method
-    mcp.tool = lambda description=None: custom_tool_decorator(mcp, description=description)
+    mcp.tool = lambda description=None, annotations=None: custom_tool_decorator(mcp, description=description, annotations=annotations)
