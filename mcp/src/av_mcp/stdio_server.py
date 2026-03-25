@@ -25,6 +25,12 @@ from .tools.registry import extract_description
 
 # Meta-tool definitions for progressive discovery
 # Descriptions are derived from meta_tools.py docstrings
+_META_ANNOTATIONS = types.ToolAnnotations(
+    readOnlyHint=True,
+    destructiveHint=False,
+    openWorldHint=True,
+)
+
 META_TOOLS = [
     types.Tool(
         name="TOOL_LIST",
@@ -33,7 +39,8 @@ META_TOOLS = [
             "type": "object",
             "properties": {},
             "required": []
-        }
+        },
+        annotations=_META_ANNOTATIONS,
     ),
     types.Tool(
         name="TOOL_GET",
@@ -56,7 +63,8 @@ META_TOOLS = [
                 }
             },
             "required": ["tool_name"]
-        }
+        },
+        annotations=_META_ANNOTATIONS,
     ),
     types.Tool(
         name="TOOL_CALL",
@@ -74,7 +82,8 @@ META_TOOLS = [
                 }
             },
             "required": ["tool_name", "arguments"]
-        }
+        },
+        annotations=_META_ANNOTATIONS,
     )
 ]
 
