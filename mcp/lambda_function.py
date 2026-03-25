@@ -1,3 +1,4 @@
+import json
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
 from av_api.context import set_api_key
@@ -9,7 +10,7 @@ from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request
 
 def create_mcp_handler() -> MCPLambdaHandler:
     """Create and configure MCP handler with meta-tools for progressive discovery."""
-    mcp = MCPLambdaHandler(name="mcp-lambda-server", version="1.0.0")
+    mcp = MCPLambdaHandler(name="alphavantage-mcp-server", version="1.0.0")
 
     # Set up custom tool decorator for UPPER_SNAKE_CASE tool names
     setup_custom_tool_decorator(mcp)
@@ -69,4 +70,18 @@ def lambda_handler(event, context):
     # Handle MCP requests
     mcp = create_mcp_handler()
 
-    return mcp.handle_request(event, context)
+    response = mcp.handle_request(event, context)
+
+    # Remove resources capability from initialize response
+    # (MCPLambdaHandler hardcodes it, but we only provide tools)
+    if method == "POST" and body:
+        try:
+            parsed = json.loads(body) if isinstance(body, str) else body
+            if parsed.get("method") == "initialize":
+                resp_body = json.loads(response["body"])
+                resp_body.get("result", {}).get("capabilities", {}).pop("resources", None)
+                response["body"] = json.dumps(resp_body)
+        except (json.JSONDecodeError, TypeError, KeyError):
+            pass
+
+    return response
