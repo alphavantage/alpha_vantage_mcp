@@ -85,7 +85,11 @@ def setup_custom_tool_decorator(mcp):
                 'inputSchema': {'type': 'object', 'properties': properties, 'required': required},
             }
             if annotations is not None:
-                tool_schema['annotations'] = annotations
+                # Convert Pydantic model to dict for JSON serialization compatibility
+                if hasattr(annotations, 'model_dump'):
+                    tool_schema['annotations'] = annotations.model_dump(exclude_none=True)
+                else:
+                    tool_schema['annotations'] = annotations
 
             # Register the tool
             self.tools[tool_name] = tool_schema
