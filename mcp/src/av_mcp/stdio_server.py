@@ -28,6 +28,7 @@ from .tools.registry import extract_description
 _META_ANNOTATIONS = types.ToolAnnotations(
     readOnlyHint=True,
     destructiveHint=False,
+    openWorldHint=True,
 )
 
 META_TOOLS = [

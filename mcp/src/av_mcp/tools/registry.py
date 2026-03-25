@@ -20,6 +20,7 @@ def register_meta_tools(mcp):
     annotations = ToolAnnotations(
         readOnlyHint=True,
         destructiveHint=False,
+        openWorldHint=True,
     )
     for func in [tool_list, tool_get, tool_call]:
         mcp.tool(annotations=annotations)(func)
