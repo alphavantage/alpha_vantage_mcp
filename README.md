@@ -489,7 +489,7 @@ Below are four example prompts and Claude's expected responses when using the MC
 
 1. Fetch and display structured market data across assets:
 
-Prompt: “Give me last week’s OHLCV data for IBM”
+**Prompt**: “Give me last week’s OHLCV data for IBM”
 
 Expected Behavior:
 - Claude will use progressive discovery to find and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
@@ -500,9 +500,44 @@ Here's IBM's OHLCV data for last week (March 16–20, 2026):
 
 <img width="751" height="348" alt="IBM_price" src="https://github.com/user-attachments/assets/6316329d-81a6-4972-a857-f059ceccf040" />
 
+
 IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of the week. Friday saw a sharp selloff to close at the session low of $241.77 on more than double the average weekly volume — likely some notable news or broad market pressure driving that move.
 
 2. Use technical indicators and price data to conduct technical analysis:
+
+**Prompt**: “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
+
+Expected Behavior: 
+- Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
+- Claude will make two separate requests, one to the TIME_SERIES_INTRADAY function and one to the RSI function. Claude will receive the relevant responses.
+- Claude will then make an HTML artifact with the requested visualizations:
+
+<img width="770" height="892" alt="NVDA_RSI" src="https://github.com/user-attachments/assets/f9e36e1a-d1d2-4816-b687-95e4c35d91f8" />
+
+
+3. Visualize fundamental data:
+
+**Prompt:** “Help me visualize AAPL’s earnings surprise trends for the past 4 quarters. Compare actual EPS to analyst estimates”
+
+Expected Behavior:
+- Claude will use progressive discovery to find and invoke the correct tool, in this case the EARNINGS function.
+- Claude will make the necessary request to the EARNINGS function and receive the relevant response.
+- Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
+
+<img width="781" height="842" alt="AAPL_earnings" src="https://github.com/user-attachments/assets/714d7eb9-e210-4008-9757-5896c8eabb4d" />
+
+
+4. Compare performance across asset classes:
+
+**Prompt:** “Compare gold, silver, and Bitcoin performance over the past 5 years”
+
+Expected Behavior: 
+- Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_MONTHLY function and the DIGITAL_CURRENCY_MONTHLY function.
+- Claude will make three separate requests, one to the TIME_SERIES_INTRADAY function using the GLD symbol, one to the TIME_SERIES_INTRADAY function using the SLV symbol, and one to the DIGITAL_CURRENCY_MONTHLY function using the BTC symbol. Claude will receive the relevant responses.
+- Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
+
+<img width="770" height="756" alt="Commodity_price" src="https://github.com/user-attachments/assets/953c5bcb-1b30-4880-a78b-7bc2ae3a8a70" />
+
 
 ## Tools Reference
 
