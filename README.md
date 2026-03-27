@@ -483,6 +483,27 @@ If the `mcpServers` object does not exist, create it.
 
 &nbsp;
 
+## Examples
+
+Below are four example prompts and Claude's expected responses when using the MCP server.
+
+1. Fetch and display structured market data across assets:
+
+Prompt: “Give me last week’s OHLCV data for IBM”
+
+Expected Behavior:
+- Claude will use progressive discovery to find and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
+- Claude will make the necessary request to the TIME_SERIES_DAILY function and receive the relevant response.
+- Claude will then respond directly in the chat interface with both text and image content:
+
+Here's IBM's OHLCV data for last week (March 16–20, 2026):
+
+<img width="751" height="348" alt="IBM_price" src="https://github.com/user-attachments/assets/6316329d-81a6-4972-a857-f059ceccf040" />
+
+IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of the week. Friday saw a sharp selloff to close at the session low of $241.77 on more than double the average weekly volume — likely some notable news or broad market pressure driving that move.
+
+2. Use technical indicators and price data to conduct technical analysis:
+
 ## Tools Reference
 
 **Note:** The tools listed below are accessed through the MCP server's `TOOL_CALL` wrapper function.
