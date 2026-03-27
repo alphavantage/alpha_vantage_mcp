@@ -516,7 +516,7 @@ Expected Behavior:
 - Claude will make two separate requests, one to the TIME_SERIES_INTRADAY function and one to the RSI function. Claude will receive the relevant responses.
 - Claude will then make an HTML artifact with the requested visualizations:
   
-&nbsp
+&nbsp;
 
 <img width="770" height="892" alt="NVDA_RSI" src="https://github.com/user-attachments/assets/f9e36e1a-d1d2-4816-b687-95e4c35d91f8" />
 
