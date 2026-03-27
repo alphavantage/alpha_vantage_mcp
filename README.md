@@ -487,11 +487,9 @@ If the `mcpServers` object does not exist, create it.
 
 Below are four example prompts and Claude's expected responses when using the MCP server.
 
-&nbsp;
-
 ### 1. Fetch and display structured market data across assets
 
-**Prompt**: “Give me last week’s OHLCV data for IBM”
+**Prompt:** “Give me last week’s OHLCV data for IBM”
 
 Expected Behavior:
 - Claude will use progressive discovery to find and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
@@ -510,7 +508,7 @@ IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of 
 
 ### 2. Use technical indicators and price data to conduct technical analysis
 
-**Prompt**: “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
+**Prompt:** “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
 
 Expected Behavior: 
 - Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
