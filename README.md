@@ -4,7 +4,7 @@ The official Alpha Vantage API MCP server enables LLMs and agentic workflows to 
 
 ---
 
-### Quickstart
+## Quickstart
 
 To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
 
@@ -486,6 +486,7 @@ If the `mcpServers` object does not exist, create it.
 ## Examples
 
 Below are four example prompts and Claude's expected responses when using the MCP server.
+&nbsp;
 
 &nbsp;**1. Fetch and display structured market data across assets:**
 
@@ -501,6 +502,7 @@ Here's IBM's OHLCV data for last week (March 16–20, 2026):
 <img width="751" height="348" alt="IBM_price" src="https://github.com/user-attachments/assets/6316329d-81a6-4972-a857-f059ceccf040" />
 
 &nbsp;
+
 IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of the week. Friday saw a sharp selloff to close at the session low of $241.77 on more than double the average weekly volume — likely some notable news or broad market pressure driving that move.
 
 &nbsp;
@@ -513,6 +515,8 @@ Expected Behavior:
 - Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
 - Claude will make two separate requests, one to the TIME_SERIES_INTRADAY function and one to the RSI function. Claude will receive the relevant responses.
 - Claude will then make an HTML artifact with the requested visualizations:
+  
+&nbsp
 
 <img width="770" height="892" alt="NVDA_RSI" src="https://github.com/user-attachments/assets/f9e36e1a-d1d2-4816-b687-95e4c35d91f8" />
 
