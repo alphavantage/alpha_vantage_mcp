@@ -78,6 +78,9 @@ Error loading README.md content.`;
               Made with love at
               <a href="https://www.alphavantage.co/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#42DCA3' }}> Alpha Vantage</a>. Happy hacking!
             </p>
+            <p className="mt-2">
+              <a href="https://www.alphavantage.co/privacy/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#42DCA3' }}>Privacy Policy</a>
+            </p>
           </div>
         </footer>
       </div>
