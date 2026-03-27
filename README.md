@@ -486,6 +486,7 @@ If the `mcpServers` object does not exist, create it.
 ## Examples
 
 Below are four example prompts and Claude's expected responses when using the MCP server.
+
 &nbsp;
 
 ### 1. Fetch and display structured market data across assets
