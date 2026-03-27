@@ -487,7 +487,7 @@ If the `mcpServers` object does not exist, create it.
 
 Below are four example prompts and Claude's expected responses when using the MCP server.
 
-1. Fetch and display structured market data across assets:
+&nbsp;**1. Fetch and display structured market data across assets:**
 
 **Prompt**: “Give me last week’s OHLCV data for IBM”
 
@@ -500,10 +500,12 @@ Here's IBM's OHLCV data for last week (March 16–20, 2026):
 
 <img width="751" height="348" alt="IBM_price" src="https://github.com/user-attachments/assets/6316329d-81a6-4972-a857-f059ceccf040" />
 
-
+&nbsp;
 IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of the week. Friday saw a sharp selloff to close at the session low of $241.77 on more than double the average weekly volume — likely some notable news or broad market pressure driving that move.
 
-2. Use technical indicators and price data to conduct technical analysis:
+&nbsp;
+
+&nbsp;**2. Use technical indicators and price data to conduct technical analysis:**
 
 **Prompt**: “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
 
@@ -514,8 +516,9 @@ Expected Behavior:
 
 <img width="770" height="892" alt="NVDA_RSI" src="https://github.com/user-attachments/assets/f9e36e1a-d1d2-4816-b687-95e4c35d91f8" />
 
+&nbsp;
 
-3. Visualize fundamental data:
+&nbsp;**3. Visualize fundamental data:**
 
 **Prompt:** “Help me visualize AAPL’s earnings surprise trends for the past 4 quarters. Compare actual EPS to analyst estimates”
 
@@ -526,8 +529,9 @@ Expected Behavior:
 
 <img width="781" height="842" alt="AAPL_earnings" src="https://github.com/user-attachments/assets/714d7eb9-e210-4008-9757-5896c8eabb4d" />
 
+&nbsp;
 
-4. Compare performance across asset classes:
+&nbsp;**4. Compare performance across asset classes:**
 
 **Prompt:** “Compare gold, silver, and Bitcoin performance over the past 5 years”
 
@@ -538,6 +542,7 @@ Expected Behavior:
 
 <img width="770" height="756" alt="Commodity_price" src="https://github.com/user-attachments/assets/953c5bcb-1b30-4880-a78b-7bc2ae3a8a70" />
 
+&nbsp;
 
 ## Tools Reference
 
