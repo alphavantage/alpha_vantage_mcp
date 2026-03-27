@@ -486,9 +486,10 @@ If the `mcpServers` object does not exist, create it.
 ## Examples
 
 Below are four example prompts and Claude's expected responses when using the MCP server.
+
 &nbsp;
 
-&nbsp;**1. Fetch and display structured market data across assets:**
+### 1. Fetch and display structured market data across assets:
 
 **Prompt**: “Give me last week’s OHLCV data for IBM”
 
@@ -507,7 +508,7 @@ IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of 
 
 &nbsp;
 
-&nbsp;**2. Use technical indicators and price data to conduct technical analysis:**
+### 2. Use technical indicators and price data to conduct technical analysis:
 
 **Prompt**: “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
 
@@ -522,7 +523,7 @@ Expected Behavior:
 
 &nbsp;
 
-&nbsp;**3. Visualize fundamental data:**
+### 3. Visualize fundamental data:
 
 **Prompt:** “Help me visualize AAPL’s earnings surprise trends for the past 4 quarters. Compare actual EPS to analyst estimates”
 
@@ -535,7 +536,7 @@ Expected Behavior:
 
 &nbsp;
 
-&nbsp;**4. Compare performance across asset classes:**
+### 4. Compare performance across asset classes:
 
 **Prompt:** “Compare gold, silver, and Bitcoin performance over the past 5 years”
 
