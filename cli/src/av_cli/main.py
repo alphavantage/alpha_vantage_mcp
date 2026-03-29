@@ -28,6 +28,27 @@ def _python_type_to_click(param_type):
 
 
 
+def _apply_limit(result, limit):
+    """Slice the time-series portion of a response to `limit` entries."""
+    if limit is None:
+        return result
+    if isinstance(result, str):
+        lines = result.splitlines()
+        # Keep header row + limit data rows
+        header = lines[0:1]
+        data = lines[1:limit + 1]
+        return '\n'.join(header + data)
+    if not isinstance(result, dict):
+        return result
+    for key, value in result.items():
+        if isinstance(value, dict) and value:
+            first_val = next(iter(value.values()))
+            if isinstance(first_val, dict):
+                result = {**result, key: dict(list(value.items())[:limit])}
+                break
+    return result
+
+
 def _make_tool_command(func, tool_name):
     """Build a Click command for a single tool function."""
     from av_api.registry import extract_description
@@ -39,7 +60,7 @@ def _make_tool_command(func, tool_name):
         hints = {}
 
     # Build short option flags, skipping conflicts with -h (help) and -k (api-key)
-    used_shorts = {'h', 'k'}
+    used_shorts = {'h', 'k', 'n'}
     short_map = {}
     for pname in sig.parameters:
         for ch in pname.lower():
@@ -52,6 +73,15 @@ def _make_tool_command(func, tool_name):
     has_symbol = 'symbol' in sig.parameters and sig.parameters['symbol'].default is inspect.Parameter.empty
 
     params = []
+    # Add --limit/-n to cap the number of returned data points
+    params.append(
+        click.Option(
+            ['--limit', '-n'],
+            type=click.INT,
+            default=None,
+            help='Maximum number of data points to return.',
+        )
+    )
     # Add --api-key/-k to each subcommand so it can appear after the command name
     params.append(
         click.Option(
@@ -102,6 +132,7 @@ def _make_tool_command(func, tool_name):
         from av_api.context import set_api_key
 
         local_api_key = kwargs.pop('api_key', None)
+        limit = kwargs.pop('limit', None)
         ctx = click.get_current_context()
         api_key = local_api_key or ctx.obj.get('api_key') or os.getenv('ALPHAVANTAGE_API_KEY') or os.getenv('ALPHA_VANTAGE_API_KEY')
         if not api_key:
@@ -117,6 +148,7 @@ def _make_tool_command(func, tool_name):
 
         set_api_key(api_key)
         result = func(**kwargs)
+        result = _apply_limit(result, limit)
 
         if isinstance(result, str):
             click.echo(result)
