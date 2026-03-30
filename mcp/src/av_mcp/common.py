@@ -32,9 +32,6 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
         "artifact_note": "claude.ai artifacts can't fetch data_url due to CSP restrictions; users can paste artifact code into this page to render full data"
     }
 
-    # Filter out None values from important_notes
-    preview["usage_instructions"]["important_notes"] = [note for note in preview["usage_instructions"]["important_notes"] if note is not None]
-
     if error:
         preview["error"] = f"Failed to upload large response: {error}"
 
