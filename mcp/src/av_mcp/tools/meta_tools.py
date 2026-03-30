@@ -67,4 +67,9 @@ def tool_call(tool_name: str, arguments: str) -> dict | str:
     # Parse arguments if passed as JSON string
     if isinstance(arguments, str):
         arguments = json.loads(arguments)
-    return call_tool(tool_name, arguments)
+    result = call_tool(tool_name, arguments)
+    # Ensure dicts are returned as JSON strings so the MCP framework
+    # doesn't str() them into Python repr syntax
+    if isinstance(result, dict):
+        return json.dumps(result, indent=2)
+    return result
