@@ -19,6 +19,7 @@ from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
 from av_api.context import set_api_key
+import av_mcp.common  # noqa: F401 — registers response processor for large responses
 from .tools.meta_tools import tool_list, tool_get, tool_call
 from .tools.registry import extract_description
 

@@ -397,7 +397,7 @@ wheels = [
 
 [[package]]
 name = "marketdata-cli"
-version = "0.1.8"
+version = "0.1.9"
 source = { editable = "cli" }
 dependencies = [
     { name = "alphavantage-core" },
