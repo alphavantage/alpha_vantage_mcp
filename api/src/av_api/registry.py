@@ -118,6 +118,7 @@ TOOL_MODULES = {
         "av_api.tools.technical_indicators_part4",
     ],
     "ping": "av_api.tools.ping",
+    "index_data": "av_api.tools.index_data",
     "openai": "av_api.tools.openai",
 }
 
