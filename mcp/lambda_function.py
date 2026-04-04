@@ -61,13 +61,14 @@ def lambda_handler(event, context):
     set_api_key(token)
 
     # GET /mcp is used by MCP clients to open an SSE stream for server notifications.
-    # MCPLambdaHandler doesn't support SSE (Lambda is request-response only),
-    # so return 204 No Content to let clients gracefully fall back to POST-only mode.
+    # Lambda doesn't support SSE, so return 405 to stop clients from retrying.
+    # NOTE: Do NOT return 204 here — clients treat it as a successful SSE connection
+    # and will retry endlessly, causing massive request volume.
     if method == "GET":
         return {
-            "statusCode": 204,
-            "headers": {"Content-Type": "text/event-stream", "Cache-Control": "no-store"},
-            "body": ""
+            "statusCode": 405,
+            "headers": {"Allow": "POST"},
+            "body": json.dumps({"error": "SSE not supported, use POST for MCP requests"})
         }
 
     # Parse and log MCP method and params for analytics (after token parsing)
