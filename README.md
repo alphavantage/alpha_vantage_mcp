@@ -170,7 +170,7 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 
 📺 Watch the **setup tutorial**. (Click image below.)
 
-[![This AI Agent Tracks Stocks 24/7 (OpenClaw Setup Tutorial)](https://i3.ytimg.com/vi/Z6DjYKN4uos/hqdefault.jpg)](https://www.youtube.com/watch?v=Z6DjYKN4uos)
+[![This AI Agent Tracks Stocks 24/7 (OpenClaw Setup Tutorial)](https://i3.ytimg.com/vi/Z6DjYKN4uos/maxresdefault.jpg)](https://www.youtube.com/watch?v=Z6DjYKN4uos)
 
 - [Download the companion installation guide from GitHub Gist.](https://gist.github.com/gabriel1l/2e6ebe57e9a17983aa8596fd7c5bcdc7)
 - For additional support links, please check the video description on YouTube.
@@ -247,7 +247,7 @@ See [OpenAI Codex](https://github.com/openai/codex) for more information.
 
 📺 Watch the **setup tutorial**. (Click image below.) This video additionally provides guidance on handling setup errors and building complete end-to-end applications which are empowered to fetch market data to power dynamic, data-driven visualizations.
 
-[![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
+[![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/maxresdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
 
 - [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
 - For additional support links, please check the video description on YouTube.
