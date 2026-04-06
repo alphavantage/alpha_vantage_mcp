@@ -31,11 +31,6 @@ uvx marketdata-mcp-server YOUR_API_KEY
 &nbsp;
 
 ### Setup Instructions by Use Case
-💡💡 _I'm just exploring_
-
-Just exploring what to build? Check out the [Trading Agents stock research tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage market data with no setup required. 
-
-&nbsp;
 
 💬📊 _Power your chatbot with financial data_
 
@@ -168,11 +163,11 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 - LLM API Key (OpenAI used in demo)
 - Messaging Platform Bot Token (Telegram used in demo)
 
-📺 Watch the **setup tutorial**. (Click image below.)
+📺 Watch the **setup tutorial** (click image below)
 
 [![This AI Agent Tracks Stocks 24/7 (OpenClaw Setup Tutorial)](https://i3.ytimg.com/vi/Z6DjYKN4uos/maxresdefault.jpg)](https://www.youtube.com/watch?v=Z6DjYKN4uos)
 
-- [Download the companion installation guide from GitHub Gist.](https://gist.github.com/gabriel1l/2e6ebe57e9a17983aa8596fd7c5bcdc7)
+- [View the detailed installation guide from GitHub Gist](https://gist.github.com/gabriel1l/2e6ebe57e9a17983aa8596fd7c5bcdc7)
 - For additional support links, please check the video description on YouTube.
 
 </details>
@@ -497,6 +492,12 @@ Or, for a local server (replace `YOUR_API_KEY` with your actual Alpha Vantage AP
 If the `mcpServers` object does not exist, create it.
 
 </details>
+
+&nbsp;
+
+💡💡 _I'm just exploring_
+
+Just exploring what to build? Check out the [Trading Agents stock research tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage market data with no setup required. 
 
 &nbsp;
 
