@@ -161,6 +161,23 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 🤖📈 _Create agentic workflows for quantitative investing_
 
 <details>
+<summary><b>Install in 🦞OpenClaw🦞</b></summary>
+
+**Requirements:**
+- Mac with Apple Silicon (or dedicated Mac mini)
+- LLM API Key (OpenAI used in demo)
+- Messaging Platform Bot Token (Telegram used in demo)
+
+📺 Watch the **setup tutorial**. (Click image below.)
+
+[![This AI Agent Tracks Stocks 24/7 (OpenClaw Setup Tutorial)](https://i3.ytimg.com/vi/Z6DjYKN4uos/hqdefault.jpg)](https://www.youtube.com/watch?v=Z6DjYKN4uos)
+
+- [Download the companion installation guide from GitHub Gist.](https://gist.github.com/gabriel1l/2e6ebe57e9a17983aa8596fd7c5bcdc7)
+- For additional support links, please check the video description on YouTube.
+
+</details>
+
+<details>
 <summary><b>Configure in OpenAI Agent Builder</b></summary>
 
 **Requirements:**
