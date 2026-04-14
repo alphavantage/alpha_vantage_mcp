@@ -62,7 +62,7 @@ Error loading README.md content.`;
               <article className="rounded-lg shadow-sm p-4 sm:p-6 lg:p-8" style={{ backgroundColor: '#1f1f1f', border: '1px solid rgba(74, 222, 128, 0.3)' }}>
                 {/* Logo Section */}
                 <div className="mb-12 text-center">
-                  <img src="https://www.alphavantage.co/logo.png" alt="Alpha Vantage Logo" className="mx-auto h-16 mb-8" />
+                  <img src="https://cdn.alphavantage.co/logo.png" alt="Alpha Vantage Logo" className="mx-auto h-16 mb-8" />
                 </div>
                 <div className="prose prose-lg prose-slate dark:prose-invert max-w-none">
                   <Markdown content={content} />
