@@ -18,6 +18,10 @@ metadata:
 
 Use these workflows to research stocks, evaluate companies, read technical signals, and monitor macro conditions — all from the terminal.
 
+## Tutorial
+
+Watch the end-to-end installation tutorial, from procuring a fresh Mac VM (or Mac mini), to installing OpenClaw, to installing and using the skill: https://www.youtube.com/watch?v=Z6DjYKN4uos
+
 ## Setup
 
 1. Install: `pip install marketdata-cli` or `uv tool install marketdata-cli --force` or run directly with `uvx marketdata-cli`
