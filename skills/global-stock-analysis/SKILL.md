@@ -4,7 +4,7 @@ description: Global stock analysis (US, China & EU stock markets, technicals, fu
 compatibility: Requires marketdata-cli installed (pip install marketdata-cli) and ALPHAVANTAGE_API_KEY set.
 metadata:
   author: alphavantage
-  version: "0.0.10"
+  version: "0.0.11"
   homepage: https://www.alphavantage.co
   source: https://github.com/alphavantage/alpha_vantage_mcp
   openclaw:
