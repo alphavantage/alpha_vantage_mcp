@@ -36,6 +36,17 @@ def lambda_handler(event, context):
     logger.info(f"Query parameters: {query_params}")
     logger.info(f"Body: {body}")
 
+    # Serve logo/favicon via 302 to CDN (no auth required, must come before token check)
+    if path in ("/favicon.ico", "/logo.png"):
+        return {
+            "statusCode": 302,
+            "headers": {
+                "Location": "https://cdn.alphavantage.co/logo.png",
+                "Cache-Control": "public, max-age=86400"
+            },
+            "body": ""
+        }
+
     # Handle OAuth 2.1 endpoints first (before token validation)
     if path == "/.well-known/oauth-authorization-server":
         return handle_metadata_discovery(event)
@@ -84,14 +95,25 @@ def lambda_handler(event, context):
 
     response = mcp.handle_request(event, context)
 
-    # Remove resources capability from initialize response
-    # (MCPLambdaHandler hardcodes it, but we only provide tools)
+    # Post-process initialize response:
+    # - Remove hardcoded `resources` capability (we only provide tools)
+    # - Inject branding (title/icons/websiteUrl) into serverInfo
+    #   per MCP 2025-06-18 Implementation fields; SDK allows extra fields.
     if method == "POST" and body:
         try:
             parsed = json.loads(body) if isinstance(body, str) else body
             if parsed.get("method") == "initialize":
                 resp_body = json.loads(response["body"])
-                resp_body.get("result", {}).get("capabilities", {}).pop("resources", None)
+                result = resp_body.get("result", {})
+                result.get("capabilities", {}).pop("resources", None)
+                server_info = result.setdefault("serverInfo", {})
+                server_info["title"] = "Alpha Vantage"
+                server_info["icons"] = [{
+                    "src": "https://cdn.alphavantage.co/logo.png",
+                    "mimeType": "image/png",
+                    "sizes": "any"
+                }]
+                server_info["websiteUrl"] = "https://www.alphavantage.co"
                 response["body"] = json.dumps(resp_body)
         except (json.JSONDecodeError, TypeError, KeyError):
             pass

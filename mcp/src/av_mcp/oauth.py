@@ -73,7 +73,7 @@ def handle_metadata_discovery(event: dict) -> dict:
     
     metadata = {
         "issuer": base_url,
-        "authorization_endpoint": f"{base_url}/authorize", 
+        "authorization_endpoint": f"{base_url}/authorize",
         "token_endpoint": f"{base_url}/token",
         "registration_endpoint": f"{base_url}/register",
         "scopes_supported": ["alphavantage:read"],
@@ -81,7 +81,11 @@ def handle_metadata_discovery(event: dict) -> dict:
         "grant_types_supported": ["authorization_code", "client_credentials"],
         "code_challenge_methods_supported": ["S256", "plain"],
         "token_endpoint_auth_methods_supported": ["client_secret_post", "none"],
-        "subject_types_supported": ["public"]
+        "subject_types_supported": ["public"],
+        "logo_uri": "https://cdn.alphavantage.co/logo.png",
+        "service_documentation": "https://www.alphavantage.co/documentation/",
+        "op_policy_uri": "https://www.alphavantage.co/terms_of_service/",
+        "op_tos_uri": "https://www.alphavantage.co/terms_of_service/"
     }
     
     return {
@@ -473,6 +477,21 @@ def handle_registration_request(event: dict) -> dict:
         "response_types": ["code"],
         "token_endpoint_auth_method": "none"  # Public client, no secret needed for auth code flow
     }
+
+    # Server branding — only fill in fields the client didn't provide itself,
+    # so a client registering with its own logo/name keeps them.
+    server_defaults = {
+        "client_name": "Alpha Vantage",
+        "logo_uri": "https://cdn.alphavantage.co/logo.png",
+        "client_uri": "https://www.alphavantage.co",
+        "policy_uri": "https://www.alphavantage.co/terms_of_service/",
+        "tos_uri": "https://www.alphavantage.co/terms_of_service/",
+    }
+    for key, value in server_defaults.items():
+        if not registration_request.get(key):
+            registration_response[key] = value
+        else:
+            registration_response[key] = registration_request[key]
     
     return {
         "statusCode": 201,
