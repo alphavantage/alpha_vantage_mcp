@@ -68,6 +68,32 @@ def realtime_put_call_ratio(
 
 
 @tool
+def realtime_volume_open_interest_ratio(
+    symbol: str,
+) -> dict:
+    """Returns the realtime volume-to-open-interest ratio within an option chain.
+
+    A high ratio (volume much larger than open interest) often suggests heavy trading activity
+    relative to existing positions, which can indicate short-term speculation, increased liquidity,
+    or possible trend changes. A low ratio (volume small compared to open interest) implies that
+    most positions are being held rather than actively traded, signaling more stable or less
+    volatile conditions.
+
+    Args:
+        symbol: The name of the equity of your choice. For example: symbol=NVDA
+
+    Returns:
+        Realtime volume-to-open-interest ratio data in JSON format.
+    """
+
+    params = {
+        "symbol": symbol,
+    }
+
+    return _make_api_request("REALTIME_VOLUME_OPEN_INTEREST_RATIO", params)
+
+
+@tool
 def historical_options(
     symbol: str, 
     date: str = None, 
@@ -126,4 +152,35 @@ def historical_put_call_ratio(
         params["date"] = date
 
     return _make_api_request("HISTORICAL_PUT_CALL_RATIO", params)
+
+
+@tool
+def historical_volume_open_interest_ratio(
+    symbol: str,
+    date: str = None,
+) -> dict:
+    """Returns the historical volume-to-open-interest ratio within an option chain.
+
+    A high ratio (volume much larger than open interest) often suggests heavy trading activity
+    relative to existing positions, which can indicate short-term speculation, increased liquidity,
+    or possible trend changes. A low ratio (volume small compared to open interest) implies that
+    most positions are being held rather than actively traded, signaling more stable or less
+    volatile conditions.
+
+    Args:
+        symbol: The name of the equity of your choice. For example: symbol=NVDA
+        date: The date in YYYY-MM-DD format. Any date later than 2008-01-01 is accepted.
+              By default, the API will return data for the previous trading session.
+
+    Returns:
+        Historical volume-to-open-interest ratio data in JSON format.
+    """
+
+    params = {
+        "symbol": symbol,
+    }
+    if date:
+        params["date"] = date
+
+    return _make_api_request("HISTORICAL_VOLUME_OPEN_INTEREST_RATIO", params)
 
