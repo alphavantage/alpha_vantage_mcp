@@ -6,6 +6,8 @@ import base64
 import urllib.parse
 from typing import Optional
 
+from av_mcp.utils import get_base_url
+
 def generate_authorization_code() -> str:
     """Generate a secure authorization code."""
     return secrets.token_urlsafe(32)
@@ -82,7 +84,7 @@ def handle_metadata_discovery(event: dict) -> dict:
         "code_challenge_methods_supported": ["S256", "plain"],
         "token_endpoint_auth_methods_supported": ["client_secret_post", "none"],
         "subject_types_supported": ["public"],
-        "logo_uri": "https://cdn.alphavantage.co/logo.png",
+        "logo_uri": f"{base_url}/logo.png",
         "service_documentation": "https://www.alphavantage.co/documentation/",
         "op_policy_uri": "https://www.alphavantage.co/terms_of_service/",
         "op_tos_uri": "https://www.alphavantage.co/terms_of_service/"
@@ -482,7 +484,7 @@ def handle_registration_request(event: dict) -> dict:
     # so a client registering with its own logo/name keeps them.
     server_defaults = {
         "client_name": "Alpha Vantage",
-        "logo_uri": "https://cdn.alphavantage.co/logo.png",
+        "logo_uri": f"{get_base_url(event)}/logo.png",
         "client_uri": "https://www.alphavantage.co",
         "policy_uri": "https://www.alphavantage.co/terms_of_service/",
         "tos_uri": "https://www.alphavantage.co/terms_of_service/",

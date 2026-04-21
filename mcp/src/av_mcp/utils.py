@@ -1,9 +1,24 @@
 """Common utility functions shared across modules."""
 import json
 import hashlib
+import os
 import time
 from typing import Any
 from loguru import logger
+
+def get_base_url(event: dict) -> str:
+    """Return the public base URL of the MCP server (same origin as the request).
+
+    Prefers the DOMAIN_NAME env var, falls back to the request Host header.
+    Always returns an https:// URL (OAuth 2.1 and MCP icon origin checks require it).
+    """
+    domain_name = os.environ.get("DOMAIN_NAME")
+    if domain_name:
+        return f"https://{domain_name}"
+    headers = event.get("headers", {}) or {}
+    host = headers.get("Host") or headers.get("host") or ""
+    return f"https://{host}"
+
 
 def parse_token_from_request(event: dict) -> str:
     """Parse API key from request body, query params, or Authorization header. Priority: body > query > header."""

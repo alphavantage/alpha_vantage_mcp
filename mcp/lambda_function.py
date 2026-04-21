@@ -1,12 +1,25 @@
+import base64
 import json
+import urllib.request
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
 from av_api.context import set_api_key
 from av_mcp.decorators import setup_custom_tool_decorator
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
 from av_mcp.tools.registry import register_meta_tools
-from av_mcp.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics
+from av_mcp.utils import parse_token_from_request, create_oauth_error_response, extract_client_platform, parse_and_log_mcp_analytics, get_base_url
 from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
+
+_LOGO_URL = "https://cdn.alphavantage.co/logo.png"
+_LOGO_B64: str | None = None
+
+
+def _get_logo_b64() -> str:
+    global _LOGO_B64
+    if _LOGO_B64 is None:
+        with urllib.request.urlopen(_LOGO_URL, timeout=5) as r:
+            _LOGO_B64 = base64.b64encode(r.read()).decode("ascii")
+    return _LOGO_B64
 
 
 def create_mcp_handler() -> MCPLambdaHandler:
@@ -36,16 +49,23 @@ def lambda_handler(event, context):
     logger.info(f"Query parameters: {query_params}")
     logger.info(f"Body: {body}")
 
-    # Serve logo/favicon via 302 to CDN (no auth required, must come before token check)
+    # Proxy logo/favicon from CDN as same-origin content (no redirect).
+    # MCP spec requires icon URIs to be same-origin as the server; a 302 to a
+    # different origin is rejected by strict clients (e.g. ChatGPT connector).
     if path in ("/favicon.ico", "/logo.png"):
-        return {
-            "statusCode": 302,
-            "headers": {
-                "Location": "https://cdn.alphavantage.co/logo.png",
-                "Cache-Control": "public, max-age=86400"
-            },
-            "body": ""
-        }
+        try:
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "image/png",
+                    "Cache-Control": "public, max-age=86400"
+                },
+                "body": _get_logo_b64(),
+                "isBase64Encoded": True
+            }
+        except Exception as e:
+            logger.error(f"Failed to proxy logo: {e}")
+            return {"statusCode": 502, "body": ""}
 
     # Handle OAuth 2.1 endpoints first (before token validation)
     if path == "/.well-known/oauth-authorization-server":
@@ -109,7 +129,7 @@ def lambda_handler(event, context):
                 server_info = result.setdefault("serverInfo", {})
                 server_info["title"] = "Alpha Vantage"
                 server_info["icons"] = [{
-                    "src": "https://cdn.alphavantage.co/logo.png",
+                    "src": f"{get_base_url(event)}/logo.png",
                     "mimeType": "image/png",
                     "sizes": ["any"]
                 }]
