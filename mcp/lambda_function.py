@@ -111,7 +111,7 @@ def lambda_handler(event, context):
                 server_info["icons"] = [{
                     "src": "https://cdn.alphavantage.co/logo.png",
                     "mimeType": "image/png",
-                    "sizes": "any"
+                    "sizes": ["any"]
                 }]
                 server_info["websiteUrl"] = "https://www.alphavantage.co"
                 response["body"] = json.dumps(resp_body)
