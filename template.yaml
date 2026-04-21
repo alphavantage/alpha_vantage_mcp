@@ -134,25 +134,6 @@ Resources:
               - PATCH
               - POST
               - DELETE
-          # Logo/favicon proxied by Lambda so same-origin icon URIs work for MCP clients
-          - PathPattern: /logo.png
-            TargetOriginId: APIOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-          - PathPattern: /favicon.ico
-            TargetOriginId: APIOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
         Origins:
           - Id: S3Origin
             DomainName: !Sub '${StaticFilesBucket}.s3-website-${AWS::Region}.amazonaws.com'
