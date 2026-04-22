@@ -573,7 +573,7 @@ Expected Behavior:
 | Category | Tools |
 |----------|-------|
 | core_stock_apis | `TIME_SERIES_INTRADAY`, `TIME_SERIES_DAILY`, `TIME_SERIES_DAILY_ADJUSTED`, `TIME_SERIES_WEEKLY`, `TIME_SERIES_WEEKLY_ADJUSTED`, `TIME_SERIES_MONTHLY`, `TIME_SERIES_MONTHLY_ADJUSTED`, `GLOBAL_QUOTE`, `REALTIME_BULK_QUOTES`, `SYMBOL_SEARCH`, `MARKET_STATUS` |
-| options_data_apis | `REALTIME_OPTIONS`, `HISTORICAL_OPTIONS` |
+| options_data_apis | `REALTIME_OPTIONS`, `REALTIME_OPTIONS_FMV`, `HISTORICAL_OPTIONS` |
 | alpha_intelligence | `NEWS_SENTIMENT`, `EARNINGS_CALL_TRANSCRIPT`, `TOP_GAINERS_LOSERS`, `INSIDER_TRANSACTIONS`, `INSTITUTIONAL_HOLDINGS`, `ANALYTICS_FIXED_WINDOW`, `ANALYTICS_SLIDING_WINDOW` |
 | fundamental_data | `COMPANY_OVERVIEW`, `INCOME_STATEMENT`, `BALANCE_SHEET`, `CASH_FLOW`, `EARNINGS`, `LISTING_STATUS`, `EARNINGS_CALENDAR`, `IPO_CALENDAR` |
 | forex | `FX_INTRADAY`, `FX_DAILY`, `FX_WEEKLY`, `FX_MONTHLY` |
@@ -621,6 +621,7 @@ Expected Behavior:
 | Category | Tool | Description |
 |----------|------|-------------|
 | options_data_apis | `REALTIME_OPTIONS` | Realtime US options data with Greeks |
+| options_data_apis | `REALTIME_OPTIONS_FMV` | Realtime US options FMV (fair market value) mark prices |
 | options_data_apis | `HISTORICAL_OPTIONS` | Historical options chain for 15+ years |
 
 ### ALPHA_INTELLIGENCE

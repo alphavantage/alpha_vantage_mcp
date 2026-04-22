@@ -44,6 +44,49 @@ def realtime_options(
 
 
 @tool
+def realtime_options_fmv(
+    symbol: str,
+    require_greeks: bool = False,
+    contract: str = None,
+    expiration: str = None,
+    datatype: str = "csv"
+) -> dict[str, str] | str:
+    """Returns realtime FMV (fair market value) mark prices for US options.
+
+    Option chains are sorted by expiration dates in chronological order.
+    Within the same expiration date, contracts are sorted by strike prices from low to high.
+
+    Args:
+        symbol: The name of the equity of your choice. For example: symbol=IBM
+        require_greeks: Enable greeks & implied volatility (IV) fields alongside the FMV mark.
+                       By default, require_greeks=false. Set require_greeks=true to enable
+                       greeks & IVs in the API response.
+        contract: The US options contract ID you would like to specify. By default, the contract parameter
+                 is not set and the entire option chain for a given symbol will be returned.
+        expiration: The expiration date in YYYY-MM-DD format. The expiration date must be on or after today's date.
+                    If not set, the API will return contracts for all expiration dates.
+        datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
+                 json returns the options data in JSON format; csv returns the data as a CSV (comma separated value) file.
+
+    Returns:
+        Realtime options FMV data in JSON format or CSV string based on datatype parameter.
+    """
+
+    params = {
+        "symbol": symbol,
+        "datatype": datatype,
+    }
+    if require_greeks:
+        params["require_greeks"] = "true"
+    if contract:
+        params["contract"] = contract
+    if expiration:
+        params["expiration"] = expiration
+
+    return _make_api_request("REALTIME_OPTIONS_FMV", params)
+
+
+@tool
 def realtime_put_call_ratio(
     symbol: str,
 ) -> dict:
