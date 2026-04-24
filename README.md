@@ -597,7 +597,7 @@ Expected Behavior:
 - [technical_indicators](#technical_indicators)
 - [ping](#ping)
 
-💡 Each of these MCP tools maps to a corresponding Alpha Vantage API endpoint. If you are interested in the full API specs (in addition to the brief tool descriptions below), please refer to the Alpha Vantage [API documentation](https://www.alphavantage.co/documentation/).  
+💡 Each of these MCP tools maps to a corresponding Alpha Vantage API endpoint. If you are interested in the full API specs (in addition to the brief tool descriptions below), please refer to the Alpha Vantage [API documentation](https://www.alphavantage.co/documentation/). For general guidance on choosing the best stock market data API and/or MCP server in the AI agent era, please refer to [this article](https://medium.com/alpha-vantage/best-stock-market-apis-in-2026-e8a982b1ea0c).
 
 
 ### CORE_STOCK_APIS
