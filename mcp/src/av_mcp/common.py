@@ -48,24 +48,23 @@ def _build_json_sample(parsed, max_array_items: int = 2):
     return sample
 
 
-def _create_preview(response_text: str, datatype: str, estimated_tokens: int, error: str = None) -> dict:
+def _create_preview(
+    response_text: str,
+    effective_datatype: str,
+    estimated_tokens: int,
+    parsed=None,
+    error: str = None,
+) -> dict:
     """Create preview data for large responses."""
     lines = response_text.split('\n')
 
     sample_data = None
     sample_line_count = 0
-    effective_datatype = datatype
-    try:
-        parsed = json.loads(response_text)
-    except (ValueError, TypeError):
-        parsed = None
     if parsed is not None:
-        effective_datatype = "json"
         structured = _build_json_sample(parsed)
         sample_data = json.dumps(structured, indent=2)
         sample_line_count = sample_data.count('\n') + 1
-
-    if sample_data is None:
+    else:
         # Fallback: prefix-truncate up to half the token budget (~4 chars per token)
         max_preview_chars = MAX_RESPONSE_TOKENS // 2 * 4
         truncated = response_text[:max_preview_chars]
@@ -102,17 +101,23 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
 def _server_response_processor(response_text: str, datatype: str, estimated_tokens: int) -> dict:
     """Process large responses: upload to S3 and return a preview."""
     try:
-        data_url = upload_to_object_storage(response_text, datatype=datatype)
+        parsed = json.loads(response_text)
+    except (ValueError, TypeError):
+        parsed = None
+    effective_datatype = "json" if parsed is not None else datatype
+
+    try:
+        data_url = upload_to_object_storage(response_text, datatype=effective_datatype)
 
         # Create preview with data URL
-        preview = _create_preview(response_text, datatype, estimated_tokens)
+        preview = _create_preview(response_text, effective_datatype, estimated_tokens, parsed=parsed)
         preview["data_url"] = data_url
 
         return preview
 
     except Exception as e:
         # If upload fails, return error with preview
-        return _create_preview(response_text, datatype, estimated_tokens, str(e))
+        return _create_preview(response_text, effective_datatype, estimated_tokens, parsed=parsed, error=str(e))
 
 
 # Install the server-specific response processor at import time
