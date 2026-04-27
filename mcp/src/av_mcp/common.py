@@ -54,11 +54,13 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
 
     sample_data = None
     sample_line_count = 0
+    effective_datatype = datatype
     try:
         parsed = json.loads(response_text)
     except (ValueError, TypeError):
         parsed = None
     if parsed is not None:
+        effective_datatype = "json"
         structured = _build_json_sample(parsed)
         sample_data = json.dumps(structured, indent=2)
         sample_line_count = sample_data.count('\n') + 1
@@ -77,14 +79,14 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
 
     preview = {
         "preview": True,
-        "data_type": datatype,
+        "data_type": effective_datatype,
         "total_lines": len(lines),
         "sample_lines": sample_line_count,
         "sample_data": sample_data,
         "headers": lines[0] if lines else None,
         "full_data_tokens": estimated_tokens,
         "max_tokens_exceeded": True,
-        "content_type": "text/csv" if datatype == "csv" else "application/json",
+        "content_type": "text/csv" if effective_datatype == "csv" else "application/json",
         "message": f"This is a preview ({MAX_RESPONSE_TOKENS} token limit). Full data ({estimated_tokens} tokens) {'unavailable.' if error else 'at data_url. Fetch it if needed for your task.'}",
         "return_full_data_note": f"All tools support a return_full_data parameter. Set it to True to get the complete response without truncation. Only use when the user explicitly requests full data or when the preview is insufficient. WARNING: full data is {estimated_tokens} tokens — do NOT use return_full_data if it would exceed your context window.",
         "artifact_url": "https://mcp.alphavantage.co/artifacts",
