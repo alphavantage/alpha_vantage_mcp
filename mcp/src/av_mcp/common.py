@@ -54,15 +54,14 @@ def _create_preview(response_text: str, datatype: str, estimated_tokens: int, er
 
     sample_data = None
     sample_line_count = 0
-    if datatype == "json":
-        try:
-            parsed = json.loads(response_text)
-        except (ValueError, TypeError):
-            parsed = None
-        if parsed is not None:
-            structured = _build_json_sample(parsed)
-            sample_data = json.dumps(structured, indent=2)
-            sample_line_count = sample_data.count('\n') + 1
+    try:
+        parsed = json.loads(response_text)
+    except (ValueError, TypeError):
+        parsed = None
+    if parsed is not None:
+        structured = _build_json_sample(parsed)
+        sample_data = json.dumps(structured, indent=2)
+        sample_line_count = sample_data.count('\n') + 1
 
     if sample_data is None:
         # Fallback: prefix-truncate up to half the token budget (~4 chars per token)
