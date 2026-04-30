@@ -101,7 +101,16 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 **Requirements:**
 - ChatGPT Plus account (or higher tier)
 - Developer mode enabled (beta feature) - see [OpenAI's Developer Mode documentation](https://platform.openai.com/docs/guides/developer-mode)
-  
+
+  📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
+
+[![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/pY2nr3FWXs0/maxresdefault.jpg)](https://www.youtube.com/watch?v=pY2nr3FWXs0)
+
+
+📺 Already have your Alpha Vantage MCP server set up? Below are a few examples of ChatGPT performing various stock analysis & charting tasks:
+
+[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
+
 **Setup:**
 1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
 2. Click on **Advanced settings →** enable **Developer mode**
