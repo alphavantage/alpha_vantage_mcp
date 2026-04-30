@@ -102,7 +102,7 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 - ChatGPT Plus account (or higher tier)
 - Developer mode enabled (beta feature) - see [OpenAI's Developer Mode documentation](https://platform.openai.com/docs/guides/developer-mode)
 
-  📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
+📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
 
 [![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/pY2nr3FWXs0/maxresdefault.jpg)](https://www.youtube.com/watch?v=pY2nr3FWXs0)
 
