@@ -85,15 +85,17 @@ def top_gainers_losers() -> dict[str, str] | str:
 
 @tool
 def insider_transactions(
-    symbol: str
+    symbol: str,
+    from_date: str = None
 ) -> dict[str, str] | str:
     """Returns latest and historical insider transactions by key stakeholders.
-    
+
     Covers transactions by founders, executives, board members, etc.
 
     Args:
         symbol: Ticker symbol. Example: "IBM".
-        
+        from_date: Optional start date in YYYY-MM-DD format. Only return transactions on or after this date. Example: "2026-03-01".
+
     Returns:
         Dictionary containing insider transaction data or JSON string.
     """
@@ -101,7 +103,9 @@ def insider_transactions(
     params = {
         "symbol": symbol,
     }
-    
+    if from_date:
+        params["from"] = from_date
+
     return _make_api_request("INSIDER_TRANSACTIONS", params)
 
 

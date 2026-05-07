@@ -27,9 +27,10 @@
    marketdata-cli dividends AAPL
    marketdata-cli splits AAPL
    ```
-7. **Insider transactions** — recent insider buys and sells:
+7. **Insider transactions** — recent insider buys and sells (optionally filter by start date):
    ```bash
    marketdata-cli insider_transactions AAPL
+   marketdata-cli insider_transactions AAPL --from_date 2026-03-01
    ```
 
 ## Additional commands
