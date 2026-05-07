@@ -4,7 +4,7 @@ description: Global stock analysis (US, China & EU stock markets, technicals, fu
 compatibility: Requires marketdata-cli installed (pip install marketdata-cli) and ALPHAVANTAGE_API_KEY set.
 metadata:
   author: alphavantage
-  version: "0.0.11"
+  version: "0.0.12"
   homepage: https://www.alphavantage.co
   source: https://github.com/alphavantage/alpha_vantage_mcp
   openclaw:
@@ -77,6 +77,21 @@ See [comparison.md](references/comparison.md) for more examples.
 
 Exchange rates and price history for currencies and cryptocurrencies.
 See [forex-crypto.md](references/forex-crypto.md) for the full step-by-step guide.
+
+### 7. Options Chain
+
+Inspect US options chains, greeks, and put/call sentiment — realtime or historical.
+
+```bash
+marketdata-cli realtime_options AAPL
+marketdata-cli realtime_options AAPL --require_greeks --expiration 2026-06-19
+marketdata-cli realtime_options_fmv AAPL --expiration 2026-06-19
+marketdata-cli realtime_put_call_ratio SPY
+marketdata-cli historical_options AAPL --date 2024-01-15
+marketdata-cli historical_put_call_ratio SPY --date 2024-01-15
+```
+
+See [options.md](references/options.md) for the full step-by-step guide.
 
 ## Quick Reference
 
