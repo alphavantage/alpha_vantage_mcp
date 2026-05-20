@@ -9,6 +9,22 @@ from av_mcp.utils import parse_token_from_request, create_oauth_error_response, 
 from av_mcp.oauth import handle_metadata_discovery, handle_authorization_request, handle_token_request, handle_registration_request
 
 
+def normalize_content_type_header(event):
+    """Normalize Content-Type so awslabs handler accepts media-type parameters."""
+    headers = event.get("headers")
+    if not isinstance(headers, dict):
+        return
+
+    for key, value in list(headers.items()):
+        if key.lower() != "content-type" or not isinstance(value, str):
+            continue
+
+        content_type = value.split(";", 1)[0].strip().lower()
+        headers[key] = content_type
+        headers["content-type"] = content_type
+        return
+
+
 def create_mcp_handler() -> MCPLambdaHandler:
     """Create and configure MCP handler with meta-tools for progressive discovery."""
     mcp = MCPLambdaHandler(name="alphavantage-mcp-server", version="1.0.0")
@@ -80,6 +96,7 @@ def lambda_handler(event, context):
         parse_and_log_mcp_analytics(body, token, platform)
 
     # Handle MCP requests
+    normalize_content_type_header(event)
     mcp = create_mcp_handler()
 
     response = mcp.handle_request(event, context)
