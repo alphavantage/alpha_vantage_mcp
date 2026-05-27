@@ -88,6 +88,68 @@ def add_entitlement_parameter(func):
 
     return wrapper
 
+
+def add_return_full_data_parameter(func):
+    """Decorator that adds return_full_data parameter to a function"""
+
+    sig = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    return_full_data_param = inspect.Parameter(
+        'return_full_data',
+        inspect.Parameter.KEYWORD_ONLY,
+        default=False,
+        annotation='bool'
+    )
+
+    params = list(sig.parameters.values())
+    params.append(return_full_data_param)
+    new_sig = sig.replace(parameters=params)
+
+    docstring = func.__doc__ or ""
+    if "Args:" in docstring and "return_full_data" not in docstring:
+        lines = docstring.split('\n')
+        args_idx = None
+        returns_idx = None
+
+        for i, line in enumerate(lines):
+            if "Args:" in line:
+                args_idx = i
+            elif "Returns:" in line and args_idx is not None:
+                returns_idx = i
+                break
+
+        if args_idx is not None:
+            return_full_data_doc = '        return_full_data: Set to true to return the complete response without preview truncation when the response exceeds the token limit'
+            if returns_idx is not None:
+                lines.insert(returns_idx, return_full_data_doc)
+                lines.insert(returns_idx, "")
+            else:
+                lines.append(return_full_data_doc)
+
+            func.__doc__ = '\n'.join(lines)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return_full_data = kwargs.pop('return_full_data', False)
+
+        if return_full_data is True:
+            import av_api.client
+            av_api.client._current_return_full_data = True
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                av_api.client._current_return_full_data = False
+            return result
+
+        return func(*args, **kwargs)
+
+    wrapper.__signature__ = new_sig
+    wrapper.__annotations__ = {**type_hints, 'return_full_data': 'bool'}
+
+    return wrapper
+
+
 def tool(func):
     """Decorator to mark functions as tools"""
     module_name = func.__module__.split('.')[-1]
@@ -95,6 +157,8 @@ def tool(func):
     # Apply entitlement decorator if this module or specific tool needs it
     if module_name in _ENTITLEMENT_MODULES or func.__name__ in _ENTITLEMENT_TOOLS:
         func = add_entitlement_parameter(func)
+
+    func = add_return_full_data_parameter(func)
 
     _all_tools_registry.append(func)
     _tools_by_name[func.__name__.upper()] = func

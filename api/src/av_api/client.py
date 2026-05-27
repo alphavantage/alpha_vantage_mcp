@@ -6,10 +6,13 @@ from av_api.context import get_api_key
 API_BASE_URL = "https://www.alphavantage.co/query"
 
 # Maximum token size for responses (configurable via environment variable)
-MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '8192'))
+MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '32000'))
 
 # Module-level entitlement state (replaces globals() hack)
 _current_entitlement = None
+
+# Module-level full-response override state set by the tool wrapper
+_current_return_full_data = False
 
 # Pluggable response processor for large responses.
 # Signature: (response_text: str, datatype: str, estimated_tokens: int) -> dict | str
@@ -40,6 +43,19 @@ def estimate_tokens(data) -> int:
         return len(str(data)) // 4
 
 
+def _parse_response_text(response_text: str, datatype: str) -> dict | str:
+    if datatype == "json":
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError:
+            return response_text
+
+    try:
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        return response_text
+
+
 def _make_api_request(function_name: str, params: dict) -> dict | str:
     """Helper function to make API requests and handle responses.
 
@@ -57,6 +73,7 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
 
     # Handle entitlement parameter if present in params or module-level variable
     entitlement = api_params.get("entitlement") or _current_entitlement
+    return_full_data = api_params.pop("return_full_data", None) is True or _current_return_full_data is True
 
     if entitlement:
         api_params["entitlement"] = entitlement
@@ -76,25 +93,13 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
         # Check response size (works for both JSON and CSV)
         estimated_tokens = estimate_tokens(response_text)
 
-        # If response is within limits, return normally
-        if estimated_tokens <= MAX_RESPONSE_TOKENS:
-            if datatype == "json":
-                try:
-                    return json.loads(response_text)
-                except json.JSONDecodeError:
-                    return response_text
-            else:
-                return response_text
+        # If response is within limits or full data was explicitly requested, return normally
+        if estimated_tokens <= MAX_RESPONSE_TOKENS or return_full_data:
+            return _parse_response_text(response_text, datatype)
 
         # For large responses, delegate to response_processor if configured
         if _response_processor is not None:
             return _response_processor(response_text, datatype, estimated_tokens)
 
         # No processor configured — return data as-is
-        if datatype == "json":
-            try:
-                return json.loads(response_text)
-            except json.JSONDecodeError:
-                return response_text
-        else:
-            return response_text
+        return _parse_response_text(response_text, datatype)
