@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Raised the default `MAX_RESPONSE_TOKENS` response preview cap from 8,192 to 32,000.
 - Implemented the `return_full_data` parameter for all tools to opt into complete responses without preview truncation.
+- Updated the `return_full_data` docstring and preview note wording to recommend default full-data responses for capable clients.
 
 ## [0.3.2] - 2026-02-27
 

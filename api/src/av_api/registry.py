@@ -120,7 +120,7 @@ def add_return_full_data_parameter(func):
                 break
 
         if args_idx is not None:
-            return_full_data_doc = '        return_full_data: Set to true to return the complete response without preview truncation when the response exceeds the token limit'
+            return_full_data_doc = '        return_full_data: Set to true to return the complete response without preview truncation. Recommended default for clients that offload large tool results to files (e.g. Claude, Claude Code).'
             if returns_idx is not None:
                 lines.insert(returns_idx, return_full_data_doc)
                 lines.insert(returns_idx, "")
