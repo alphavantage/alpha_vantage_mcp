@@ -3,6 +3,13 @@ import inspect
 import functools
 from typing import Union, get_type_hints
 
+from loguru import logger
+
+from av_api.context import get_client_name, is_capable_client
+
+
+_RETURN_FULL_DATA_UNSET = object()
+
 # Module names that should have entitlement parameter added
 _ENTITLEMENT_MODULES = {
     "core_stock_apis",
@@ -120,7 +127,7 @@ def add_return_full_data_parameter(func):
                 break
 
         if args_idx is not None:
-            return_full_data_doc = '        return_full_data: Set to true to return the complete response without preview truncation. Recommended default for clients that offload large tool results to files (e.g. Claude, Claude Code).'
+            return_full_data_doc = '        return_full_data: Override the server default for full vs preview response. Defaults to true for clients that offload large tool results to files (Claude.ai, Claude Code, Claude Desktop); false for unknown clients. Pass true to force full data; pass false to force preview.'
             if returns_idx is not None:
                 lines.insert(returns_idx, return_full_data_doc)
                 lines.insert(returns_idx, "")
@@ -131,16 +138,31 @@ def add_return_full_data_parameter(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return_full_data = kwargs.pop('return_full_data', False)
+        raw = kwargs.pop('return_full_data', _RETURN_FULL_DATA_UNSET)
+        client_name = get_client_name()
 
-        if return_full_data is True:
+        if raw is _RETURN_FULL_DATA_UNSET:
+            caller_passed = False
+            effective = is_capable_client(client_name)
+        else:
+            caller_passed = True
+            effective = bool(raw)
+
+        logger.debug(
+            "return_full_data resolved: tool={tool} client={client} caller_passed={caller_passed} effective={effective}",
+            tool=func.__name__,
+            client=client_name,
+            caller_passed=caller_passed,
+            effective=effective,
+        )
+
+        if effective:
             import av_api.client
             av_api.client._current_return_full_data = True
             try:
-                result = func(*args, **kwargs)
+                return func(*args, **kwargs)
             finally:
                 av_api.client._current_return_full_data = False
-            return result
 
         return func(*args, **kwargs)
 

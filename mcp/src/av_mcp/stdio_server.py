@@ -16,9 +16,10 @@ from loguru import logger
 import mcp.server.stdio
 import mcp.types as types
 from mcp.server.lowlevel import NotificationOptions, Server
+from mcp.server.lowlevel.server import request_ctx
 from mcp.server.models import InitializationOptions
 
-from av_api.context import set_api_key
+from av_api.context import set_api_key, set_client_name
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
 from .tools.meta_tools import tool_list, tool_get, tool_call
 from .tools.registry import extract_description
@@ -117,6 +118,18 @@ class StdioMCPServer:
         async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
             """Handle meta-tool calls."""
             try:
+                # Pull the in-band clientInfo.name from the active MCP session so
+                # the API layer can pick an adaptive default for return_full_data
+                # per client capability. Best-effort: any missing piece leaves
+                # the client name unset (treated as unknown / preview default).
+                try:
+                    ctx = request_ctx.get()
+                    client_params = getattr(ctx.session, "client_params", None)
+                    client_info = getattr(client_params, "clientInfo", None)
+                    set_client_name(getattr(client_info, "name", None))
+                except (LookupError, AttributeError):
+                    set_client_name(None)
+
                 if name == "TOOL_LIST":
                     result = tool_list()
                 elif name == "TOOL_GET":

@@ -86,7 +86,7 @@ def _create_preview(
         "max_tokens_exceeded": True,
         "content_type": "text/csv" if effective_datatype == "csv" else "application/json",
         "message": f"This is a preview because the response exceeded the {MAX_RESPONSE_TOKENS} token limit. Full data ({estimated_tokens} tokens) {'unavailable.' if error else 'is available at data_url or by retrying this tool with return_full_data=true.'}",
-        "return_full_data_note": f"All tools support a return_full_data boolean parameter. If your client offloads large tool results to files for later inspection (e.g. Claude, Claude Code), default it to true to skip preview truncation. Otherwise, only set it when the user explicitly asks for full data or the preview is insufficient. Full data is {estimated_tokens} tokens.",
+        "return_full_data_note": f"All tools support a return_full_data boolean parameter. The server picks a default per detected client (full for clients that offload large tool results to files like Claude.ai / Claude Code / Claude Desktop, preview otherwise). To force behavior either way, pass return_full_data=true or return_full_data=false. Full data is {estimated_tokens} tokens.",
         "artifact_url": "https://mcp.alphavantage.co/artifacts",
         "artifact_note": "claude.ai artifacts can't fetch data_url due to CSP restrictions; users can paste artifact code into this page to render full data"
     }
