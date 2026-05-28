@@ -1,7 +1,7 @@
 import json
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
-from av_api.context import set_api_key, set_client_name
+from av_api.context import set_api_key
 from av_mcp.decorators import setup_custom_tool_decorator
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
 from av_mcp.tools.registry import register_meta_tools
@@ -87,12 +87,12 @@ def lambda_handler(event, context):
             "body": json.dumps({"error": "SSE not supported, use POST for MCP requests"})
         }
 
-    # Parse and log MCP method and params for analytics (after token parsing).
-    # Also set the detected client name so the API layer can pick an adaptive
-    # default for return_full_data per client capability.
+    # Parse and log MCP method and params for analytics (after token parsing)
     if method == "POST":
+        # Extract client platform information
         platform = extract_client_platform(event)
-        set_client_name(platform)
+
+        # Log MCP analytics
         parse_and_log_mcp_analytics(body, token, platform)
 
     # Handle MCP requests

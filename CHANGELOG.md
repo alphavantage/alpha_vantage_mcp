@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raised the default `MAX_RESPONSE_TOKENS` response preview cap from 8,192 to 32,000.
 - Implemented the `return_full_data` parameter for all tools to opt into complete responses without preview truncation.
 - Updated the `return_full_data` docstring and preview note wording to recommend default full-data responses for capable clients.
-- Adaptive default for `return_full_data`: server detects the MCP client (stdio `clientInfo.name`, Lambda `User-Agent`) and defaults the flag to `true` for any Claude-family client (matched by `"claude"` substring). Other clients keep the previous preview-on-overflow default; an explicit `return_full_data` from the caller always wins.
 
 ## [0.3.2] - 2026-02-27
 
