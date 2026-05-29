@@ -265,20 +265,20 @@ To connect a Foundry agent to this MCP server:
 2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
 3. Configure the MCP server with the following settings:
 
- - Unathenticated (recommended):
-   - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
-   - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
-     - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
-   - Authentication: Select **Unauthenticated**
+- Unathenticated (recommended):
+  - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+  - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
+    - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+  - Authentication: Select **Unauthenticated**
     
- - Key-based authentication (alternative):
-   - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
-   - Server URL: `https://mcp.alphavantage.co/mcp`
-   - Authentication: Select **Key-based authentication**
-   - Credential
-     - Click "Add key value pair"
-     - Key: `apikey`
-     - Value: Enter your Alpha Vantage API key
+- Key-based authentication (alternative):
+  - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+  - Server URL: `https://mcp.alphavantage.co/mcp`
+  - Authentication: Select **Key-based authentication**
+  - Credential
+    - Click "Add key value pair"
+    - Key: `apikey`
+    - Value: Enter your Alpha Vantage API key
    
 4. Click **Save** or **Add tool**
 5. If successful, the tools will appear under the agent's available tools list
