@@ -237,6 +237,55 @@ The example includes a complete setup guide and configuration templates.
 
 </details>
 
+<details>
+<summary><b>Configure in Microsoft Foundry Agent Service</b></summary>
+
+**Requirements:**
+- Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
+
+#### Microsoft Foundry Agent Service Connection
+
+To connect a Foundry agent to this MCP server:
+
+1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
+2. In the **Tools** section of the agent configuration, click **Add**, **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
+3. Configure the MCP server with the following settings:
+
+ - Unathenticated (recommended):
+   - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+   - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
+     - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+   - Authentication: Select **Unauthenticated**
+    
+ - Key-based authentication (alternative):
+   - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+   - Server URL: `https://mcp.alphavantage.co/mcp`
+   - Authentication: Select **Key-based authentication**
+   - Credential
+     - Click "Add key value pair"
+     - Key: `apikey`
+     - Value: Enter your Alpha Vantage API key
+   
+4. Click **Save** or **Add tool**
+5. If successful, the tools will appear under the agent's available tools list
+
+**Recommended Agent Instructions:**
+
+Add the following instruction to your agent's system prompt to optimize performance:
+
+```
+You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
+IMPORTANT: Alpha Vantage functions are accessed via wrapper tools:
+
+Use TOOL_LIST to see available functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.)
+Use TOOL_GET to retrieve the schema for a specific function before calling it
+Use TOOL_CALL with the format: TOOL_CALL(tool_name="FUNCTION_NAME", arguments={...})
+Example: TOOL_CALL(tool_name="TIME_SERIES_DAILY", arguments={"symbol": "IBM", "outputsize": "compact"})
+
+Always use Alpha Vantage MCP Server for market data queries. Do not answer from prior knowledge or web search.
+```
+</details>
+
 &nbsp;
 
 💻💵 _Code up fintech apps_
@@ -390,6 +439,57 @@ Open the Chat view and select Agent mode
 
 </details>
 
+<details>
+  
+<summary><b>Install in Continue (Extension for VS Code, JetBrains)</b></summary>
+
+See [Continue MCP docs](https://docs.continue.dev/customize/deep-dives/mcp) for more information. Continue uses its own configuration format (not VS Code's mcp.json).
+
+Create `.continue/mcpServers/alphavantage.yaml` in your workspace, and paste into it one of the following configurations, depending on whether you’re connecting remotely or running the server locally. (Recommended: Remote)
+
+#### Continue Remote Server Connection
+
+Paste the following into `.continue/mcpServers/alphavantage.yaml`:
+
+```yaml
+name: Alpha Vantage MCP Server
+version: 1.0
+schema: v1
+mcpServers:
+  - name: alphavantage
+    type: streamable-http
+    url: https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+#### Continue Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then, paste the following into `.continue/mcpServers/alphavantage.yaml`:
+
+```yaml
+name: Alpha Vantage MCP Server
+version: 1.0
+schema: v1
+mcpServers:
+  - name: alphavantage
+    type: stdio
+    command: uvx
+    args:
+      - marketdata-mcp-server
+      - YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Open the Continue panel and select Agent mode. Set up your LLM provider.
+</details>
 
 <details>
 <summary><b>Install in Cursor</b></summary>
