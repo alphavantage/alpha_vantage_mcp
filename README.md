@@ -160,6 +160,20 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
   
 </details>
 
+<details>
+<summary><b>Install in Grok</b></summary>
+
+**Requirements:**
+- SuperGrok (or higher tier)
+
+**Setup:**
+1. Click the `+` button → **Connectors** → **Add connector** → **Custom**
+2. **Name**: Alpha Vantage MCP Server (or whatever you prefer)
+3. **Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
+4. Click **Add Connector**
+  
+</details>
+
 &nbsp;
 
 🤖📈 _Create agentic workflows for quantitative investing_
@@ -248,7 +262,7 @@ The example includes a complete setup guide and configuration templates.
 To connect a Foundry agent to this MCP server:
 
 1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
-2. In the **Tools** section of the agent configuration, click **Add**, **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
+2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
 3. Configure the MCP server with the following settings:
 
  - Unathenticated (recommended):
