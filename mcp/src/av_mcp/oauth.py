@@ -154,7 +154,7 @@ def show_authorization_form(query_params: dict) -> dict:
     query_string = urllib.parse.urlencode(oauth_params)
     
     # Read the external HTML file
-    html_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'authorization.html')
+    html_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'authorization.html')
     try:
         with open(html_file_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
@@ -263,7 +263,7 @@ def show_authorization_form_with_error(query_params: dict, error_message: str) -
     query_string = urllib.parse.urlencode(oauth_params)
     
     # Read the external HTML file
-    html_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'authorization.html')
+    html_file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'authorization.html')
     try:
         with open(html_file_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
