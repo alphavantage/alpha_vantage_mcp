@@ -29,6 +29,16 @@ Parameters:
   CdnDomain:
     Type: String
     Description: CDN domain for public access
+  JwtSecretKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: HS256 signing key for OAuth token envelopes (sourced from config/SSM)
+  AvApikeyEncKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Fernet key for field-encrypting the Alpha Vantage apikey claim (sourced from config/SSM)
 
 Resources:
   # S3 bucket for static files
@@ -183,6 +193,8 @@ Resources:
           DOMAIN_NAME: !Ref DomainName
           CDN_BUCKET_NAME: !Ref CdnBucketName
           CDN_DOMAIN: !Ref CdnDomain
+          JWT_SECRET_KEY: !Ref JwtSecretKey
+          AV_APIKEY_ENC_KEY: !Ref AvApikeyEncKey
 
 Outputs:
   MCPApi:

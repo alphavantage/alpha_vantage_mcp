@@ -78,6 +78,8 @@ jobs:
           [ -n "$STATIC_FILES_BUCKET" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES StaticFilesBucket=$STATIC_FILES_BUCKET"
           [ -n "$CDN_BUCKET_NAME" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES CdnBucketName=$CDN_BUCKET_NAME"
           [ -n "$CDN_DOMAIN" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES CdnDomain=$CDN_DOMAIN"
+          [ -n "$JWT_SECRET_KEY" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES JwtSecretKey=$JWT_SECRET_KEY"
+          [ -n "$AV_APIKEY_ENC_KEY" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES AvApikeyEncKey=$AV_APIKEY_ENC_KEY"
           if [ -n "$PARAM_OVERRIDES" ]; then
             sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides $PARAM_OVERRIDES
           else
