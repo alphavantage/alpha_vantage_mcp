@@ -54,19 +54,19 @@ To connect Claude (Web or Desktop) to this MCP server:
 
 [![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/tyl9E7fddvU/maxresdefault.jpg)](https://www.youtube.com/watch?v=tyl9E7fddvU)
 
-**Query Param Option (Recommended):**
-1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
-2. Click "Add Custom Connector"
-3. Add the MCP server URL with your API key: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
-4. Click "Connect"
-
-**OAuth Option:**
+**OAuth Option (Recommended):**
 1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
 2. Click "Add Custom Connector"
 3. Add the MCP server URL: `https://mcp.alphavantage.co/mcp`
 4. Click "Connect"
-5. Enter your Alpha Vantage API token
+5. Enter your Alpha Vantage API key
 6. Click "Authorize Access"
+
+**API Key in URL (Alternative):**
+1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
+2. Click "Add Custom Connector"
+3. Add the MCP server URL with your API key: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
+4. Click "Connect"
 
 #### Claude Local Server Connection
 See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
@@ -112,6 +112,13 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 [![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
 
 **Setup:**
+1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
+2. Click on **Advanced settings →** enable **Developer mode**
+3. Return to the **Apps** submenu, then click **Create app**.
+4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp`
+5. **Authentication:** OAuth. When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
+
+**Alternative (API key in URL):**
 1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
 2. Click on **Advanced settings →** enable **Developer mode**
 3. Return to the **Apps** submenu, then click **Create app**.
