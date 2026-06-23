@@ -37,8 +37,9 @@ ALLOWED_REDIRECT_HOSTS = {
     "chatgpt.com",  # ChatGPT connector callback (per-connector path)
     "chat.openai.com",
 }
-# Base domains whose apex AND any subdomain are allowed (https only). Manufact /
-# mcp-use owns *.manufact.com — cloud connector, inspector, preview envs, etc.
+# Base domains whose apex and any subdomain are allowed (https only).
+# mcp-use (Manufact) owns *.manufact.com: cloud connector, inspector, and
+# preview environments all authenticate against this server.
 ALLOWED_REDIRECT_DOMAINS = {
     "manufact.com",
 }
