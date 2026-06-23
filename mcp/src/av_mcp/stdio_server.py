@@ -78,7 +78,7 @@ META_TOOLS = [
                 },
                 "arguments": {
                     "type": "object",
-                    "description": "Dictionary of arguments matching the tool's parameter schema from TOOL_GET"
+                    "description": "Dictionary of arguments matching the tool's parameter schema"
                 }
             },
             "required": ["tool_name", "arguments"]
