@@ -8,7 +8,7 @@ The official Alpha Vantage API MCP server enables LLMs and agentic workflows to 
 
 To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
 
-⚡ We use an optimization technique called [**Progressive Tool Discovery**](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/docs/progressive-discovery.md) to minimize the number of tokens consumed (hence the cost incurred) while preserving the superb response quality when the MCP server is invoked. You can learn more about this technique [here](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/docs/progressive-discovery.md)
+The Alpha Vantage functions are exposed directly as MCP tools. MCP clients discover the available tools with `tools/list` and invoke them with `tools/call`.
 
 ⭐ View MCP source code on [Github](https://github.com/alphavantage/alpha_vantage_mcp)
 
