@@ -15,10 +15,16 @@ from av_api.registry import (  # noqa: F401
 def register_meta_tools(mcp):
     """Register only the meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) for progressive discovery."""
     from mcp.types import ToolAnnotations
-    from av_mcp.tools.meta_tools import tool_list, tool_get, tool_call
+    from av_mcp.tools.meta_tools import (
+        META_TOOL_OPEN_WORLD_HINT,
+        tool_list,
+        tool_get,
+        tool_call,
+    )
 
     # Each meta-tool gets a human-readable `title` annotation (Software Directory
-    # Policy 5.E) in addition to readOnlyHint/destructiveHint.
+    # Policy 5.E) plus behavior hints. All are read-only and non-destructive;
+    # openWorldHint varies per tool (only TOOL_CALL reaches the public internet).
     meta_tools = [
         (tool_list, "List Alpha Vantage Tools"),
         (tool_get, "Get Alpha Vantage Tool Schema"),
@@ -29,5 +35,6 @@ def register_meta_tools(mcp):
             title=title,
             readOnlyHint=True,
             destructiveHint=False,
+            openWorldHint=META_TOOL_OPEN_WORLD_HINT[func.__name__.upper()],
         )
         mcp.tool(annotations=annotations)(func)

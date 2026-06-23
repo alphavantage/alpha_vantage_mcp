@@ -7,6 +7,17 @@ import json
 from av_mcp.tools.registry import get_tool_list, get_tool_schema, get_tool_schemas, call_tool
 
 
+# MCP behavior hints (openWorldHint) per meta-tool, shared by the stdio and Lambda
+# registration paths. TOOL_LIST/TOOL_GET only read the in-process tool registry (no
+# network); TOOL_CALL proxies to Alpha Vantage data tools that fetch market data over
+# the public internet. All three are read-only and non-destructive.
+META_TOOL_OPEN_WORLD_HINT = {
+    "TOOL_LIST": False,
+    "TOOL_GET": False,
+    "TOOL_CALL": True,
+}
+
+
 def tool_list() -> list[dict]:
     """
     Lists the available Alpha Vantage API tools, returning each tool's name and short

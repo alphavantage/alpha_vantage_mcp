@@ -20,16 +20,26 @@ from mcp.server.models import InitializationOptions
 
 from av_api.context import set_api_key
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
-from .tools.meta_tools import tool_list, tool_get, tool_call
+from .tools.meta_tools import (
+    META_TOOL_OPEN_WORLD_HINT,
+    tool_list,
+    tool_get,
+    tool_call,
+)
 from .tools.registry import extract_description
 
 
 # Meta-tool definitions for progressive discovery
-# Descriptions are derived from meta_tools.py docstrings
-_META_ANNOTATIONS = types.ToolAnnotations(
-    readOnlyHint=True,
-    destructiveHint=False,
-)
+# Descriptions are derived from meta_tools.py docstrings. All meta-tools are
+# read-only and non-destructive; openWorldHint varies per tool (see
+# META_TOOL_OPEN_WORLD_HINT) since only TOOL_CALL reaches the public internet.
+def _meta_annotations(tool_name: str) -> types.ToolAnnotations:
+    return types.ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        openWorldHint=META_TOOL_OPEN_WORLD_HINT[tool_name],
+    )
+
 
 META_TOOLS = [
     types.Tool(
@@ -40,7 +50,7 @@ META_TOOLS = [
             "properties": {},
             "required": []
         },
-        annotations=_META_ANNOTATIONS,
+        annotations=_meta_annotations("TOOL_LIST"),
     ),
     types.Tool(
         name="TOOL_GET",
@@ -64,7 +74,7 @@ META_TOOLS = [
             },
             "required": ["tool_name"]
         },
-        annotations=_META_ANNOTATIONS,
+        annotations=_meta_annotations("TOOL_GET"),
     ),
     types.Tool(
         name="TOOL_CALL",
@@ -83,7 +93,7 @@ META_TOOLS = [
             },
             "required": ["tool_name", "arguments"]
         },
-        annotations=_META_ANNOTATIONS,
+        annotations=_meta_annotations("TOOL_CALL"),
     )
 ]
 

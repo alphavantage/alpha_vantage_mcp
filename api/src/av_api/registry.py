@@ -15,6 +15,15 @@ _ENTITLEMENT_MODULES = {
 # Individual tools that should have entitlement parameter added (by function name)
 _ENTITLEMENT_TOOLS = {"top_gainers_losers"}
 
+# MCP behavior hints shared by every Alpha Vantage data tool. They all fetch
+# market data over the public internet and never modify user data, so the hints
+# are identical across tools (single DRY source instead of per-tool duplication).
+DATA_TOOL_ANNOTATIONS = {
+    "readOnlyHint": True,
+    "destructiveHint": False,
+    "openWorldHint": True,
+}
+
 # Tool registries
 _all_tools_registry = []  # List of all tools across all modules
 _tools_by_name = {}  # Maps uppercase tool name to function
@@ -346,6 +355,7 @@ def get_tool_schema(tool_name: str) -> dict:
         "name": tool_name_upper,
         "description": func.__doc__ or f"Execute {func.__name__}",
         "parameters": _build_parameter_schema(func),
+        "annotations": dict(DATA_TOOL_ANNOTATIONS),
     }
 
 
@@ -378,6 +388,7 @@ def get_tool_schemas(tool_names: list[str]) -> list[dict]:
             "name": tool_name_upper,
             "description": func.__doc__ or f"Execute {func.__name__}",
             "parameters": _build_parameter_schema(func),
+            "annotations": dict(DATA_TOOL_ANNOTATIONS),
         })
 
     if not_found:
