@@ -14,6 +14,9 @@
 .env.bak
 .env*
 
+# Generated env files (derived from .github/config-*.json)
+env/
+
 # Python-generated files
 __pycache__/
 *.py[oc]
