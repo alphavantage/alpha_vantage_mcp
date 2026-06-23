@@ -22,6 +22,8 @@ from av_api.context import set_api_key
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
 from .tools.meta_tools import (
     META_TOOL_OPEN_WORLD_HINT,
+    META_TOOL_OUTPUT_SCHEMA,
+    build_structured_content,
     tool_list,
     tool_get,
     tool_call,
@@ -50,6 +52,7 @@ META_TOOLS = [
             "properties": {},
             "required": []
         },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_LIST"],
         annotations=_meta_annotations("TOOL_LIST"),
     ),
     types.Tool(
@@ -74,6 +77,7 @@ META_TOOLS = [
             },
             "required": ["tool_name"]
         },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_GET"],
         annotations=_meta_annotations("TOOL_GET"),
     ),
     types.Tool(
@@ -93,6 +97,7 @@ META_TOOLS = [
             },
             "required": ["tool_name", "arguments"]
         },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_CALL"],
         annotations=_meta_annotations("TOOL_CALL"),
     )
 ]
@@ -124,8 +129,15 @@ class StdioMCPServer:
             return META_TOOLS
 
         @self.server.call_tool()
-        async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
-            """Handle meta-tool calls."""
+        async def handle_call_tool(
+            name: str, arguments: dict[str, Any]
+        ) -> tuple[list[types.TextContent], dict[str, Any]]:
+            """Handle meta-tool calls.
+
+            Returns both unstructured text content and structuredContent matching the
+            tool's declared outputSchema (the lowlevel server validates the latter).
+            Exceptions propagate to the lowlevel handler, which renders an isError result.
+            """
             try:
                 if name == "TOOL_LIST":
                     result = tool_list()
@@ -142,16 +154,17 @@ class StdioMCPServer:
                     result = tool_call(tool_name, tool_args)
                 else:
                     raise ValueError(f"Unknown tool: {name}")
-
-                # Convert result to text content
-                if isinstance(result, str):
-                    return [types.TextContent(type="text", text=result)]
-                else:
-                    return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
             except Exception as e:
+                # Re-raise so the lowlevel server builds a proper isError CallToolResult
+                # instead of a text body that would fail outputSchema validation.
                 logger.error(f"Error calling tool {name}: {e}")
-                return [types.TextContent(type="text", text=f"Error: {str(e)}")]
+                raise
+
+            # Unstructured text (back-compat) + structuredContent (matches outputSchema)
+            text = result if isinstance(result, str) else json.dumps(result, indent=2)
+            content = [types.TextContent(type="text", text=text)]
+            structured = build_structured_content(name, result)
+            return content, structured
     
     async def run(self):
         """Run the low-level server"""

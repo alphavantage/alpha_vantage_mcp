@@ -11,12 +11,19 @@ Semantics:
 - openWorldHint=False for TOOL_LIST/TOOL_GET (in-process registry reads only).
 - openWorldHint=True for TOOL_CALL and every data tool (fetch over the public internet).
 """
+import jsonschema
 import pytest
 
 from av_api.registry import DATA_TOOL_ANNOTATIONS, get_tool_schema, get_tool_schemas
 from av_mcp.stdio_server import META_TOOLS
-from av_mcp.tools.meta_tools import META_TOOL_OPEN_WORLD_HINT
+from av_mcp.tools.meta_tools import (
+    META_TOOL_OPEN_WORLD_HINT,
+    META_TOOL_OUTPUT_SCHEMA,
+    build_structured_content,
+)
 from av_mcp.tools.registry import register_meta_tools
+
+META_TOOL_NAMES = ("TOOL_LIST", "TOOL_GET", "TOOL_CALL")
 
 DATA_TOOL_SAMPLE = [
     "TIME_SERIES_DAILY",
@@ -69,6 +76,50 @@ def test_lambda_meta_tool_annotations():
             schema["annotations"],
             open_world=META_TOOL_OPEN_WORLD_HINT[name],
         )
+
+
+@pytest.mark.parametrize("tool", META_TOOLS, ids=lambda t: t.name)
+def test_stdio_meta_tool_output_schema(tool):
+    """Each stdio meta-tool declares the shared outputSchema (a valid object schema)."""
+    assert tool.outputSchema is not None, f"{tool.name} missing outputSchema"
+    assert tool.outputSchema == META_TOOL_OUTPUT_SCHEMA[tool.name]
+    assert tool.outputSchema["type"] == "object", f"{tool.name} outputSchema must be object"
+    jsonschema.Draft7Validator.check_schema(tool.outputSchema)
+
+
+def test_lambda_meta_tool_output_schema():
+    """Lambda registration carries outputSchema on each meta-tool (surfaced in tools/list)."""
+    class _FakeMCP:
+        def __init__(self):
+            self.tools = {}
+            self.tool_implementations = {}
+
+    from av_mcp.decorators import setup_custom_tool_decorator
+
+    mcp = _FakeMCP()
+    setup_custom_tool_decorator(mcp)
+    register_meta_tools(mcp)
+
+    for name in META_TOOL_NAMES:
+        schema = mcp.tools[name]
+        assert "outputSchema" in schema, f"{name} missing outputSchema"
+        assert schema["outputSchema"] == META_TOOL_OUTPUT_SCHEMA[name]
+
+
+@pytest.mark.parametrize(
+    "tool_name, raw",
+    [
+        ("TOOL_LIST", [{"name": "GLOBAL_QUOTE", "description": "desc"}]),
+        ("TOOL_GET", {"name": "GLOBAL_QUOTE", "description": "desc", "parameters": {}}),
+        ("TOOL_GET", [{"name": "A", "description": "x"}, {"name": "B", "description": "y"}]),
+        ("TOOL_CALL", '{"Global Quote": {"price": "1.0"}}'),
+        ("TOOL_CALL", "plain non-json string preview"),
+    ],
+)
+def test_structured_content_validates_against_output_schema(tool_name, raw):
+    """structuredContent built for a meta-tool result validates against its outputSchema."""
+    structured = build_structured_content(tool_name, raw)
+    jsonschema.validate(instance=structured, schema=META_TOOL_OUTPUT_SCHEMA[tool_name])
 
 
 @pytest.mark.parametrize("tool_name", DATA_TOOL_SAMPLE)

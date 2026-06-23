@@ -4,7 +4,16 @@ from loguru import logger
 from av_api.context import set_api_key
 from av_mcp.decorators import setup_custom_tool_decorator
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
-from av_mcp.tools.registry import register_meta_tools
+from av_mcp.tools.registry import (
+    register_meta_tools,
+    get_tool_list,
+    get_tool_schema,
+    get_tool_schemas,
+)
+from av_mcp.tools.meta_tools import (
+    META_TOOL_OUTPUT_SCHEMA,
+    build_structured_content,
+)
 from av_mcp.utils import (
     parse_token_from_request,
     create_oauth_error_response,
@@ -37,6 +46,61 @@ def oauth_misconfig_response() -> dict:
             }
         ),
     }
+
+
+def _meta_tool_structured(tool_name: str, arguments: dict, content: list) -> dict | None:
+    """Build a meta-tool call's structuredContent (matching its declared outputSchema).
+
+    TOOL_LIST/TOOL_GET re-read the in-process tool registry (pure, no network). TOOL_CALL
+    reuses the already-computed text content (which reflects large-response processing)
+    instead of re-running the proxied data tool.
+    """
+    if tool_name == "TOOL_LIST":
+        return build_structured_content(tool_name, get_tool_list())
+    if tool_name == "TOOL_GET":
+        tn = arguments.get("tool_name")
+        if not tn:
+            return None
+        raw = get_tool_schemas(tn) if isinstance(tn, list) else get_tool_schema(tn)
+        return build_structured_content(tool_name, raw)
+    # TOOL_CALL: derive from the returned text content.
+    text = next(
+        (c.get("text") for c in content if isinstance(c, dict) and c.get("type") == "text"),
+        None,
+    )
+    if text is None:
+        return None
+    return build_structured_content(tool_name, text)
+
+
+def add_meta_tool_structured_content(parsed_request: dict, response: dict) -> None:
+    """Inject structuredContent into a tools/call response (in place).
+
+    The awslabs handler only emits `content`, but each meta-tool declares an outputSchema,
+    and MCP requires structuredContent whenever outputSchema is declared.
+    """
+    if not isinstance(parsed_request, dict) or parsed_request.get("method") != "tools/call":
+        return
+    params = parsed_request.get("params") or {}
+    tool_name = params.get("name")
+    if tool_name not in META_TOOL_OUTPUT_SCHEMA:
+        return
+    try:
+        resp_body = json.loads(response["body"])
+    except (json.JSONDecodeError, TypeError, KeyError):
+        return
+    result = resp_body.get("result")
+    if (
+        not isinstance(result, dict)
+        or "content" not in result
+        or "structuredContent" in result
+    ):
+        return
+    structured = _meta_tool_structured(tool_name, params.get("arguments") or {}, result["content"])
+    if structured is None:
+        return
+    result["structuredContent"] = structured
+    response["body"] = json.dumps(resp_body)
 
 
 def normalize_content_type_header(event):
@@ -172,18 +236,27 @@ def lambda_handler(event, context):
 
     response = mcp.handle_request(event, context)
 
-    # Remove resources capability from initialize response
-    # (MCPLambdaHandler hardcodes it, but we only provide tools)
+    # Post-process the response:
+    # - initialize: drop the resources capability (MCPLambdaHandler hardcodes it, we only
+    #   provide tools).
+    # - tools/call: add structuredContent for meta-tools (the awslabs handler emits only
+    #   `content`, but each meta-tool declares an outputSchema).
     if method == "POST" and body:
         try:
             parsed = json.loads(body) if isinstance(body, str) else body
+        except (json.JSONDecodeError, TypeError):
+            parsed = None
+        if isinstance(parsed, dict):
             if parsed.get("method") == "initialize":
-                resp_body = json.loads(response["body"])
-                resp_body.get("result", {}).get("capabilities", {}).pop(
-                    "resources", None
-                )
-                response["body"] = json.dumps(resp_body)
-        except (json.JSONDecodeError, TypeError, KeyError):
-            pass
+                try:
+                    resp_body = json.loads(response["body"])
+                    resp_body.get("result", {}).get("capabilities", {}).pop(
+                        "resources", None
+                    )
+                    response["body"] = json.dumps(resp_body)
+                except (json.JSONDecodeError, TypeError, KeyError):
+                    pass
+            elif parsed.get("method") == "tools/call":
+                add_meta_tool_structured_content(parsed, response)
 
     return response

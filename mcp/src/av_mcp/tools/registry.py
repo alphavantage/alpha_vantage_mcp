@@ -17,6 +17,7 @@ def register_meta_tools(mcp):
     from mcp.types import ToolAnnotations
     from av_mcp.tools.meta_tools import (
         META_TOOL_OPEN_WORLD_HINT,
+        META_TOOL_OUTPUT_SCHEMA,
         tool_list,
         tool_get,
         tool_call,
@@ -31,10 +32,14 @@ def register_meta_tools(mcp):
         (tool_call, "Call Alpha Vantage Tool"),
     ]
     for func, title in meta_tools:
+        tool_name = func.__name__.upper()
         annotations = ToolAnnotations(
             title=title,
             readOnlyHint=True,
             destructiveHint=False,
-            openWorldHint=META_TOOL_OPEN_WORLD_HINT[func.__name__.upper()],
+            openWorldHint=META_TOOL_OPEN_WORLD_HINT[tool_name],
         )
-        mcp.tool(annotations=annotations)(func)
+        mcp.tool(
+            annotations=annotations,
+            output_schema=META_TOOL_OUTPUT_SCHEMA[tool_name],
+        )(func)
