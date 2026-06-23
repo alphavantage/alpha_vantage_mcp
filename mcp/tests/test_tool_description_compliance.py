@@ -3,8 +3,8 @@
 The connector compliance rule requires that tool descriptions contain no instructions
 about model behavior, no references to other tools, and no external-instruction-source
 references. These tests assert the forbidden substrings are absent from every description
-surfaced to the model: the 3 meta-tool descriptions, the META_TOOLS schemas, and a sample
-of data-tool schemas.
+surfaced to the model: the real Alpha Vantage tool list (stdio build_tools) and a sample of
+data-tool schemas.
 
 Scope is the ``description`` fields only. Example argument VALUES (e.g. "TIME_SERIES_DAILY")
 are allowed in parameter descriptions and are intentionally not matched by the forbidden set.
@@ -13,12 +13,10 @@ import re
 
 import pytest
 
-from av_api.registry import extract_description, get_tool_schema
-from av_mcp.stdio_server import META_TOOLS
-from av_mcp.tools.meta_tools import tool_call, tool_get, tool_list
+from av_api.registry import get_tool_schema
+from av_mcp.stdio_server import build_tools
 
-# Case-insensitive forbidden patterns. Note: the META_TOOLS *name* fields are
-# "TOOL_LIST"/"TOOL_GET"/"TOOL_CALL"; only the description fields are checked here.
+# Case-insensitive forbidden patterns.
 FORBIDDEN_PATTERNS = [
     re.compile(r"important", re.IGNORECASE),
     re.compile(r"you must", re.IGNORECASE),
@@ -60,15 +58,11 @@ def _collect_descriptions(schema: dict) -> list[tuple[str, str]]:
     return descriptions
 
 
-@pytest.mark.parametrize(
-    "func", [tool_list, tool_get, tool_call], ids=lambda f: f.__name__
-)
-def test_meta_tool_extracted_description_is_clean(func):
-    _assert_clean(func.__name__, extract_description(func))
-
-
-def test_meta_tool_schemas_are_clean():
-    for tool in META_TOOLS:
+def test_listed_tool_descriptions_are_clean():
+    """Every real tool surfaced over stdio has compliant descriptions."""
+    tools = build_tools()
+    assert len(tools) > 50
+    for tool in tools:
         schema = {
             "name": tool.name,
             "description": tool.description,

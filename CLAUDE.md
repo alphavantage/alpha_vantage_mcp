@@ -7,7 +7,7 @@ Official MCP server exposing Alpha Vantage financial data APIs (100+ endpoints) 
 Monorepo using `uv` workspace:
 
 - `api/` — Shared API client library (`alphavantage-core`): HTTP client, tool registry, context vars
-- `mcp/` — MCP server (stdio + Lambda HTTP): progressive discovery, OAuth 2.0, meta-tools
+- `mcp/` — MCP server (stdio + Lambda HTTP): direct tool exposure, OAuth 2.0
 - `cli/` — CLI tool (`marketdata-cli`): terminal access via Click
 - `analytics/` — AWS analytics pipeline: log compaction, CloudWatch → S3 → Athena
 - `examples/agent/` — OpenAI Agents example with session persistence
@@ -34,8 +34,8 @@ uv run pytest                              # Run tests
 
 ## Key Patterns
 
-### Progressive Discovery
-Only 3 meta-tools exposed (not 50+): `TOOL_LIST`, `TOOL_GET`, `TOOL_CALL`. Reduces initial context from ~25K to ~500 tokens. Tools loaded on-demand.
+### Direct Tool Exposure
+All ~100 real Alpha Vantage tools are listed directly as normal MCP tools in both the stdio and Lambda paths, with direct `tools/call` dispatch. Clients do their own (client-side) discovery over the listed tools. Each tool carries behavior hints (readOnly/destructive/openWorld), a derived human-readable title, and a permissive outputSchema (with matching structuredContent).
 
 ### Tool Definition
 - Tools defined with `@tool` decorator in `api/src/av_api/tools/` by category
@@ -70,8 +70,8 @@ cd web && npm run deploy                   # Cloudflare (web)
 
 ## Key Files
 
-- `mcp/src/av_mcp/tools/registry.py` — Tool registry and meta-tool registration
-- `mcp/src/av_mcp/tools/meta_tools.py` — Progressive discovery (TOOL_LIST/GET/CALL)
+- `mcp/src/av_mcp/tools/registry.py` — Tool registry and `register_all_tools` (Lambda path)
+- `mcp/src/av_mcp/stdio_server.py` — stdio server; `build_tools()` lists the real tools
 - `mcp/src/av_mcp/decorators.py` — Custom @tool decorator
 - `api/src/av_api/client.py` — HTTP client
 - `api/src/av_api/registry.py` — Tool registry with lazy loading

@@ -243,10 +243,9 @@ Add the following instruction to your agent's configuration to optimize performa
 ```
 You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
 
-IMPORTANT: Alpha Vantage functions are accessed via wrapper tools:
-- Use TOOL_LIST to see available functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.)
-- Use TOOL_CALL with the format: TOOL_CALL(tool_name="FUNCTION_NAME", arguments={...})
-- Example: TOOL_CALL(tool_name="TIME_SERIES_DAILY", arguments={"symbol": "AAPL", "outputsize": "compact"})
+The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
+directly as MCP tools. Call them by name with their parameters, e.g.
+TIME_SERIES_DAILY(symbol="AAPL", outputsize="compact").
 ```
 </details>
 
@@ -298,12 +297,10 @@ Add the following instruction to your agent's system prompt to optimize performa
 
 ```
 You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
-IMPORTANT: Alpha Vantage functions are accessed via wrapper tools:
 
-Use TOOL_LIST to see available functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.)
-Use TOOL_GET to retrieve the schema for a specific function before calling it
-Use TOOL_CALL with the format: TOOL_CALL(tool_name="FUNCTION_NAME", arguments={...})
-Example: TOOL_CALL(tool_name="TIME_SERIES_DAILY", arguments={"symbol": "IBM", "outputsize": "compact"})
+The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
+directly as MCP tools. Call them by name with their parameters, e.g.
+TIME_SERIES_DAILY(symbol="IBM", outputsize="compact").
 
 Always use Alpha Vantage MCP Server for market data queries. Do not answer from prior knowledge or web search.
 ```
@@ -643,7 +640,7 @@ Below are four example prompts and Claude's expected responses when using the MC
 **Prompt:** “Give me last week’s OHLCV data for IBM”
 
 Expected Behavior:
-- Claude will use progressive discovery to find and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
+- Claude will select and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
 - Claude will make the necessary request to the TIME_SERIES_DAILY function and receive the relevant response.
 - Claude will then respond directly in the chat interface with both text and image content:
 
@@ -662,7 +659,7 @@ IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of 
 **Prompt:** “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
 
 Expected Behavior: 
-- Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
+- Claude will select and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
 - Claude will make two separate requests, one to the TIME_SERIES_INTRADAY function and one to the RSI function. Claude will receive the relevant responses.
 - Claude will then make an HTML artifact with the requested visualizations:
   
@@ -677,7 +674,7 @@ Expected Behavior:
 **Prompt:** “Help me visualize AAPL’s earnings surprise trends for the past 4 quarters. Compare actual EPS to analyst estimates”
 
 Expected Behavior:
-- Claude will use progressive discovery to find and invoke the correct tool, in this case the EARNINGS function.
+- Claude will select and invoke the correct tool, in this case the EARNINGS function.
 - Claude will make the necessary request to the EARNINGS function and receive the relevant response.
 - Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
 
@@ -690,7 +687,7 @@ Expected Behavior:
 **Prompt:** “Compare gold, silver, and Bitcoin performance over the past 5 years”
 
 Expected Behavior: 
-- Claude will use progressive discovery to find and invoke the correct tools, in this case the TIME_SERIES_MONTHLY function and the DIGITAL_CURRENCY_MONTHLY function.
+- Claude will select and invoke the correct tools, in this case the TIME_SERIES_MONTHLY function and the DIGITAL_CURRENCY_MONTHLY function.
 - Claude will make three separate requests, one to the TIME_SERIES_INTRADAY function using the GLD symbol, one to the TIME_SERIES_INTRADAY function using the SLV symbol, and one to the DIGITAL_CURRENCY_MONTHLY function using the BTC symbol. Claude will receive the relevant responses.
 - Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
 
@@ -700,7 +697,7 @@ Expected Behavior:
 
 ## Tools Reference
 
-**Note:** The tools listed below are accessed through the MCP server's `TOOL_CALL` wrapper function.
+**Note:** The tools listed below are exposed directly as MCP tools and can be called by name.
 
 | Category | Tools |
 |----------|-------|

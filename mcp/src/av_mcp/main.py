@@ -11,8 +11,7 @@ import click
 def serve(api_key, api_key_option, verbose):
     """Start MCP server (stdio transport).
 
-    Uses progressive discovery mode with meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL).
-    LLMs can discover and call specific tools on-demand without flooding the context.
+    Exposes the full catalog of Alpha Vantage data tools directly as normal MCP tools.
 
     Examples:
       marketdata-mcp-server YOUR_API_KEY
@@ -38,9 +37,9 @@ def serve(api_key, api_key_option, verbose):
         print("   or: ALPHA_VANTAGE_API_KEY=YOUR_KEY marketdata-mcp-server", file=sys.stderr)
         sys.exit(1)
 
-    # Create and run server with progressive discovery
+    # Create and run server exposing the full Alpha Vantage tool catalog
     if verbose:
-        logger.info("Starting Alpha Vantage MCP Server (stdio) with progressive discovery")
+        logger.info("Starting Alpha Vantage MCP Server (stdio)")
     server = StdioMCPServer(api_key, verbose)
 
     try:

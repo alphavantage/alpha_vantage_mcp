@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import functools
+import json
 from typing import Union, get_type_hints
 
 # Module names that should have entitlement parameter added
@@ -23,6 +24,61 @@ DATA_TOOL_ANNOTATIONS = {
     "destructiveHint": False,
     "openWorldHint": True,
 }
+
+# Generic permissive outputSchema shared by every data tool. Their payloads are
+# dynamic per-endpoint (JSON object, occasionally CSV/array, or a preview dict for
+# large responses), so a single permissive object schema is the only DRY contract
+# that fits all of them. MCP requires matching structuredContent whenever an
+# outputSchema is declared; build_data_structured_content() produces it from the
+# tool's already-returned result (single source so schema + content never drift).
+DATA_TOOL_OUTPUT_SCHEMA = {"type": "object", "additionalProperties": True}
+
+
+def build_data_structured_content(raw) -> dict:
+    """Wrap a data tool's raw return value into the object shape DATA_TOOL_OUTPUT_SCHEMA declares.
+
+    ``raw`` is whatever ``call_tool`` returned (already preview-truncated by the response
+    processor for large responses) — this never re-fetches, so the large-response S3
+    offload behaviour is preserved. JSON-object payloads (and preview dicts) pass through;
+    JSON strings are parsed back to objects when possible; everything else is wrapped under
+    ``result`` so structuredContent is always a JSON object.
+    """
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except (json.JSONDecodeError, ValueError):
+            return {"result": raw}
+        return parsed if isinstance(parsed, dict) else {"result": parsed}
+    return {"result": raw}
+
+
+# Acronyms / indicator codes that must stay uppercase in a derived title. str.title()
+# would mangle them (RSI -> "Rsi", SMA -> "Sma", MACD -> "Macd"). Title is a display-only
+# hint, so this set only needs the all-caps tokens that appear in tool names; everything
+# else (TIME, SERIES, DAILY, ...) is an English word and title-cases correctly.
+_TITLE_ACRONYMS = frozenset({
+    "AD", "ADOSC", "ADX", "ADXR", "APO", "AROON", "AROONOSC", "ATR", "BBANDS",
+    "BOP", "CCI", "CMO", "CPI", "DCPERIOD", "DCPHASE", "DEMA", "DI", "DM", "DX",
+    "EMA", "ETF", "FMV", "FX", "GDP", "HT", "IPO", "KAMA", "MACD", "MACDEXT",
+    "MAMA", "MFI", "MOM", "NATR", "OBV", "PPO", "ROC", "ROCR", "RSI", "SAR",
+    "SMA", "STOCH", "STOCHF", "STOCHRSI", "T3", "TEMA", "TRANGE", "TRIMA",
+    "TRIX", "ULTOSC", "VWAP", "WILLR", "WMA", "WTI",
+})
+
+
+def derive_tool_title(tool_name: str) -> str:
+    """Human-readable title from an UPPER_SNAKE tool name (TIME_SERIES_DAILY -> 'Time Series Daily').
+
+    Derived in the register loops so the ~100 data tools get a title (Software Directory
+    Policy 5.E) with zero per-tool maintenance. Known acronyms / indicator codes
+    (_TITLE_ACRONYMS) stay uppercase so str.title() doesn't mangle them (RSI, SMA, MACD).
+    """
+    return " ".join(
+        token if token in _TITLE_ACRONYMS else token.capitalize()
+        for token in tool_name.split("_")
+    )
 
 # Tool registries
 _all_tools_registry = []  # List of all tools across all modules
@@ -194,7 +250,7 @@ TOOL_MODULES = {
     "index_data": "av_api.tools.index_data",
     # NOTE: 'openai' (SEARCH/FETCH) intentionally omitted — those tools are
     # placeholders whose behavior contradicts their descriptions, so they must
-    # not ship in TOOL_LIST/TOOL_CALL (Software Directory Policy 2.B).
+    # not ship in the exposed tool list (Software Directory Policy 2.B).
 }
 
 
