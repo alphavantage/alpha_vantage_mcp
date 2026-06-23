@@ -43,6 +43,65 @@ def estimate_tokens(data) -> int:
         return len(str(data)) // 4
 
 
+def _detect_av_error(response_text: str) -> dict | None:
+    """Detect an Alpha Vantage error envelope and map it to a structured error.
+
+    Alpha Vantage signals failures with **HTTP 200** and a JSON body keyed by
+    ``Error Message`` (rejected request / bad params), ``Information`` or
+    ``Note`` (rate limit). Left untouched these pass through as raw data, so the
+    caller gets no actionable feedback. This normalizes them into a structured
+    error and clearly maps invalid-key and rate-limit cases.
+
+    Returns the structured error dict, or ``None`` for normal data responses.
+    """
+    try:
+        parsed = json.loads(response_text)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    if "Error Message" in parsed:
+        message = str(parsed["Error Message"])
+        if "apikey" in message.lower():
+            return {
+                "error": {
+                    "type": "invalid_api_key",
+                    "message": message,
+                    "detail": (
+                        "The Alpha Vantage API key is invalid or missing. "
+                        "Re-authenticate or supply a valid apikey."
+                    ),
+                }
+            }
+        return {
+            "error": {
+                "type": "invalid_request",
+                "message": message,
+                "detail": (
+                    "Alpha Vantage rejected the request parameters. "
+                    "Check the tool arguments and retry."
+                ),
+            }
+        }
+
+    for key in ("Information", "Note"):
+        if key in parsed:
+            return {
+                "error": {
+                    "type": "rate_limit",
+                    "message": str(parsed[key]),
+                    "detail": (
+                        "Alpha Vantage rate limit reached. Wait and retry, or "
+                        "use a premium API key for higher limits."
+                    ),
+                }
+            }
+
+    return None
+
+
 def _parse_response_text(response_text: str, datatype: str) -> dict | str:
     if datatype == "json":
         try:
@@ -86,6 +145,12 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
         response.raise_for_status()
 
         response_text = response.text
+
+        # Alpha Vantage returns HTTP 200 even on failure; surface those error
+        # envelopes as structured, actionable errors instead of raw data.
+        av_error = _detect_av_error(response_text)
+        if av_error is not None:
+            return av_error
 
         # Determine datatype from params (default to csv if not specified)
         datatype = api_params.get("datatype", "csv")

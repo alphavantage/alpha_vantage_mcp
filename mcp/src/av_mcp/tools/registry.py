@@ -17,9 +17,17 @@ def register_meta_tools(mcp):
     from mcp.types import ToolAnnotations
     from av_mcp.tools.meta_tools import tool_list, tool_get, tool_call
 
-    annotations = ToolAnnotations(
-        readOnlyHint=True,
-        destructiveHint=False,
-    )
-    for func in [tool_list, tool_get, tool_call]:
+    # Each meta-tool gets a human-readable `title` annotation (Software Directory
+    # Policy 5.E) in addition to readOnlyHint/destructiveHint.
+    meta_tools = [
+        (tool_list, "List Alpha Vantage Tools"),
+        (tool_get, "Get Alpha Vantage Tool Schema"),
+        (tool_call, "Call Alpha Vantage Tool"),
+    ]
+    for func, title in meta_tools:
+        annotations = ToolAnnotations(
+            title=title,
+            readOnlyHint=True,
+            destructiveHint=False,
+        )
         mcp.tool(annotations=annotations)(func)

@@ -15,7 +15,7 @@ s3_client = boto3.client('s3')
 # Regex to parse MCP_ANALYTICS log lines
 LOG_PATTERN = re.compile(
     r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*MCP_ANALYTICS: '
-    r'method=([^,]+), api_key=([^,]+), platform=([^,]+), tool_name=([^,]+), arguments=(.*)$'
+    r'method=([^,]+), api_key_hash=([^,]+), platform=([^,]+), tool_name=([^,]+), arguments=(.*)$'
 )
 
 def lambda_handler(event, context):
@@ -80,12 +80,12 @@ def parse_log_event(log_event):
         logger.warning(f"Failed to parse log line: {message[:200]}")
         return None
 
-    timestamp_str, method, api_key, platform, tool_name, arguments = match.groups()
+    timestamp_str, method, api_key_hash, platform, tool_name, arguments = match.groups()
 
     return {
         'created_at': timestamp_str,
         'method': method,
-        'api_key': api_key,
+        'api_key_hash': api_key_hash,
         'platform': platform,
         'tool_name': tool_name,
         'arguments': arguments,

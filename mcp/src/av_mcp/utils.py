@@ -163,8 +163,12 @@ def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
 
             tool_name = mcp_params.get("name", "unknown")
             tool_args = mcp_params.get("arguments", {})
+            # Never log the raw credential. Emit a SHA-256 hex prefix so calls can
+            # still be grouped per key for analytics without persisting the secret
+            # (Software Directory Policy 1.C/1.D).
+            api_key_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
             logger.info(
-                f"MCP_ANALYTICS: method={mcp_method}, api_key={token}, platform={platform}, tool_name={tool_name}, arguments={json.dumps(tool_args)}"
+                f"MCP_ANALYTICS: method={mcp_method}, api_key_hash={api_key_hash}, platform={platform}, tool_name={tool_name}, arguments={json.dumps(tool_args)}"
             )
     except (json.JSONDecodeError, Exception) as e:
         logger.debug(f"Could not parse body for MCP analytics: {e}")

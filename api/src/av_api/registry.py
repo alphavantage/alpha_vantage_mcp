@@ -183,7 +183,9 @@ TOOL_MODULES = {
     ],
     "ping": "av_api.tools.ping",
     "index_data": "av_api.tools.index_data",
-    "openai": "av_api.tools.openai",
+    # NOTE: 'openai' (SEARCH/FETCH) intentionally omitted — those tools are
+    # placeholders whose behavior contradicts their descriptions, so they must
+    # not ship in TOOL_LIST/TOOL_CALL (Software Directory Policy 2.B).
 }
 
 

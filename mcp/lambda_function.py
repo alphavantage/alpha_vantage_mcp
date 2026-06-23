@@ -76,12 +76,11 @@ def lambda_handler(event, context):
     path = event.get("path", "/")
     headers = event.get("headers", {})
     body = event.get("body", "")
-    query_params = event.get("queryStringParameters", {})
 
+    # Log only the request line. Do NOT log Headers (Authorization: Bearer ...),
+    # Query parameters (?apikey=...), or Body — they carry credentials that must
+    # never reach CloudWatch (Software Directory Policy 1.C/1.D).
     logger.info(f"Incoming request: {method} {path}")
-    logger.info(f"Headers: {headers}")
-    logger.info(f"Query parameters: {query_params}")
-    logger.info(f"Body: {body}")
 
     # Handle OAuth 2.1 endpoints first (before token validation). The token-minting endpoints
     # (/authorize POST, /token) require the OAuth keys; surface unset keys as a clean 500.
