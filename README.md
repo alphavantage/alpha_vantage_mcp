@@ -18,7 +18,13 @@ To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclic
 
 ### Connection Examples
 
-**Remote Server Connection:**
+**Remote Server Connection (Recommended, OAuth):**
+```
+https://mcp.alphavantage.co/mcp
+```
+When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
+
+**Remote Server Connection (Legacy, API key in URL, deprecated):**
 ```
 https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
 ```
@@ -62,7 +68,7 @@ To connect Claude (Web or Desktop) to this MCP server:
 5. Enter your Alpha Vantage API key
 6. Click "Authorize Access"
 
-**API Key in URL (Alternative):**
+**API Key in URL (Legacy, deprecated):**
 1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
 2. Click "Add Custom Connector"
 3. Add the MCP server URL with your API key: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
@@ -111,14 +117,14 @@ Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 
 [![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
 
-**Setup:**
+**Setup (Recommended, OAuth):**
 1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
 2. Click on **Advanced settings →** enable **Developer mode**
 3. Return to the **Apps** submenu, then click **Create app**.
 4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp`
 5. **Authentication:** OAuth. When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
 
-**Alternative (API key in URL):**
+**Legacy (API key in URL, deprecated):**
 1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
 2. Click on **Advanced settings →** enable **Developer mode**
 3. Return to the **Apps** submenu, then click **Create app**.
@@ -271,12 +277,7 @@ To connect a Foundry agent to this MCP server:
 1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
 2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
 3. Configure the MCP server with the following settings:
-   - Unauthenticated (recommended):
-     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
-     - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
-       - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
-     - Authentication: Select **Unauthenticated**
-   - Key-based authentication (alternative):
+   - Key-based authentication (recommended):
      - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
      - Server URL: `https://mcp.alphavantage.co/mcp`
      - Authentication: Select **Key-based authentication**
@@ -284,6 +285,11 @@ To connect a Foundry agent to this MCP server:
        - Click "Add key value pair"
        - Key: `apikey`
        - Value: Enter your Alpha Vantage API key
+   - Unauthenticated (legacy, API key in URL, deprecated):
+     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+     - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
+       - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+     - Authentication: Select **Unauthenticated**
 4. Click **Connect**
 
 **Recommended Agent Instructions:**
