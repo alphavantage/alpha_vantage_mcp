@@ -1,13 +1,13 @@
 """Regression guard for Anthropic MCP Connector tool-annotation (behavior hint) compliance.
 
-The connector compliance rule requires every surfaced tool to carry the three behavior
-hints: readOnlyHint, destructiveHint, openWorldHint. These tests assert the hints (plus a
+The connector compliance rule requires every surfaced tool to carry the behavior
+hints: readOnlyHint, destructiveHint. These tests assert the hints (plus a
 valid outputSchema and a human-readable title) are present and correct on the real Alpha
 Vantage data tools that the server lists, in both the stdio (build_tools / handle_list_tools)
 and Lambda (register_all_tools) registration paths.
 
-Semantics for every data tool: readOnlyHint=True, destructiveHint=False, openWorldHint=True
-(they all fetch market data over the public internet and never modify user data).
+Semantics for every data tool: readOnlyHint=True, destructiveHint=False
+(they are read-only and never modify user data). openWorldHint is intentionally not set.
 """
 import jsonschema
 import pytest
@@ -51,11 +51,13 @@ LAMBDA_TOOLS = _register_lambda_tools()
 
 
 def _assert_hints(label, annotations):
-    for field in ("readOnlyHint", "destructiveHint", "openWorldHint"):
+    for field in ("readOnlyHint", "destructiveHint"):
         assert field in annotations, f"{label} missing {field}"
     assert annotations["readOnlyHint"] is True, f"{label} readOnlyHint should be True"
     assert annotations["destructiveHint"] is False, f"{label} destructiveHint should be False"
-    assert annotations["openWorldHint"] is True, f"{label} openWorldHint should be True"
+    # openWorldHint intentionally removed: it must not be advertised as True
+    # (absent in the raw Lambda annotations; None/unset in the SDK model).
+    assert annotations.get("openWorldHint") is not True, f"{label} openWorldHint should not be set"
 
 
 def test_data_tool_annotations_constant():
