@@ -22,6 +22,7 @@ _ENTITLEMENT_TOOLS = {"top_gainers_losers"}
 DATA_TOOL_ANNOTATIONS = {
     "readOnlyHint": True,
     "destructiveHint": False,
+    "openWorldHint": False,
 }
 
 # Generic permissive outputSchema shared by every data tool. Their payloads are
