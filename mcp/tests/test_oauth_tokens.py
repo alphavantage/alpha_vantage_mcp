@@ -350,8 +350,9 @@ def test_www_authenticate_includes_resource_metadata(monkeypatch):
         {"error": "invalid_token", "error_description": "bad"}, 401
     )
     www = resp["headers"]["WWW-Authenticate"]
+    # Path-aware location for the `/mcp` resource (RFC 9728), not the bare path.
     assert (
-        'resource_metadata="https://mcp.yovy.ai/.well-known/oauth-protected-resource"'
+        'resource_metadata="https://mcp.yovy.ai/.well-known/oauth-protected-resource/mcp"'
         in www
     )
 
@@ -366,6 +367,10 @@ def test_www_authenticate_includes_resource_metadata(monkeypatch):
         "http://127.0.0.1:54999/cb",
         "https://claude.ai/api/mcp/auth_callback",
         "https://chatgpt.com/connector/oauth/abc",
+        # *.manufact.com domain allowlist: apex + any subdomain over https.
+        "https://manufact.com/oauth/callback",
+        "https://inspector.manufact.com/inspector/oauth/callback",
+        "https://foo.bar.manufact.com/cb",
     ],
 )
 def test_redirect_uri_allowed(uri):
@@ -379,6 +384,10 @@ def test_redirect_uri_allowed(uri):
         "http://claude.ai/api/mcp/auth_callback",  # non-loopback http not allowed
         "ftp://localhost/cb",
         "",
+        # manufact.com look-alikes must NOT match the domain allowlist.
+        "https://evilmanufact.com/callback",  # suffix without a "." boundary
+        "https://manufact.com.evil.com/callback",  # different registrable domain
+        "http://manufact.com/callback",  # non-loopback http not allowed
     ],
 )
 def test_redirect_uri_rejected(uri):

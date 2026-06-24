@@ -122,9 +122,18 @@ def lambda_handler(event, context):
 
     # Handle OAuth 2.1 endpoints first (before token validation). The token-minting endpoints
     # (/authorize POST, /token) require the OAuth keys; surface unset keys as a clean 500.
+    # Protected Resource Metadata: RFC 9728 inserts the resource path after the
+    # well-known segment, so for the `/mcp` resource the canonical location is
+    # `/.well-known/oauth-protected-resource/mcp`. Serve both the path-aware
+    # form (spec-correct) and the bare form (backwards-compatible) so clients
+    # and proxies resolve metadata regardless of which they request.
+    protected_resource_paths = (
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+    )
     if path in (
         "/.well-known/oauth-authorization-server",
-        "/.well-known/oauth-protected-resource",
+        *protected_resource_paths,
         "/authorize",
         "/token",
         "/register",
@@ -132,7 +141,7 @@ def lambda_handler(event, context):
         try:
             if path == "/.well-known/oauth-authorization-server":
                 return handle_metadata_discovery(event)
-            elif path == "/.well-known/oauth-protected-resource":
+            elif path in protected_resource_paths:
                 return handle_protected_resource_metadata(event)
             elif path == "/authorize":
                 return handle_authorization_request(event)

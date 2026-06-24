@@ -191,10 +191,14 @@ def create_oauth_error_response(error_dict: dict, status_code: int = 401) -> dic
         f'error_description="{error_dict["error_description"]}"'
     )
     # Point clients at the Protected Resource Metadata document (RFC 9728 / T9).
+    # The resource is the `/mcp` endpoint, so the canonical metadata location is
+    # the path-aware `/.well-known/oauth-protected-resource/mcp` (RFC 9728 inserts
+    # the resource path after the well-known segment). The handler also serves the
+    # bare path for backwards compatibility.
     domain_name = os.environ.get("DOMAIN_NAME")
     if domain_name:
         resource_metadata = (
-            f"https://{domain_name}/.well-known/oauth-protected-resource"
+            f"https://{domain_name}/.well-known/oauth-protected-resource/mcp"
         )
         www_authenticate += f', resource_metadata="{resource_metadata}"'
 

@@ -37,6 +37,12 @@ ALLOWED_REDIRECT_HOSTS = {
     "chatgpt.com",  # ChatGPT connector callback (per-connector path)
     "chat.openai.com",
 }
+# Base domains whose apex and any subdomain are allowed (https only).
+# mcp-use (Manufact) owns *.manufact.com: cloud connector, inspector, and
+# preview environments all authenticate against this server.
+ALLOWED_REDIRECT_DOMAINS = {
+    "manufact.com",
+}
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
@@ -76,10 +82,14 @@ def is_valid_redirect_uri(redirect_uri: str) -> bool:
     # Loopback clients (Claude Code): any port, http or https.
     if host in LOOPBACK_HOSTS:
         return parsed.scheme in ("http", "https")
-    # Everything else must be https against the allowlist.
+    # Everything else must be https against the host allowlist or an allowed domain.
     if parsed.scheme != "https":
         return False
-    return host in ALLOWED_REDIRECT_HOSTS
+    if host in ALLOWED_REDIRECT_HOSTS:
+        return True
+    # Apex or subdomain of an allowed base domain (e.g. *.manufact.com). The
+    # "." prefix on the suffix check prevents look-alikes like "evilmanufact.com".
+    return any(host == domain or host.endswith(f".{domain}") for domain in ALLOWED_REDIRECT_DOMAINS)
 
 
 def verify_pkce_challenge(code_verifier: str, code_challenge: str) -> bool:
