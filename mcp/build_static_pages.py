@@ -7,10 +7,9 @@ truth for the landing content: this script inlines it into a self-contained
 HTML shell (inline CSS + a small client-side markdown render via marked) that
 the Lambda returns verbatim for ``GET /``.
 
-The artifact viewer (av_mcp/static/artifacts.html) has no README dependency and
-is maintained directly, so it is not generated here.
-
-Run from the repo root or the mcp/ dir after editing README.md:
+The generated index.html is NOT committed (see .gitignore); CI regenerates it
+before ``sam build`` in .github/workflows/deploy.yml. For local dev / local
+sam build, run this once after editing README.md so the file exists:
 
     python mcp/build_static_pages.py
 """

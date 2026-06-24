@@ -26,9 +26,9 @@ from av_mcp.tokens import decode_access_token, TokenConfigError
 
 
 # Public, no-auth static pages bundled inside the package (todo 2600). The MCP server
-# serves its own landing page (/) and artifact viewer (/artifacts) so it no longer
-# depends on the CloudFront/S3 static site. Maps request path -> packaged file name.
-STATIC_PAGES = {"/": "index.html", "/artifacts": "artifacts.html"}
+# serves its own landing page (/) so it no longer depends on the CloudFront/S3 static
+# site. Maps request path -> packaged file name.
+STATIC_PAGES = {"/": "index.html"}
 
 
 @lru_cache(maxsize=None)
@@ -173,9 +173,9 @@ def _handle_request(event, context):
     headers = event.get("headers", {})
     body = event.get("body", "")
 
-    # Public static pages (before token validation): the landing page and the artifact
-    # viewer are public, so serve them without a credential. Only intercept GET on exactly
-    # / and /artifacts; every other path keeps its current behavior (todo 2600).
+    # Public static pages (before token validation): the landing page is public, so serve
+    # it without a credential. Only intercept GET on exactly /; every other path keeps its
+    # current behavior (todo 2600).
     if method == "GET" and path in STATIC_PAGES:
         return serve_static_page(path)
 

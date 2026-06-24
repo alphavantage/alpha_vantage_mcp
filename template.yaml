@@ -64,13 +64,13 @@ Resources:
       DistributionConfig:
         Aliases:
           - !Ref DomainName
-        # Default behavior: the server now serves its own landing page (/) and
-        # artifact viewer (/artifacts) as bundled static HTML, so route the root
-        # and every otherwise-unmatched path to the Lambda via APIOrigin instead
-        # of the S3 website (todo 2600). These are public GETs, so caching is fine
-        # (CachingOptimized keys on path); AllViewerExceptHostHeader forwards the
-        # viewer request to the Lambda while letting API Gateway keep its own Host
-        # header — same origin-request policy the /mcp* behavior uses below.
+        # Default behavior: the server now serves its own landing page (/) as
+        # bundled static HTML, so route the root and every otherwise-unmatched
+        # path to the Lambda via APIOrigin instead of the S3 website (todo 2600).
+        # The landing page is a public GET, so caching is fine (CachingOptimized
+        # keys on path); AllViewerExceptHostHeader forwards the request to the
+        # Lambda while letting API Gateway keep its own Host header, same
+        # origin-request policy the /mcp* behavior uses below.
         DefaultCacheBehavior:
           TargetOriginId: APIOrigin
           ViewerProtocolPolicy: redirect-to-https

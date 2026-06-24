@@ -67,6 +67,11 @@ jobs:
           uv export --package marketdata-mcp-server --format=requirements-txt --no-hashes | grep -v "^-e \." > mcp/requirements.txt
           cp -r api/src/av_api mcp/av_api
 
+      - name: Generate landing page from README
+        # index.html is not committed; regenerate it from README.md so the latest
+        # landing content is bundled into the Lambda package by sam build below.
+        run: python mcp/build_static_pages.py
+
       - name: Build SAM application
         run: sam build
 
@@ -88,13 +93,13 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
-          # The default behavior now serves / and /artifacts from the Lambda, so
-          # invalidate the old S3-cached objects (and any stale regenerated HTML).
+          # The default behavior now serves / from the Lambda, so invalidate the
+          # old S3-cached object (and any stale regenerated HTML).
           # CLOUDFRONT_DISTRIBUTION_ID comes from the CONFIG secret (Parse config).
           if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
             aws cloudfront create-invalidation \
               --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-              --paths "/" "/artifacts" \
+              --paths "/" \
               --no-cli-pager
           else
             echo "CLOUDFRONT_DISTRIBUTION_ID not set - skipping cache invalidation"

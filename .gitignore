@@ -35,3 +35,6 @@ dev_docs
 requirements.txt
 sessions.db
 mcp.json
+
+# Landing page generated from README.md by mcp/build_static_pages.py (CI regenerates before sam build)
+mcp/src/av_mcp/static/index.html
