@@ -85,3 +85,17 @@ jobs:
           else
             sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
           fi
+
+      - name: Invalidate CloudFront cache
+        run: |
+          # The default behavior now serves / and /artifacts from the Lambda, so
+          # invalidate the old S3-cached objects (and any stale regenerated HTML).
+          # CLOUDFRONT_DISTRIBUTION_ID comes from the CONFIG secret (Parse config).
+          if [ -n "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+              --paths "/" "/artifacts" \
+              --no-cli-pager
+          else
+            echo "CLOUDFRONT_DISTRIBUTION_ID not set - skipping cache invalidation"
+          fi

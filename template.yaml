@@ -41,7 +41,8 @@ Parameters:
     Description: Fernet key for field-encrypting the Alpha Vantage apikey claim (sourced from config/SSM)
 
 Resources:
-  # S3 bucket for static files
+  # S3 bucket for static files. No longer fronted by CloudFront (the Lambda serves
+  # the site via APIOrigin now, todo 2600); kept defined pending data decommission.
   StaticFilesBucketResource:
     Type: AWS::S3::Bucket
     Properties:
@@ -63,11 +64,18 @@ Resources:
       DistributionConfig:
         Aliases:
           - !Ref DomainName
+        # Default behavior: the server now serves its own landing page (/) and
+        # artifact viewer (/artifacts) as bundled static HTML, so route the root
+        # and every otherwise-unmatched path to the Lambda via APIOrigin instead
+        # of the S3 website (todo 2600). These are public GETs, so caching is fine
+        # (CachingOptimized keys on path); AllViewerExceptHostHeader forwards the
+        # viewer request to the Lambda while letting API Gateway keep its own Host
+        # header — same origin-request policy the /mcp* behavior uses below.
         DefaultCacheBehavior:
-          TargetOriginId: S3Origin
+          TargetOriginId: APIOrigin
           ViewerProtocolPolicy: redirect-to-https
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
-          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf  # Managed-CORS-S3Origin
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
         CacheBehaviors:
           # API routes
           - PathPattern: /mcp*
@@ -145,12 +153,9 @@ Resources:
               - POST
               - DELETE
         Origins:
-          - Id: S3Origin
-            DomainName: !Sub '${StaticFilesBucket}.s3-website-${AWS::Region}.amazonaws.com'
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
+          # S3Origin (the alphavantage-mcp-web website) was removed: the site is
+          # now served by the Lambda via APIOrigin (todo 2600). The bucket resource
+          # itself is intentionally kept for now (data decommission is a later step).
           - Id: APIOrigin
             DomainName: !Sub '${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com'
             CustomOriginConfig:
@@ -159,7 +164,9 @@ Resources:
               OriginProtocolPolicy: https-only
             OriginPath: /Prod
         Enabled: true
-        DefaultRootObject: index.html
+        # No DefaultRootObject: a request to "/" must reach the Lambda as path "/"
+        # (which serves the landing page). Setting it to index.html would rewrite
+        # "/" to "/index.html", which the server's exact "/" route does not match.
         ViewerCertificate:
           AcmCertificateArn: !Ref CertificateArn
           SslSupportMethod: sni-only

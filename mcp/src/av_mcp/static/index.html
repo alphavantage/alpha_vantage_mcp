@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alpha Vantage MCP Server</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<style>
+  :root { --av-green: #42DCA3; --av-card: #1f1f1f; --av-border: rgba(74, 222, 128, 0.3); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background-color: rgb(45, 45, 45);
+    color: #d1d5db;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  header { padding: 2rem 1rem 1rem; }
+  .bar {
+    max-width: 900px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+  }
+  .brand { color: #fff; font-size: 1.25rem; letter-spacing: 0.1em; text-decoration: none; }
+  .brand span { font-weight: 300; }
+  .nav { display: flex; gap: 1.5rem; }
+  .nav a, a { color: var(--av-green); text-decoration: none; }
+  .nav a:hover, a:hover { text-decoration: underline; }
+  main { display: flex; justify-content: center; padding: 1rem; }
+  article {
+    width: 100%; max-width: 820px;
+    background-color: var(--av-card);
+    border: 1px solid var(--av-border);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+  }
+  @media (min-width: 640px) { article { padding: 2rem; } }
+  .logo { text-align: center; margin-bottom: 3rem; }
+  .logo img { height: 4rem; }
+  .content h1 { display: none; }
+  .content h2 { color: var(--av-green); font-weight: 300; font-size: 1.875rem; margin: 2rem 0 1.5rem; }
+  .content h3 { color: var(--av-green); font-weight: 300; font-size: 1.5rem; margin: 1.5rem 0 1rem; }
+  .content h4 { color: var(--av-green); font-weight: 600; font-size: 1.25rem; margin: 1rem 0; }
+  .content h5, .content h6 { color: #fff; font-weight: 700; margin: 0.75rem 0 0.25rem; }
+  .content p { color: #d1d5db; margin: 1rem 0; }
+  .content strong { color: var(--av-green); }
+  .content em { color: #9ca3af; }
+  .content ul { list-style: disc; padding-left: 1.5rem; }
+  .content ol { list-style: decimal; padding-left: 1.5rem; }
+  .content li { color: #d1d5db; margin: 0.5rem 0; }
+  .content blockquote {
+    border-left: 4px solid var(--av-border); background-color: var(--av-card);
+    padding: 0.5rem 1rem; margin: 1rem 0; border-radius: 0 0.375rem 0.375rem 0;
+    color: #9ca3af; font-style: italic;
+  }
+  .content code {
+    background-color: var(--av-card); color: var(--av-green);
+    border: 1px solid var(--av-border); border-radius: 0.25rem;
+    padding: 0.1rem 0.4rem; font-size: 0.875rem;
+  }
+  .content pre {
+    background-color: var(--av-card); color: var(--av-green);
+    border: 1px solid var(--av-border); border-radius: 0.375rem;
+    padding: 1rem; overflow-x: auto; margin: 1rem 0;
+  }
+  .content pre code { border: none; padding: 0; background: none; }
+  .content hr { border: none; border-top: 1px solid var(--av-border); margin: 2rem 0; }
+  .content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; display: block; overflow-x: auto; }
+  .content th { border: 1px solid var(--av-border); color: var(--av-green); background-color: var(--av-card); padding: 0.5rem 1rem; }
+  .content td { border: 1px solid var(--av-border); color: #d1d5db; padding: 0.5rem 1rem; }
+  .content img { max-width: 100%; height: auto; }
+  .content details { border: 1px solid var(--av-border); background-color: var(--av-card); border-radius: 0.5rem; margin: 1rem 0; overflow: hidden; }
+  .content summary { cursor: pointer; font-weight: 600; color: var(--av-green); background-color: rgba(66, 220, 163, 0.1); padding: 1rem; }
+  .content details[open] { padding: 0 1rem 1rem; }
+  .content details[open] summary { border-bottom: 1px solid var(--av-border); margin: 0 -1rem 1rem; }
+  .content .youtube-embed { margin: 1.5rem 0; text-align: center; }
+  .content .youtube-embed iframe { width: 100%; max-width: 42rem; aspect-ratio: 16 / 9; border: 0; border-radius: 0.5rem; }
+  footer { padding: 2rem 1rem; text-align: center; color: #9ca3af; font-size: 0.875rem; }
+  footer p { margin: 0.25rem 0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="brand" href="https://www.alphavantage.co/">ALPHA <span>VANTAGE</span></a>
+      <nav class="nav">
+        <a href="https://www.alphavantage.co/">Alpha Vantage Home</a>
+        <a href="https://www.alphavantage.co/documentation/">API Documentation</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <article>
+      <div class="logo">
+        <img src="https://cdn.alphavantage.co/logo.png" alt="Alpha Vantage Logo">
+      </div>
+      <div class="content" id="content"></div>
+    </article>
+  </main>
+  <footer>
+    <p>Made with love at <a href="https://www.alphavantage.co/" target="_blank" rel="noopener noreferrer">Alpha Vantage</a>. Happy hacking!</p>
+    <p><a href="https://www.alphavantage.co/privacy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a></p>
+  </footer>
+
+  <script type="text/markdown" id="readme-source">
+# Alpha Vantage MCP Server
+
+The official Alpha Vantage API MCP server enables LLMs and agentic workflows to seamlessly interact with real-time and historical stock market data through the Model Context Protocol (MCP). Add this server to your favorite apps such as Claude, Claude Code, Cursor, VS Code, and many more to give them access to comprehensive financial data.
+
+---
+
+## Quickstart
+
+To use the server, <a href="https://www.alphavantage.co/support/#api-key" onclick="gtag('event', 'mcp_getKey')">get your free Alpha Vantage API key</a>, copy it to your clipboard, then follow the instructions below for the agentic tool/platform of your interest.
+
+The Alpha Vantage functions are exposed directly as MCP tools. MCP clients discover the available tools with `tools/list` and invoke them with `tools/call`.
+
+⭐ View MCP source code on [Github](https://github.com/alphavantage/alpha_vantage_mcp)
+
+👉 Any questions? Please contact support@alphavantage.co
+
+&nbsp;
+
+### Connection Examples
+
+**Remote Server Connection (Recommended, OAuth):**
+```
+https://mcp.alphavantage.co/mcp
+```
+When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
+
+**Remote Server Connection (Legacy, API key in URL, deprecated):**
+```
+https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+**Local Server Connection:**
+```
+uvx marketdata-mcp-server YOUR_API_KEY
+```
+
+&nbsp;
+
+### Setup Instructions by Use Case
+
+💬📊 _Power your chatbot with financial data_
+
+
+<details>
+<summary><b>Install in Claude</b></summary>
+
+**Requirements:**
+- Claude Pro account (or higher tier)
+  
+#### Claude Remote Server Connection
+
+To connect Claude (Web or Desktop) to this MCP server:
+
+📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
+
+[![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/W69x2qJcYmI/maxresdefault.jpg)](https://www.youtube.com/watch?v=W69x2qJcYmI)
+
+
+📺 Already have your Alpha Vantage MCP server set up? Below are a few examples of Claude performing various stock analysis & charting tasks:
+
+[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/tyl9E7fddvU/maxresdefault.jpg)](https://www.youtube.com/watch?v=tyl9E7fddvU)
+
+**OAuth Option (Recommended):**
+1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
+2. Click "Add Custom Connector"
+3. Add the MCP server URL: `https://mcp.alphavantage.co/mcp`
+4. Click "Connect"
+5. Enter your Alpha Vantage API key
+6. Click "Authorize Access"
+
+**API Key in URL (Legacy, deprecated):**
+1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
+2. Click "Add Custom Connector"
+3. Add the MCP server URL with your API key: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
+4. Click "Connect"
+
+#### Claude Local Server Connection
+See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
+
+Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Open Claude Desktop developer settings and edit your `claude_desktop_config.json` file to add the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "alphavantage": {
+      "command": "uvx",
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+</details>
+
+
+<details>
+<summary><b>Install in ChatGPT</b></summary>
+
+**Requirements:**
+- ChatGPT Plus account (or higher tier)
+- Developer mode enabled (beta feature) - see [OpenAI's Developer Mode documentation](https://platform.openai.com/docs/guides/developer-mode)
+
+📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
+
+[![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/pY2nr3FWXs0/maxresdefault.jpg)](https://www.youtube.com/watch?v=pY2nr3FWXs0)
+
+
+📺 Already have your Alpha Vantage MCP server set up? Below are a few examples of ChatGPT performing various stock analysis & charting tasks:
+
+[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
+
+**Setup (Recommended, OAuth):**
+1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
+2. Click on **Advanced settings →** enable **Developer mode**
+3. Return to the **Apps** submenu, then click **Create app**.
+4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp`
+5. **Authentication:** OAuth. When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
+
+**Legacy (API key in URL, deprecated):**
+1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
+2. Click on **Advanced settings →** enable **Developer mode**
+3. Return to the **Apps** submenu, then click **Create app**.
+4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
+5. **Authentication:** No authentication
+
+> **Note:** When you return to your conversation, your UI will clearly indicate that you are in **Developer mode**. ChatGPT will retain memory of any previous remarks made within the same chat session; however, **these sessions may not be persisted**, meaning the conversation generated while Developer mode is active may not be saved or accessible once closed.
+
+**Troubleshooting for ChatGPT Plus Accounts**
+
+While Developer mode is available for both **Plus** and **Pro** accounts, on **Plus** accounts, first-time MCP tool execution may exhibit inconsistent behavior. This primarily affects large data payloads returned from the MCP server. If you notice that MCP calls abruptly terminate without returning any JSON response, try the following:
+
+1. **Confirm Connection**
+   - Confirm the connection by prompting:
+     ```
+     List 3 functions available in Alpha Vantage MCP server.
+     ```
+   - You should see endpoints like `TIME_SERIES_DAILY` and `TIME_SERIES_INTRADAY`.
+
+2. **Force JSON Passthrough with simple payload**
+   - Use the following prompts in sequence to prime ChatGPT to surface the full payload:
+     ```
+     Run ADD_TWO_NUMBERS from Alpha Vantage MCP Server using 3 and 6, and then show the JSON response.
+     ```
+   - If successful, ChatGPT should ask you to **Confirm** or **Deny** the call. Click **Confirm**.
+   - If it doesn't, use the 🔄 "Try Again..." button and see if you get the **Confirm**/**Deny** prompt.
+   - If this doesn't work, ask ChatGPT the following, and if it starts `Thinking` make it **Skip**, so that it doesn't try the call again and instead outputs its conversational response.
+     ```
+     Why aren't you receiving a JSON response?
+     ```
+   - Then, regardless of the response, prompt ChatGPT
+     ```
+     Explicitly request a return value from the tool response to verify what the server outputs.
+     ```
+   - Typically, this gets ChatGPT to ask you to **Confirm** or **Deny** the call. Click **Confirm**.
+   - Sometimes, ChatGPT will insist it has no active connection to Alpha Vantage MCP Server. Just tell it to "try again".
+   - If payloads still fail to appear, start a New Chat and try Step #2 again.
+
+3. **Force JSON Passthrough with large payload**
+   - Once step #2 has been successful, repeat step #2 with the larger call:
+     ```
+     Run TIME_SERIES_DAILY using NVDA, and then show the JSON response.
+     ```
+   - Use the fallback steps from Step #2 if ChatGPT does not ask you to **Confirm** or **Deny** the call.
+   - Once you observe ChatGPT successfully return part of the raw JSON payload from the larger call, you can typically continue on with more conversational queries.
+  
+</details>
+
+<details>
+<summary><b>Install in Grok</b></summary>
+
+**Requirements:**
+- SuperGrok (or higher tier)
+
+**Setup:**
+1. Click the `+` button → **Connectors** → **Add connector** → **Custom**
+2. **Name**: Alpha Vantage MCP Server (or whatever you prefer)
+3. **Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
+4. Click **Add Connector**
+  
+</details>
+
+&nbsp;
+
+🤖📈 _Create agentic workflows for quantitative investing_
+
+<details>
+<summary><b>Install in 🦞OpenClaw🦞</b></summary>
+
+**Requirements:**
+- Mac with Apple Silicon (or dedicated Mac mini)
+- LLM API Key (OpenAI used in demo)
+- Messaging Platform Bot Token (Telegram used in demo)
+
+📺 Watch the **setup tutorial** (click image below)
+
+[![This AI Agent Tracks Stocks 24/7 (OpenClaw Setup Tutorial)](https://i3.ytimg.com/vi/Z6DjYKN4uos/maxresdefault.jpg)](https://www.youtube.com/watch?v=Z6DjYKN4uos)
+
+- [View the detailed installation guide from GitHub Gist](https://gist.github.com/gabriel1l/2e6ebe57e9a17983aa8596fd7c5bcdc7)
+- For additional support links, please check the video description on YouTube.
+
+</details>
+
+<details>
+<summary><b>Configure in OpenAI Agent Builder</b></summary>
+
+**Requirements:**
+- OpenAI account with [access to Agent Builder](https://platform.openai.com/docs/guides/agents) (e.g., billing details added, organization verified)
+
+📺 Watch the **setup tutorial**. (Click image below.)
+
+[![Configure Alpha Vantage MCP Server + OpenAI Agent Builder](http://i3.ytimg.com/vi/2Rsvzjn8hwE/hqdefault.jpg)](https://www.youtube.com/watch?v=2Rsvzjn8hwE)
+
+
+#### OpenAI Agent Builder Connection
+
+To connect OpenAI Agent Builder to this MCP server:
+
+1. Do not add a separate MCP Server object. Instead, click on your agent in OpenAI Agent Builder to add the MCP Server directly to the agent.
+2. Find the Tools section of the agent and click the + button to add a new tool
+3. Select MCP Server
+4. Click "+ Server" in the upper right of the "Add MCP server" menu
+5. Configure the MCP server with the following settings:
+   - URL: `https://mcp.alphavantage.co/mcp`
+   - Label: `Alpha Vantage MCP Server` (or any name you prefer)
+   - Description: `Financial market data and technical indicators` (or any description you prefer)
+   - Authentication: Select "Access token / API key" (should be default)
+   - Access Token: Enter your Alpha Vantage API key
+6. Click Connect
+7. If successful, the next prompt will display all the tools. Scroll to the bottom and click Add.
+
+**Recommended Agent Instructions:**
+
+Add the following instruction to your agent's configuration to optimize performance:
+
+```
+You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
+
+The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
+directly as MCP tools. Call them by name with their parameters, e.g.
+TIME_SERIES_DAILY(symbol="AAPL", outputsize="compact").
+```
+</details>
+
+<details>
+<summary><b>Install in OpenAI Agents SDK</b></summary>
+
+To use the Alpha Vantage MCP server with OpenAI Agents SDK, see our [example agent](https://github.com/alphavantage/alpha_vantage_mcp/blob/main/examples/agent/README.md) that demonstrates:
+
+- Interactive financial analysis agent
+- Session management for conversation continuity
+- Real-time tool execution with Alpha Vantage data
+- Support for both HTTP and stdio MCP connections
+
+The example includes a complete setup guide and configuration templates.
+
+</details>
+
+<details>
+<summary><b>Configure in Microsoft Foundry Agent Service</b></summary>
+
+**Requirements:**
+- Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
+
+#### Microsoft Foundry Agent Service Connection
+
+To connect a Foundry agent to this MCP server:
+
+1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
+2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
+3. Configure the MCP server with the following settings:
+   - Key-based authentication (recommended):
+     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+     - Server URL: `https://mcp.alphavantage.co/mcp`
+     - Authentication: Select **Key-based authentication**
+     - Credential
+       - Click "Add key value pair"
+       - Key: `apikey`
+       - Value: Enter your Alpha Vantage API key
+   - Unauthenticated (legacy, API key in URL, deprecated):
+     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
+     - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
+       - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+     - Authentication: Select **Unauthenticated**
+4. Click **Connect**
+
+**Recommended Agent Instructions:**
+
+Add the following instruction to your agent's system prompt to optimize performance:
+
+```
+You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
+
+The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
+directly as MCP tools. Call them by name with their parameters, e.g.
+TIME_SERIES_DAILY(symbol="IBM", outputsize="compact").
+
+Always use Alpha Vantage MCP Server for market data queries. Do not answer from prior knowledge or web search.
+```
+</details>
+
+&nbsp;
+
+💻💵 _Code up fintech apps_
+
+<details>
+<summary><b>Install in OpenAI Codex</b></summary>
+
+**Requirements:**
+- ChatGPT Plus account (or higher tier)
+
+See [OpenAI Codex](https://github.com/openai/codex) for more information.
+
+📺 Watch the **setup tutorial**. (Click image below.) This video additionally provides guidance on handling setup errors and building complete end-to-end applications which are empowered to fetch market data to power dynamic, data-driven visualizations.
+
+[![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
+
+- [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
+- For additional support links, please check the video description on YouTube.
+
+Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Install **Codex CLI v0.34 or later** to avoid compatibility issues.
+
+```bash
+# Install (if not already installed)
+npm install -g @openai/codex
+
+# Or update to the latest version
+npm update -g @openai/codex
+
+# Verify installation and version
+codex --version
+```
+
+Add the following configuration to your Codex MCP server settings by editing `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.alphavantage]
+command = "uvx"
+args = ["marketdata-mcp-server", "YOUR_API_KEY"]
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Run `codex` in your terminal from your project directory. First-time users will be guided through additional prompts.
+
+Then connect with:
+```
+/mcp
+```
+
+</details>
+
+<details>
+<summary><b>Install in Claude Code</b></summary>
+
+  **Requirements:**
+- Claude Pro account (or higher tier)
+  
+See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp) for more information.
+
+Run one of the following commands, depending on whether you’re connecting remotely or running the server locally.
+
+#### Claude Code Remote Server Connection
+
+```bash
+claude mcp add -t http alphavantage https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+#### Claude Code Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then run:
+
+```bash
+claude mcp add alphavantage -- uvx marketdata-mcp-server YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Run `claude` in your terminal from your project directory.
+
+Then connect with:
+```
+/mcp
+```
+
+</details>
+
+
+<details>
+<summary><b>Install in VS Code (Visual Studio Code)</b></summary>
+
+See [VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) for more info.
+
+Create `.vscode/mcp.json` (your VS Code MCP config file) in your workspace, and paste into it one of the following configurations, depending on whether you’re connecting remotely or running the server locally.
+
+#### VS Code Remote Server Connection
+
+Paste the following into `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "alphavantage": {
+      "type": "http",
+      "url": "https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+#### VS Code Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then, paste the following into `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "alphavantage": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Open the Chat view and select Agent mode
+
+</details>
+
+<details>
+  
+<summary><b>Install in Continue (Extension for VS Code, JetBrains)</b></summary>
+
+See [Continue MCP docs](https://docs.continue.dev/customize/deep-dives/mcp) for more information. Continue uses its own configuration format (not VS Code's mcp.json).
+
+Create `.continue/mcpServers/alphavantage.yaml` in your workspace, and paste into it one of the following configurations, depending on whether you’re connecting remotely or running the server locally. (Recommended: Remote)
+
+#### Continue Remote Server Connection
+
+Paste the following into `.continue/mcpServers/alphavantage.yaml`:
+
+```yaml
+name: Alpha Vantage MCP Server
+version: 1.0
+schema: v1
+mcpServers:
+  - name: alphavantage
+    type: streamable-http
+    url: https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+#### Continue Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then, paste the following into `.continue/mcpServers/alphavantage.yaml`:
+
+```yaml
+name: Alpha Vantage MCP Server
+version: 1.0
+schema: v1
+mcpServers:
+  - name: alphavantage
+    type: stdio
+    command: uvx
+    args:
+      - marketdata-mcp-server
+      - YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Open the Continue panel and select Agent mode. Set up your LLM provider.
+</details>
+
+<details>
+<summary><b>Install in Cursor</b></summary>
+
+See [Cursor MCP docs](https://docs.cursor.com/context/model-context-protocol) for more information.
+
+Paste one of the following configurations into your Cursor `~/.cursor/mcp.json` file, depending on whether you’re connecting remotely or running the server locally. You may also install in a specific project by creating `.cursor/mcp.json` in your project folder. 
+
+#### Cursor Remote Server Connection
+
+Configure Cursor by editing `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "alphavantage": {
+      "url": "https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+#### Cursor Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then, paste the following into your Cursor `~/.cursor/mcp.json` file:
+
+```json
+{
+  "mcpServers": {
+    "alphavantage": {
+      "command": "uvx",
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+</details>
+
+
+<details>
+<summary><b>Install in Gemini CLI</b></summary>
+
+See [Gemini CLI Configuration](https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html) for more information.
+
+Run one of the following commands, depending on whether you’re connecting remotely or running the server locally.
+
+**Gemini CLI Remote Server Connection (Recommended):**
+```bash
+gemini mcp add -t http alphavantage https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+**Gemini CLI Local Server Connection:**
+
+Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then run:
+
+```bash
+gemini mcp add alphavantage uvx marketdata-mcp-server YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+**Manual Configuration:**
+1. Open the Gemini CLI settings file. The location is `~/.gemini/settings.json` (where `~` is your home directory).
+2. Add the following to the `mcpServers` object in your `settings.json` file (replace `YOUR_API_KEY` with your actual Alpha Vantage API key):
+
+```json
+{
+  "mcpServers": {
+    "alphavantage": {
+      "httpUrl": "https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY"
+    }
+  }
+}
+```
+
+Or, for a local server (replace `YOUR_API_KEY` with your actual Alpha Vantage API key):
+
+```json
+{
+  "mcpServers": {
+    "alphavantage": {
+      "command": "uvx",
+      "args": ["marketdata-mcp-server", "YOUR_API_KEY"]
+    }
+  }
+}
+```
+
+If the `mcpServers` object does not exist, create it.
+
+</details>
+
+&nbsp;
+
+💡💡 _I'm just exploring_
+
+Just exploring what to build? Check out the [Trading Agents stock research tool](https://trading-agents.ai/) (#1 trending on Github), which is powered by Alpha Vantage market data with no setup required. 
+
+&nbsp;
+
+## Examples
+
+Below are four example prompts and Claude's expected responses when using the MCP server.
+
+&nbsp;
+
+### 1. Fetch and display structured market data across assets
+
+**Prompt:** “Give me last week’s OHLCV data for IBM”
+
+Expected Behavior:
+- Claude will select and invoke the correct tool, in this case the TIME_SERIES_DAILY function.
+- Claude will make the necessary request to the TIME_SERIES_DAILY function and receive the relevant response.
+- Claude will then respond directly in the chat interface with both text and image content:
+
+Here's IBM's OHLCV data for last week (March 16–20, 2026):
+
+<img width="751" height="348" alt="IBM_price" src="https://github.com/user-attachments/assets/6316329d-81a6-4972-a857-f059ceccf040" />
+
+&nbsp;
+
+IBM had a strong Tuesday rally to $256.11, then pulled back through the rest of the week. Friday saw a sharp selloff to close at the session low of $241.77 on more than double the average weekly volume — likely some notable news or broad market pressure driving that move.
+
+&nbsp;
+
+### 2. Use technical indicators and price data to conduct technical analysis
+
+**Prompt:** “Get NVDA’s hourly price data for the last two days. Compute RSI as well, and plot both hourly with guidelines at 30 and 70 for RSI”
+
+Expected Behavior: 
+- Claude will select and invoke the correct tools, in this case the TIME_SERIES_INTRADAY function and the RSI function.
+- Claude will make two separate requests, one to the TIME_SERIES_INTRADAY function and one to the RSI function. Claude will receive the relevant responses.
+- Claude will then make an HTML artifact with the requested visualizations:
+  
+&nbsp;
+
+<img width="770" height="892" alt="NVDA_RSI" src="https://github.com/user-attachments/assets/f9e36e1a-d1d2-4816-b687-95e4c35d91f8" />
+
+&nbsp;
+
+### 3. Visualize fundamental data
+
+**Prompt:** “Help me visualize AAPL’s earnings surprise trends for the past 4 quarters. Compare actual EPS to analyst estimates”
+
+Expected Behavior:
+- Claude will select and invoke the correct tool, in this case the EARNINGS function.
+- Claude will make the necessary request to the EARNINGS function and receive the relevant response.
+- Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
+
+<img width="781" height="842" alt="AAPL_earnings" src="https://github.com/user-attachments/assets/714d7eb9-e210-4008-9757-5896c8eabb4d" />
+
+&nbsp;
+
+### 4. Compare performance across asset classes
+
+**Prompt:** “Compare gold, silver, and Bitcoin performance over the past 5 years”
+
+Expected Behavior: 
+- Claude will select and invoke the correct tools, in this case the TIME_SERIES_MONTHLY function and the DIGITAL_CURRENCY_MONTHLY function.
+- Claude will make three separate requests, one to the TIME_SERIES_INTRADAY function using the GLD symbol, one to the TIME_SERIES_INTRADAY function using the SLV symbol, and one to the DIGITAL_CURRENCY_MONTHLY function using the BTC symbol. Claude will receive the relevant responses.
+- Claude will do any necessary calculations on top of the returned data, and create an HTML artifact:
+
+<img width="770" height="756" alt="Commodity_price" src="https://github.com/user-attachments/assets/953c5bcb-1b30-4880-a78b-7bc2ae3a8a70" />
+
+&nbsp;
+
+## Tools Reference
+
+**Note:** The tools listed below are exposed directly as MCP tools and can be called by name.
+
+| Category | Tools |
+|----------|-------|
+| core_stock_apis | `TIME_SERIES_INTRADAY`, `TIME_SERIES_DAILY`, `TIME_SERIES_DAILY_ADJUSTED`, `TIME_SERIES_WEEKLY`, `TIME_SERIES_WEEKLY_ADJUSTED`, `TIME_SERIES_MONTHLY`, `TIME_SERIES_MONTHLY_ADJUSTED`, `GLOBAL_QUOTE`, `REALTIME_BULK_QUOTES`, `SYMBOL_SEARCH`, `MARKET_STATUS` |
+| options_data_apis | `REALTIME_OPTIONS`, `REALTIME_OPTIONS_FMV`, `HISTORICAL_OPTIONS` |
+| alpha_intelligence | `NEWS_SENTIMENT`, `EARNINGS_CALL_TRANSCRIPT`, `TOP_GAINERS_LOSERS`, `INSIDER_TRANSACTIONS`, `INSTITUTIONAL_HOLDINGS`, `ANALYTICS_FIXED_WINDOW`, `ANALYTICS_SLIDING_WINDOW` |
+| fundamental_data | `COMPANY_OVERVIEW`, `INCOME_STATEMENT`, `BALANCE_SHEET`, `CASH_FLOW`, `EARNINGS`, `LISTING_STATUS`, `EARNINGS_CALENDAR`, `IPO_CALENDAR` |
+| forex | `FX_INTRADAY`, `FX_DAILY`, `FX_WEEKLY`, `FX_MONTHLY` |
+| cryptocurrencies | `CURRENCY_EXCHANGE_RATE`, `DIGITAL_CURRENCY_INTRADAY`, `DIGITAL_CURRENCY_DAILY`, `DIGITAL_CURRENCY_WEEKLY`, `DIGITAL_CURRENCY_MONTHLY` |
+| commodities | `WTI`, `BRENT`, `NATURAL_GAS`, `COPPER`, `ALUMINUM`, `WHEAT`, `CORN`, `COTTON`, `SUGAR`, `COFFEE`, `GOLD_SILVER_SPOT`, `GOLD_SILVER_HISTORY`, `ALL_COMMODITIES` |
+| economic_indicators | `REAL_GDP`, `REAL_GDP_PER_CAPITA`, `TREASURY_YIELD`, `FEDERAL_FUNDS_RATE`, `CPI`, `INFLATION`, `RETAIL_SALES`, `DURABLES`, `UNEMPLOYMENT`, `NONFARM_PAYROLL` |
+| technical_indicators | `SMA`, `EMA`, `WMA`, `DEMA`, `TEMA`, `TRIMA`, `KAMA`, `MAMA`, `VWAP`, `T3`, `MACD`, `MACDEXT`, `STOCH`, `STOCHF`, `RSI`, `STOCHRSI`, `WILLR`, `ADX`, `ADXR`, `APO`, `PPO`, `MOM`, `BOP`, `CCI`, `CMO`, `ROC`, `ROCR`, `AROON`, `AROONOSC`, `MFI`, `TRIX`, `ULTOSC`, `DX`, `MINUS_DI`, `PLUS_DI`, `MINUS_DM`, `PLUS_DM`, `BBANDS`, `MIDPOINT`, `MIDPRICE`, `SAR`, `TRANGE`, `ATR`, `NATR`, `AD`, `ADOSC`, `OBV`, `HT_TRENDLINE`, `HT_SINE`, `HT_TRENDMODE`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR` |
+| ping | `PING`, `ADD_TWO_NUMBERS` |
+
+&nbsp;
+
+### Table of Contents - API Tools
+- [core_stock_apis](#core_stock_apis)
+- [options_data_apis](#options_data_apis)
+- [alpha_intelligence](#alpha_intelligence)
+- [fundamental_data](#fundamental_data)
+- [forex](#forex)
+- [cryptocurrencies](#cryptocurrencies)
+- [commodities](#commodities)
+- [economic_indicators](#economic_indicators)
+- [technical_indicators](#technical_indicators)
+- [ping](#ping)
+
+💡 Each of these MCP tools maps to a corresponding Alpha Vantage API endpoint. If you are interested in the full API specs (in addition to the brief tool descriptions below), please refer to the Alpha Vantage [API documentation](https://www.alphavantage.co/documentation/). For general guidance on choosing the best stock market data API and/or MCP server in the AI agent era, please refer to [this article](https://medium.com/alpha-vantage/best-stock-market-apis-in-2026-e8a982b1ea0c).
+
+
+### CORE_STOCK_APIS
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| core_stock_apis | `TIME_SERIES_INTRADAY` | Current and 20+ years of historical intraday OHLCV data |
+| core_stock_apis | `TIME_SERIES_DAILY` | Daily time series (OHLCV) covering 20+ years |
+| core_stock_apis | `TIME_SERIES_DAILY_ADJUSTED` | Daily adjusted OHLCV with split/dividend events |
+| core_stock_apis | `TIME_SERIES_WEEKLY` | Weekly time series (last trading day of week) |
+| core_stock_apis | `TIME_SERIES_WEEKLY_ADJUSTED` | Weekly adjusted time series with dividends |
+| core_stock_apis | `TIME_SERIES_MONTHLY` | Monthly time series (last trading day of month) |
+| core_stock_apis | `TIME_SERIES_MONTHLY_ADJUSTED` | Monthly adjusted time series with dividends |
+| core_stock_apis | `GLOBAL_QUOTE` | Latest price and volume for a ticker |
+| core_stock_apis | `REALTIME_BULK_QUOTES` | Realtime quotes for up to 100 symbols |
+| core_stock_apis | `SYMBOL_SEARCH` | Search for symbols by keywords |
+| core_stock_apis | `MARKET_STATUS` | Current market status worldwide |
+
+### OPTIONS_DATA_APIS
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| options_data_apis | `REALTIME_OPTIONS` | Realtime US options data with Greeks |
+| options_data_apis | `REALTIME_OPTIONS_FMV` | Realtime US options FMV (fair market value) mark prices |
+| options_data_apis | `HISTORICAL_OPTIONS` | Historical options chain for 15+ years |
+
+### ALPHA_INTELLIGENCE
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| alpha_intelligence | `NEWS_SENTIMENT` | Live and historical market news & sentiment |
+| alpha_intelligence | `EARNINGS_CALL_TRANSCRIPT` | Earnings call transcripts with LLM sentiment |
+| alpha_intelligence | `TOP_GAINERS_LOSERS` | Top 20 gainers, losers, and most active |
+| alpha_intelligence | `INSIDER_TRANSACTIONS` | Latest and historical insider transactions |
+| alpha_intelligence | `INSTITUTIONAL_HOLDINGS` | Institutional ownership and holdings information |
+| alpha_intelligence | `ANALYTICS_FIXED_WINDOW` | Advanced analytics over fixed windows |
+| alpha_intelligence | `ANALYTICS_SLIDING_WINDOW` | Advanced analytics over sliding windows |
+
+### FUNDAMENTAL_DATA
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| fundamental_data | `COMPANY_OVERVIEW` | Company information, financial ratios, and metrics |
+| fundamental_data | `INCOME_STATEMENT` | Annual and quarterly income statements |
+| fundamental_data | `BALANCE_SHEET` | Annual and quarterly balance sheets |
+| fundamental_data | `CASH_FLOW` | Annual and quarterly cash flow statements |
+| fundamental_data | `EARNINGS` | Annual and quarterly earnings data |
+| fundamental_data | `LISTING_STATUS` | Listing and delisting data for equities |
+| fundamental_data | `EARNINGS_CALENDAR` | Earnings calendar for upcoming earnings |
+| fundamental_data | `IPO_CALENDAR` | Initial public offering calendar |
+
+### FOREX
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| forex | `FX_INTRADAY` | Intraday foreign exchange rates |
+| forex | `FX_DAILY` | Daily foreign exchange rates |
+| forex | `FX_WEEKLY` | Weekly foreign exchange rates |
+| forex | `FX_MONTHLY` | Monthly foreign exchange rates |
+
+### CRYPTOCURRENCIES
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| cryptocurrencies | `CURRENCY_EXCHANGE_RATE` | Exchange rate between digital/crypto currencies |
+| cryptocurrencies | `DIGITAL_CURRENCY_INTRADAY` | Intraday time series for digital currencies |
+| cryptocurrencies | `DIGITAL_CURRENCY_DAILY` | Daily time series for digital currencies |
+| cryptocurrencies | `DIGITAL_CURRENCY_WEEKLY` | Weekly time series for digital currencies |
+| cryptocurrencies | `DIGITAL_CURRENCY_MONTHLY` | Monthly time series for digital currencies |
+
+### COMMODITIES
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| commodities | `WTI` | West Texas Intermediate (WTI) crude oil prices |
+| commodities | `BRENT` | Brent crude oil prices |
+| commodities | `NATURAL_GAS` | Henry Hub natural gas spot prices |
+| commodities | `COPPER` | Global copper prices |
+| commodities | `ALUMINUM` | Global aluminum prices |
+| commodities | `WHEAT` | Global wheat prices |
+| commodities | `CORN` | Global corn prices |
+| commodities | `COTTON` | Global cotton prices |
+| commodities | `SUGAR` | Global sugar prices |
+| commodities | `COFFEE` | Global coffee prices |
+| commodities | `GOLD_SILVER_SPOT` | Live spot prices for gold and silver |
+| commodities | `GOLD_SILVER_HISTORY` | Historical gold and silver prices (daily, weekly, monthly) |
+| commodities | `ALL_COMMODITIES` | All commodities prices |
+
+### ECONOMIC_INDICATORS
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| economic_indicators | `REAL_GDP` | Real Gross Domestic Product |
+| economic_indicators | `REAL_GDP_PER_CAPITA` | Real GDP per capita |
+| economic_indicators | `TREASURY_YIELD` | Daily treasury yield rates |
+| economic_indicators | `FEDERAL_FUNDS_RATE` | Federal funds rate (interest rates) |
+| economic_indicators | `CPI` | Consumer Price Index |
+| economic_indicators | `INFLATION` | Inflation rates |
+| economic_indicators | `RETAIL_SALES` | Retail sales data |
+| economic_indicators | `DURABLES` | Durable goods orders |
+| economic_indicators | `UNEMPLOYMENT` | Unemployment rate |
+| economic_indicators | `NONFARM_PAYROLL` | Non-farm payroll data |
+
+### TECHNICAL_INDICATORS
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| technical_indicators | `SMA` | Simple moving average (SMA) values |
+| technical_indicators | `EMA` | Exponential moving average (EMA) values |
+| technical_indicators | `WMA` | Weighted moving average (WMA) values |
+| technical_indicators | `DEMA` | Double exponential moving average (DEMA) values |
+| technical_indicators | `TEMA` | Triple exponential moving average (TEMA) values |
+| technical_indicators | `TRIMA` | Triangular moving average (TRIMA) values |
+| technical_indicators | `KAMA` | Kaufman adaptive moving average (KAMA) values |
+| technical_indicators | `MAMA` | MESA adaptive moving average (MAMA) values |
+| technical_indicators | `VWAP` | Volume weighted average price (VWAP) for intraday time series |
+| technical_indicators | `T3` | Triple exponential moving average (T3) values |
+| technical_indicators | `MACD` | Moving average convergence / divergence (MACD) values |
+| technical_indicators | `MACDEXT` | Moving average convergence / divergence values with controllable moving average type |
+| technical_indicators | `STOCH` | Stochastic oscillator (STOCH) values |
+| technical_indicators | `STOCHF` | Stochastic fast (STOCHF) values |
+| technical_indicators | `RSI` | Relative strength index (RSI) values |
+| technical_indicators | `STOCHRSI` | Stochastic relative strength index (STOCHRSI) values |
+| technical_indicators | `WILLR` | Williams' %R (WILLR) values |
+| technical_indicators | `ADX` | Average directional movement index (ADX) values |
+| technical_indicators | `ADXR` | Average directional movement index rating (ADXR) values |
+| technical_indicators | `APO` | Absolute price oscillator (APO) values |
+| technical_indicators | `PPO` | Percentage price oscillator (PPO) values |
+| technical_indicators | `MOM` | Momentum (MOM) values |
+| technical_indicators | `BOP` | Balance of power (BOP) values |
+| technical_indicators | `CCI` | Commodity channel index (CCI) values |
+| technical_indicators | `CMO` | Chande momentum oscillator (CMO) values |
+| technical_indicators | `ROC` | Rate of change (ROC) values |
+| technical_indicators | `ROCR` | Rate of change ratio (ROCR) values |
+| technical_indicators | `AROON` | Aroon (AROON) values |
+| technical_indicators | `AROONOSC` | Aroon oscillator (AROONOSC) values |
+| technical_indicators | `MFI` | Money flow index (MFI) values |
+| technical_indicators | `TRIX` | 1-day rate of change of a triple smooth exponential moving average (TRIX) values |
+| technical_indicators | `ULTOSC` | Ultimate oscillator (ULTOSC) values |
+| technical_indicators | `DX` | Directional movement index (DX) values |
+| technical_indicators | `MINUS_DI` | Minus directional indicator (MINUS_DI) values |
+| technical_indicators | `PLUS_DI` | Plus directional indicator (PLUS_DI) values |
+| technical_indicators | `MINUS_DM` | Minus directional movement (MINUS_DM) values |
+| technical_indicators | `PLUS_DM` | Plus directional movement (PLUS_DM) values |
+| technical_indicators | `BBANDS` | Bollinger bands (BBANDS) values |
+| technical_indicators | `MIDPOINT` | Midpoint values - (highest value + lowest value)/2 |
+| technical_indicators | `MIDPRICE` | Midpoint price values - (highest high + lowest low)/2 |
+| technical_indicators | `SAR` | Parabolic SAR (SAR) values |
+| technical_indicators | `TRANGE` | True range (TRANGE) values |
+| technical_indicators | `ATR` | Average true range (ATR) values |
+| technical_indicators | `NATR` | Normalized average true range (NATR) values |
+| technical_indicators | `AD` | Chaikin A/D line (AD) values |
+| technical_indicators | `ADOSC` | Chaikin A/D oscillator (ADOSC) values |
+| technical_indicators | `OBV` | On balance volume (OBV) values |
+| technical_indicators | `HT_TRENDLINE` | Hilbert transform, instantaneous trendline (HT_TRENDLINE) values |
+| technical_indicators | `HT_SINE` | Hilbert transform, sine wave (HT_SINE) values |
+| technical_indicators | `HT_TRENDMODE` | Hilbert transform, trend vs cycle mode (HT_TRENDMODE) values |
+| technical_indicators | `HT_DCPERIOD` | Hilbert transform, dominant cycle period (HT_DCPERIOD) values |
+| technical_indicators | `HT_DCPHASE` | Hilbert transform, dominant cycle phase (HT_DCPHASE) values |
+| technical_indicators | `HT_PHASOR` | Hilbert transform, phasor components (HT_PHASOR) values |
+
+### PING
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| ping | `PING` | Health check tool that returns 'pong' |
+| ping | `ADD_TWO_NUMBERS` | Example tool for adding two numbers |
+
+  </script>
+
+  <script>
+    // Slugify headings the same way web/lib/toc.ts does, so the README's in-page
+    // anchor links (e.g. [core_stock_apis](#core_stock_apis)) resolve.
+    function slugify(text) {
+      var slug = text.toLowerCase()
+        .replace(/[^\p{L}\p{N}\s-]/gu, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      return slug || 'heading';
+    }
+
+    // Convert YouTube thumbnail links to iframe embeds (mirrors Markdown.tsx).
+    function preprocess(md) {
+      var pattern = /\[!\[([^\]]*)\]\(https?:\/\/(?:img\.youtube\.com|i\d*\.ytimg\.com)\/vi\/([^\/]+)\/[^)]+\)\]\(https:\/\/www\.youtube\.com\/watch\?v=([^)]+)\)/g;
+      return md.replace(pattern, function (_m, _alt, _thumb, id) {
+        return '<div class="youtube-embed"><iframe src="https://www.youtube.com/embed/' + id + '" allowfullscreen></iframe></div>';
+      });
+    }
+
+    var source = document.getElementById('readme-source').textContent;
+    var renderer = new marked.Renderer();
+    renderer.heading = function (text, level) {
+      var id = slugify(text.replace(/<[^>]+>/g, ''));
+      return '<h' + level + ' id="' + id + '">' + text + '</h' + level + '>';
+    };
+    marked.setOptions({ renderer: renderer, gfm: true, breaks: false });
+    document.getElementById('content').innerHTML = marked.parse(preprocess(source));
+  </script>
+</body>
+</html>

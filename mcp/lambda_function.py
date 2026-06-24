@@ -1,4 +1,6 @@
 import json
+from functools import lru_cache
+from importlib.resources import files
 from awslabs.mcp_lambda_handler import MCPLambdaHandler
 from loguru import logger
 from av_api.context import set_api_key
@@ -21,6 +23,27 @@ from av_mcp.oauth import (
     handle_registration_request,
 )
 from av_mcp.tokens import decode_access_token, TokenConfigError
+
+
+# Public, no-auth static pages bundled inside the package (todo 2600). The MCP server
+# serves its own landing page (/) and artifact viewer (/artifacts) so it no longer
+# depends on the CloudFront/S3 static site. Maps request path -> packaged file name.
+STATIC_PAGES = {"/": "index.html", "/artifacts": "artifacts.html"}
+
+
+@lru_cache(maxsize=None)
+def _read_static_page(filename: str) -> str:
+    """Read a bundled static HTML page from av_mcp/static (cached across warm invocations)."""
+    return files("av_mcp").joinpath("static", filename).read_text(encoding="utf-8")
+
+
+def serve_static_page(path: str) -> dict:
+    """Return a bundled static HTML page as a 200 text/html response (public, no auth)."""
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "text/html; charset=utf-8"},
+        "body": _read_static_page(STATIC_PAGES[path]),
+    }
 
 
 def oauth_misconfig_response() -> dict:
@@ -149,6 +172,12 @@ def _handle_request(event, context):
     path = event.get("path", "/")
     headers = event.get("headers", {})
     body = event.get("body", "")
+
+    # Public static pages (before token validation): the landing page and the artifact
+    # viewer are public, so serve them without a credential. Only intercept GET on exactly
+    # / and /artifacts; every other path keeps its current behavior (todo 2600).
+    if method == "GET" and path in STATIC_PAGES:
+        return serve_static_page(path)
 
     # Handle OAuth 2.1 endpoints first (before token validation). The token-minting endpoints
     # (/authorize POST, /token) require the OAuth keys; surface unset keys as a clean 500.
