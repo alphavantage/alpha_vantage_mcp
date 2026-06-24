@@ -7,6 +7,21 @@ from typing import Any
 from loguru import logger
 
 
+def cors_headers() -> dict[str, str]:
+    """Browser-grade CORS headers applied to every Lambda response (todo 2583).
+
+    Allow-Headers is an explicit list (the ``*`` wildcard does not cover ``Authorization``
+    per the Fetch spec) and includes ``mcp-protocol-version`` — the header MCP clients (e.g.
+    the browser Inspector) attach to every fetch, which preflights otherwise reject.
+    """
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, mcp-protocol-version",
+        "Access-Control-Max-Age": "86400",
+    }
+
+
 def parse_token_from_request(event: dict) -> str:
     """Parse the credential from request body, query params, or Authorization header.
 
@@ -202,14 +217,13 @@ def create_oauth_error_response(error_dict: dict, status_code: int = 401) -> dic
         )
         www_authenticate += f', resource_metadata="{resource_metadata}"'
 
+    # CORS headers are merged centrally in lambda_handler (cors_headers()), which adds
+    # mcp-protocol-version to Allow-Headers; only the auth-specific headers live here.
     return {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
             "WWW-Authenticate": www_authenticate,
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
         },
         "body": json.dumps(error_dict),
     }

@@ -9,10 +9,13 @@ import av_mcp.common as common  # noqa: E402
 from awslabs.mcp_lambda_handler import MCPLambdaHandler  # noqa: E402
 from av_mcp.decorators import setup_custom_tool_decorator  # noqa: E402
 from av_mcp.tools.registry import register_all_tools  # noqa: E402
+import lambda_function  # noqa: E402
 from lambda_function import (  # noqa: E402
     add_data_tool_structured_content,
     normalize_content_type_header,
+    lambda_handler,
 )
+from av_mcp.utils import cors_headers  # noqa: E402
 
 
 def test_normalize_content_type_strips_charset_parameter():
@@ -146,3 +149,83 @@ def test_lambda_large_preview_result_is_valid_json_and_structured(monkeypatch):
     parsed = json.loads(text)  # the large-response preview dict must serialize as valid JSON
     assert parsed.get("preview") is True
     assert result["structuredContent"] == parsed
+
+
+# --- CORS at the Lambda boundary (todo 2583) -----------------------------------------
+# Browser MCP clients attach `mcp-protocol-version` to every fetch and rely on preflight
+# OPTIONS + Access-Control-Allow-Origin on real responses. These cover the central helper,
+# the OPTIONS short-circuit, and the per-response CORS merge.
+
+
+def test_cors_headers_allows_mcp_protocol_version():
+    headers = cors_headers()
+
+    assert "mcp-protocol-version" in headers["Access-Control-Allow-Headers"]
+    assert headers["Access-Control-Allow-Origin"] == "*"
+    assert headers["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
+    assert headers["Access-Control-Max-Age"] == "86400"
+
+
+def test_options_preflight_short_circuits_before_handlers(monkeypatch):
+    def _boom(event):
+        raise AssertionError("OPTIONS must not reach the token handler")
+
+    monkeypatch.setattr(lambda_function, "handle_token_request", _boom)
+
+    response = lambda_handler({"httpMethod": "OPTIONS", "path": "/token"}, None)
+
+    assert response["statusCode"] == 204
+    assert response["headers"] == cors_headers()
+
+
+def test_token_response_carries_cors_headers(monkeypatch):
+    monkeypatch.setattr(
+        lambda_function,
+        "handle_token_request",
+        lambda event: {"statusCode": 200, "headers": {}, "body": "{}"},
+    )
+
+    response = lambda_handler({"httpMethod": "POST", "path": "/token"}, None)
+
+    assert response["statusCode"] == 200
+    assert response["headers"]["Access-Control-Allow-Origin"] == "*"
+    assert "mcp-protocol-version" in response["headers"]["Access-Control-Allow-Headers"]
+
+
+def test_mcp_post_response_carries_cors_headers(monkeypatch):
+    class _FakeMCP:
+        def handle_request(self, event, context):
+            return {"statusCode": 200, "headers": {}, "body": "{}"}
+
+    monkeypatch.setattr(lambda_function, "create_mcp_handler", lambda: _FakeMCP())
+
+    event = {
+        "httpMethod": "POST",
+        "path": "/mcp",
+        "queryStringParameters": {"apikey": "demo"},
+        "body": "{}",
+    }
+    response = lambda_handler(event, None)
+
+    assert response["statusCode"] == 200
+    assert response["headers"]["Access-Control-Allow-Origin"] == "*"
+
+
+def test_cors_merge_does_not_clobber_stricter_origin(monkeypatch):
+    monkeypatch.setattr(
+        lambda_function,
+        "handle_metadata_discovery",
+        lambda event: {
+            "statusCode": 200,
+            "headers": {"Access-Control-Allow-Origin": "https://example.com"},
+            "body": "{}",
+        },
+    )
+
+    response = lambda_handler(
+        {"httpMethod": "GET", "path": "/.well-known/oauth-authorization-server"}, None
+    )
+
+    # setdefault keeps the handler's stricter value, still fills the rest.
+    assert response["headers"]["Access-Control-Allow-Origin"] == "https://example.com"
+    assert "mcp-protocol-version" in response["headers"]["Access-Control-Allow-Headers"]

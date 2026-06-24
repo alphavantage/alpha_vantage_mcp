@@ -11,6 +11,7 @@ from av_mcp.utils import (
     create_oauth_error_response,
     extract_client_platform,
     parse_and_log_mcp_analytics,
+    cors_headers,
 )
 from av_mcp.oauth import (
     handle_metadata_discovery,
@@ -107,18 +108,47 @@ def create_mcp_handler() -> MCPLambdaHandler:
     return mcp
 
 
+def _merge_cors_headers(response):
+    """Add CORS headers to a Lambda response without clobbering stricter existing values.
+
+    setdefault semantics: a handler that already set a header (e.g. Access-Control-Allow-Origin
+    on the metadata endpoints) keeps its value; everything else gets the central cors_headers().
+    """
+    if not isinstance(response, dict):
+        return response
+    headers = response.get("headers")
+    if not isinstance(headers, dict):
+        headers = {}
+        response["headers"] = headers
+    for key, value in cors_headers().items():
+        headers.setdefault(key, value)
+    return response
+
+
 def lambda_handler(event, context):
-    """AWS Lambda handler function."""
-    # Log incoming request details
+    """AWS Lambda entry point: CORS preflight short-circuit + central CORS merge."""
     method = event.get("httpMethod", "UNKNOWN")
     path = event.get("path", "/")
-    headers = event.get("headers", {})
-    body = event.get("body", "")
 
     # Log only the request line. Do NOT log Headers (Authorization: Bearer ...),
     # Query parameters (?apikey=...), or Body — they carry credentials that must
     # never reach CloudWatch (Software Directory Policy 1.C/1.D).
     logger.info(f"Incoming request: {method} {path}")
+
+    # CORS preflight: short-circuit OPTIONS for ANY path before auth/routing (todo 2583).
+    # Covers /.well-known/*, /token, /register, /authorize, and /mcp in one place.
+    if method == "OPTIONS":
+        return {"statusCode": 204, "headers": cors_headers(), "body": ""}
+
+    return _merge_cors_headers(_handle_request(event, context))
+
+
+def _handle_request(event, context):
+    """Resolve the caller's credential and dispatch (OAuth endpoints, MCP, errors)."""
+    method = event.get("httpMethod", "UNKNOWN")
+    path = event.get("path", "/")
+    headers = event.get("headers", {})
+    body = event.get("body", "")
 
     # Handle OAuth 2.1 endpoints first (before token validation). The token-minting endpoints
     # (/authorize POST, /token) require the OAuth keys; surface unset keys as a clean 500.
