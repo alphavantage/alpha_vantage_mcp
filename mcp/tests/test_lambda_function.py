@@ -120,7 +120,7 @@ def _build_handler():
 
 
 def test_lambda_dict_result_is_valid_json_and_structured(monkeypatch):
-    monkeypatch.setattr(client.httpx, "Client", _FakeClient)
+    monkeypatch.setattr(client, "_http_client", _FakeClient())
     handler = _build_handler()
 
     result = _run_tool_through_lambda(handler, "GLOBAL_QUOTE", {"symbol": "AAPL"})
@@ -133,7 +133,7 @@ def test_lambda_dict_result_is_valid_json_and_structured(monkeypatch):
 
 
 def test_lambda_large_preview_result_is_valid_json_and_structured(monkeypatch):
-    monkeypatch.setattr(client.httpx, "Client", _FakeClient)
+    monkeypatch.setattr(client, "_http_client", _FakeClient())
     monkeypatch.setattr(
         common, "upload_to_object_storage", lambda text, datatype: "data:application/json;base64,stub"
     )
@@ -197,7 +197,7 @@ def test_mcp_post_response_carries_cors_headers(monkeypatch):
         def handle_request(self, event, context):
             return {"statusCode": 200, "headers": {}, "body": "{}"}
 
-    monkeypatch.setattr(lambda_function, "create_mcp_handler", lambda: _FakeMCP())
+    monkeypatch.setattr(lambda_function, "_mcp_handler", _FakeMCP())
 
     event = {
         "httpMethod": "POST",

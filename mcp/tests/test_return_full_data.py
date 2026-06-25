@@ -56,7 +56,7 @@ def test_return_full_data_is_added_to_tool_schema():
 
 
 def test_default_cap_allows_earnings_without_preview(monkeypatch):
-    monkeypatch.setattr(client.httpx, "Client", FakeClient)
+    monkeypatch.setattr(client, "_http_client", FakeClient())
     ensure_tools_loaded()
 
     result = call_tool("EARNINGS", {"symbol": "AAPL"})
@@ -66,7 +66,7 @@ def test_default_cap_allows_earnings_without_preview(monkeypatch):
 
 
 def test_large_response_previews_unless_return_full_data(monkeypatch):
-    monkeypatch.setattr(client.httpx, "Client", FakeClient)
+    monkeypatch.setattr(client, "_http_client", FakeClient())
     monkeypatch.setattr(common, "upload_to_object_storage", lambda text, datatype: "data:application/json;base64,stub")
     ensure_tools_loaded()
 

@@ -5,6 +5,11 @@ from av_api.context import get_api_key
 
 API_BASE_URL = "https://www.alphavantage.co/query"
 
+# Shared HTTP client reused across requests for connection pooling (avoids a fresh
+# TLS handshake per call). httpx.Client is thread-safe, so the threaded
+# local_http_server can share this single instance across request threads.
+_http_client = httpx.Client()
+
 # Maximum token size for responses (configurable via environment variable)
 MAX_RESPONSE_TOKENS = int(os.environ.get('MAX_RESPONSE_TOKENS', '32000'))
 
@@ -140,31 +145,30 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
         # Remove entitlement if it's None or empty
         api_params.pop("entitlement", None)
 
-    with httpx.Client() as client:
-        response = client.get(API_BASE_URL, params=api_params)
-        response.raise_for_status()
+    response = _http_client.get(API_BASE_URL, params=api_params)
+    response.raise_for_status()
 
-        response_text = response.text
+    response_text = response.text
 
-        # Alpha Vantage returns HTTP 200 even on failure; surface those error
-        # envelopes as structured, actionable errors instead of raw data.
-        av_error = _detect_av_error(response_text)
-        if av_error is not None:
-            return av_error
+    # Alpha Vantage returns HTTP 200 even on failure; surface those error
+    # envelopes as structured, actionable errors instead of raw data.
+    av_error = _detect_av_error(response_text)
+    if av_error is not None:
+        return av_error
 
-        # Determine datatype from params (default to csv if not specified)
-        datatype = api_params.get("datatype", "csv")
+    # Determine datatype from params (default to csv if not specified)
+    datatype = api_params.get("datatype", "csv")
 
-        # Check response size (works for both JSON and CSV)
-        estimated_tokens = estimate_tokens(response_text)
+    # Check response size (works for both JSON and CSV)
+    estimated_tokens = estimate_tokens(response_text)
 
-        # If response is within limits or full data was explicitly requested, return normally
-        if estimated_tokens <= MAX_RESPONSE_TOKENS or return_full_data:
-            return _parse_response_text(response_text, datatype)
-
-        # For large responses, delegate to response_processor if configured
-        if _response_processor is not None:
-            return _response_processor(response_text, datatype, estimated_tokens)
-
-        # No processor configured — return data as-is
+    # If response is within limits or full data was explicitly requested, return normally
+    if estimated_tokens <= MAX_RESPONSE_TOKENS or return_full_data:
         return _parse_response_text(response_text, datatype)
+
+    # For large responses, delegate to response_processor if configured
+    if _response_processor is not None:
+        return _response_processor(response_text, datatype, estimated_tokens)
+
+    # No processor configured — return data as-is
+    return _parse_response_text(response_text, datatype)

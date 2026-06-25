@@ -2,7 +2,7 @@
 """Local development server to test the lambda function."""
 
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from lambda_function import lambda_handler
 import sys
@@ -92,7 +92,10 @@ class LambdaRequestHandler(BaseHTTPRequestHandler):
 
 def run_server(port=8000):
     server_address = ('', port)
-    httpd = HTTPServer(server_address, LambdaRequestHandler)
+    # ThreadingHTTPServer serves each request in its own thread, so blocking
+    # upstream Alpha Vantage calls overlap instead of queuing serially. Per-request
+    # api keys stay isolated because set_api_key uses thread-local contextvars.
+    httpd = ThreadingHTTPServer(server_address, LambdaRequestHandler)
     print(f"Starting local server on http://localhost:{port}")
     print("Press Ctrl+C to stop the server")
     
