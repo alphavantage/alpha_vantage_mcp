@@ -131,6 +131,20 @@ def create_mcp_handler() -> MCPLambdaHandler:
     return mcp
 
 
+# Build the handler ONCE at import (Lambda cold start / process boot) and reuse it for
+# every request. The tool catalog is immutable per-process and the tools are stateless:
+# the caller's api key is resolved per-request into a thread-local contextvar (set_api_key),
+# not stored on the handler. MCPLambdaHandler.handle_request holds no per-request mutable
+# state on the instance — request data lives in locals + the thread-isolated
+# current_session_id ContextVar, and the session store is NoOpSessionStore — so the single
+# instance is safe to share across the docker ThreadingHTTPServer's request threads.
+# Lambda-safety: this is just an in-memory catalog object with NO live sockets, so there is
+# no freeze/thaw issue (unlike a pooled httpx.Client, which is correctly kept per-request).
+# Rebuilding the ~126-tool catalog on every request was the docker container's true-concurrency
+# bottleneck (CPU/GIL-bound), so it is done exactly once here.
+_mcp_handler = create_mcp_handler()
+
+
 def _merge_cors_headers(response):
     """Add CORS headers to a Lambda response without clobbering stricter existing values.
 
@@ -274,9 +288,7 @@ def _handle_request(event, context):
 
     # Handle MCP requests
     normalize_content_type_header(event)
-    mcp = create_mcp_handler()
-
-    response = mcp.handle_request(event, context)
+    response = _mcp_handler.handle_request(event, context)
 
     # Post-process the response:
     # - initialize: drop the resources capability (MCPLambdaHandler hardcodes it, we only
