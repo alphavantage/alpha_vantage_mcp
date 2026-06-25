@@ -1,6 +1,8 @@
+import contextlib
 import httpx
 import json
 import os
+import threading
 from av_api.context import get_api_key
 
 API_BASE_URL = "https://www.alphavantage.co/query"
@@ -17,6 +19,43 @@ _current_return_full_data = False
 # Pluggable response processor for large responses.
 # Signature: (response_text: str, datatype: str, estimated_tokens: int) -> dict | str
 _response_processor = None
+
+# Optional docker-only shared httpx connection pool, gated by AV_HTTP_POOL.
+# Reusing one pooled client across request threads avoids a fresh TLS handshake
+# per upstream call. NEVER enabled in the default/Lambda path: persistent pooled
+# keepalive connections go stale across Lambda freeze/thaw, so Lambda keeps the
+# per-request client (created and closed each call).
+_shared_http_client = None
+_shared_http_client_lock = threading.Lock()
+
+
+def _get_request_client():
+    """Choose the httpx client context for one upstream request.
+
+    Default (AV_HTTP_POOL unset, including Lambda): a fresh per-request
+    ``httpx.Client()`` used as a real context manager and closed each call
+    (freeze/thaw safe).
+
+    When ``AV_HTTP_POOL == '1'`` (set by local_http_server.py on docker): reuse a
+    lazily built, thread-safe module-level pooled client wrapped in
+    ``contextlib.nullcontext`` so the shared client is yielded but NOT closed per
+    request. The lazy init is double-checked under a lock because the docker
+    server is a ThreadingHTTPServer (request threads may race the first use).
+    """
+    if os.environ.get("AV_HTTP_POOL") != "1":
+        return httpx.Client()
+
+    global _shared_http_client
+    if _shared_http_client is None:
+        with _shared_http_client_lock:
+            if _shared_http_client is None:
+                _shared_http_client = httpx.Client(
+                    limits=httpx.Limits(
+                        max_connections=200,
+                        max_keepalive_connections=100,
+                    )
+                )
+    return contextlib.nullcontext(_shared_http_client)
 
 
 def set_response_processor(fn):
@@ -140,7 +179,7 @@ def _make_api_request(function_name: str, params: dict) -> dict | str:
         # Remove entitlement if it's None or empty
         api_params.pop("entitlement", None)
 
-    with httpx.Client() as client:
+    with _get_request_client() as client:
         response = client.get(API_BASE_URL, params=api_params)
         response.raise_for_status()
 

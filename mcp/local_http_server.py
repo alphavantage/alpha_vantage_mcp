@@ -11,6 +11,11 @@ import os
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Docker-only: enable the shared httpx connection pool (reuses TLS connections
+# across the ThreadingHTTPServer request threads). Lambda never imports this
+# module and never sets AV_HTTP_POOL, so its per-request client path is unchanged.
+os.environ.setdefault('AV_HTTP_POOL', '1')
+
 class LambdaRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.handle_request('GET')
