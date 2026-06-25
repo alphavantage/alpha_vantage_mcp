@@ -131,13 +131,6 @@ def create_mcp_handler() -> MCPLambdaHandler:
     return mcp
 
 
-# Build the ~100-tool catalog once at import (Lambda cold start / server startup)
-# and reuse it across all requests. The catalog never changes within a process and
-# tools are stateless (the api key comes from a contextvar, not the handler), so a
-# single shared handler is correct even under the threaded local_http_server.
-_mcp_handler = create_mcp_handler()
-
-
 def _merge_cors_headers(response):
     """Add CORS headers to a Lambda response without clobbering stricter existing values.
 
@@ -281,7 +274,9 @@ def _handle_request(event, context):
 
     # Handle MCP requests
     normalize_content_type_header(event)
-    response = _mcp_handler.handle_request(event, context)
+    mcp = create_mcp_handler()
+
+    response = mcp.handle_request(event, context)
 
     # Post-process the response:
     # - initialize: drop the resources capability (MCPLambdaHandler hardcodes it, we only
