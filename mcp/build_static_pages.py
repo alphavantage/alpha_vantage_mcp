@@ -32,6 +32,7 @@ TEMPLATE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Alpha Vantage MCP Server</title>
+<link rel="icon" href="https://cdn.alphavantage.co/logo.png">
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <style>
   :root { --av-green: #42DCA3; --av-card: #1f1f1f; --av-border: rgba(74, 222, 128, 0.3); }
