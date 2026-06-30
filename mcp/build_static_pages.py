@@ -45,6 +45,17 @@ TEMPLATE = """<!DOCTYPE html>
     line-height: 1.6;
     min-height: 100vh;
   }
+  /* Custom scrollbar (ported from web/components/Markdown.tsx): thin av-green thumb
+     on a dark track. Applied to the whole page (html) and code-block <pre> overflow. */
+  html { scrollbar-width: thin; scrollbar-color: var(--av-green) var(--av-card); }
+  html::-webkit-scrollbar, .content pre::-webkit-scrollbar { width: 8px; height: 8px; }
+  html::-webkit-scrollbar-track, .content pre::-webkit-scrollbar-track { background: var(--av-card); }
+  html::-webkit-scrollbar-thumb, .content pre::-webkit-scrollbar-thumb {
+    background: rgba(66, 220, 163, 0.3); border-radius: 4px;
+  }
+  html::-webkit-scrollbar-thumb:hover, .content pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(66, 220, 163, 0.5);
+  }
   header { padding: 2rem 1rem 1rem; }
   .bar {
     max-width: 900px; margin: 0 auto;
@@ -91,6 +102,7 @@ TEMPLATE = """<!DOCTYPE html>
     background-color: var(--av-card); color: var(--av-green);
     border: 1px solid var(--av-border); border-radius: 0.375rem;
     padding: 1rem; overflow-x: auto; margin: 1rem 0;
+    scrollbar-width: thin; scrollbar-color: var(--av-green) var(--av-card);
   }
   .content pre code { border: none; padding: 0; background: none; }
   /* Per-code-block copy button (ported from web/components/Markdown.tsx pre wrapper).
