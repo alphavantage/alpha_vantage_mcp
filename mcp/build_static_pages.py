@@ -123,12 +123,18 @@ TEMPLATE = """<!DOCTYPE html>
   .toc-nav a.toc-h3 { padding-left: 1.4rem; font-size: 0.8125rem; }
   .toc-nav a.active { color: var(--av-green); border-left-color: var(--av-green); background-color: rgba(66, 220, 163, 0.12); }
   .toc-desktop {
-    position: fixed; left: 2rem; top: 6rem; width: 16rem;
+    /* Anchor to the gutter left of the centered 820px article: on wide screens
+       it sits inward next to the article, never overlapping; clamps to 2rem near
+       the 1280px breakpoint where the gutter is too narrow. */
+    position: fixed; left: max(2rem, calc(50vw - 410px - 17.5rem)); top: 6rem; width: 16rem;
     max-height: 64vh; overflow-y: auto;
     background-color: var(--av-card); border: 1px solid var(--av-border);
     border-radius: 0.5rem; padding: 1rem; font-size: 0.875rem; z-index: 10;
     display: none;
   }
+  /* Hide the scrollbar but keep the TOC panels scrollable. */
+  .toc-desktop, .toc-mobile { scrollbar-width: none; -ms-overflow-style: none; }
+  .toc-desktop::-webkit-scrollbar, .toc-mobile::-webkit-scrollbar { display: none; }
   .toc-toggle {
     position: fixed; bottom: 1.5rem; right: 1.5rem; width: 3rem; height: 3rem;
     border-radius: 9999px; background-color: var(--av-green); color: rgb(45, 45, 45);
