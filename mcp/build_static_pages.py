@@ -136,10 +136,11 @@ TEMPLATE = """<!DOCTYPE html>
   .toc-nav a.toc-h3 { padding-left: 1.4rem; font-size: 0.8125rem; }
   .toc-nav a.active { color: var(--av-green); border-left-color: var(--av-green); background-color: rgba(66, 220, 163, 0.12); }
   .toc-desktop {
-    /* Anchor to the gutter left of the centered 820px article: on wide screens
-       it sits inward next to the article, never overlapping; clamps to 2rem near
-       the 1280px breakpoint where the gutter is too narrow. */
-    position: fixed; left: max(2rem, calc(50vw - 410px - 17.5rem)); top: 6rem; width: 16rem;
+    /* Anchor to the gutter left of the centered 820px article: its right edge sits
+       a constant 24px from the article (17.5rem = 16rem width + 1.5rem gap). Only
+       shown at >=1444px (see media query), the point where the left edge clears 2rem
+       without clamping, so it never overlaps the article. */
+    position: fixed; left: calc(50vw - 410px - 17.5rem); top: 6rem; width: 16rem;
     max-height: 64vh; overflow-y: auto;
     background-color: var(--av-card); border: 1px solid var(--av-border);
     border-radius: 0.5rem; padding: 1rem; font-size: 0.875rem; z-index: 10;
@@ -163,7 +164,10 @@ TEMPLATE = """<!DOCTYPE html>
     display: none;
   }
   .toc-mobile.open { display: block; }
-  @media (min-width: 1280px) {
+  /* 1444px = 410px (half article) + 17.5rem (sidebar + gap) + 2rem (edge margin),
+     scaled by 2 for 50vw: below this the gutter can't fit the sidebar, so the
+     floating toggle handles the TOC instead. */
+  @media (min-width: 1444px) {
     .toc-desktop { display: block; }
     .toc-toggle, .toc-mobile { display: none !important; }
   }
