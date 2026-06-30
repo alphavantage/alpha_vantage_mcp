@@ -150,6 +150,32 @@ def test_parse_token_precedence_body_over_query_over_header():
     assert parse_token_from_request(event) == "HEADERKEY"
 
 
+def test_parse_token_apikey_header_works():
+    # Key-based clients send the raw AV key as an `apikey` header (case-insensitive).
+    assert parse_token_from_request({"headers": {"apikey": "HDRKEY"}}) == "HDRKEY"
+    assert parse_token_from_request({"headers": {"Apikey": "HDRKEY"}}) == "HDRKEY"
+
+
+def test_parse_token_x_api_key_header_works():
+    assert parse_token_from_request({"headers": {"X-API-Key": "XKEY"}}) == "XKEY"
+    assert parse_token_from_request({"headers": {"x-api-key": "XKEY"}}) == "XKEY"
+
+
+def test_parse_token_query_beats_apikey_header():
+    event = {
+        "headers": {"apikey": "HDRKEY"},
+        "queryStringParameters": {"apikey": "QUERYKEY"},
+    }
+    assert parse_token_from_request(event) == "QUERYKEY"
+
+
+def test_parse_token_apikey_header_beats_bearer():
+    # A raw apikey header is preferred over the Bearer fallback within this parser; the
+    # Bearer/OAuth path in _handle_request still runs first for genuine OAuth callers.
+    event = {"headers": {"apikey": "HDRKEY", "Authorization": "Bearer BEARERTOK"}}
+    assert parse_token_from_request(event) == "HDRKEY"
+
+
 # --- T10: PKCE S256 enforcement + metadata --------------------------------------------------
 
 

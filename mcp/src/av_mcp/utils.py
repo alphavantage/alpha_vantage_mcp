@@ -23,11 +23,13 @@ def cors_headers() -> dict[str, str]:
 
 
 def parse_token_from_request(event: dict) -> str:
-    """Parse the credential from request body, query params, or Authorization header.
+    """Parse the credential from request body, query params, or request headers.
 
-    Accepts all three sources (additive, non-breaking): direct-apikey callers may still pass the
-    raw apikey via the request body or ``?apikey=`` query, and the ``Authorization: Bearer`` path
-    carries the encrypted OAuth access token. Priority: body > query > header.
+    Accepts several sources (additive, non-breaking): direct-apikey callers may pass the raw
+    apikey via the request body, the ``?apikey=`` query, or an ``apikey`` / ``X-API-Key``
+    request header (a raw AV key, NOT an OAuth bearer token); the ``Authorization: Bearer``
+    path carries the encrypted OAuth access token. Priority: body > query > apikey header >
+    Bearer.
     """
     # Check request body first (highest priority)
     if event.get("body"):
@@ -47,9 +49,18 @@ def parse_token_from_request(event: dict) -> str:
     if "apikey" in query_params and query_params["apikey"]:
         return query_params["apikey"]
 
-    # Fallback to Authorization header
+    # Case-insensitive header lookup (API Gateway HTTP API lowercases header names; REST
+    # preserves the client's casing), reused for both the apikey-header and Bearer sources.
     headers = event.get("headers", {})
-    auth_header = headers.get("Authorization") or headers.get("authorization")
+    lower_headers = {k.lower(): v for k, v in headers.items()}
+
+    # Check a raw apikey passed as a custom header (Key-based clients): apikey / X-API-Key.
+    for name in ("apikey", "x-api-key"):
+        if lower_headers.get(name):
+            return lower_headers[name]
+
+    # Fallback to Authorization header (OAuth bearer token)
+    auth_header = lower_headers.get("authorization")
     if auth_header and auth_header.startswith("Bearer "):
         return auth_header[7:]  # Remove 'Bearer ' prefix
     return ""
