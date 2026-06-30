@@ -106,6 +106,9 @@ TEMPLATE = """<!DOCTYPE html>
   }
   .content .code-block:hover .copy-btn { opacity: 1; }
   .content .copy-btn:hover { background-color: rgba(66, 220, 163, 0.2); transform: scale(1.05); }
+  /* Single-line blocks: vertically center the button next to the lone line. */
+  .content .code-block--single .copy-btn { top: 50%; transform: translateY(-50%); }
+  .content .code-block--single .copy-btn:hover { transform: translateY(-50%) scale(1.05); }
   .content hr { border: none; border-top: 1px solid var(--av-border); margin: 2rem 0; }
   .content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; display: block; overflow-x: auto; }
   .content th { border: 1px solid var(--av-border); color: var(--av-green); background-color: var(--av-card); padding: 0.5rem 1rem; }
@@ -296,6 +299,10 @@ __README__
       document.querySelectorAll('#content pre').forEach(function (pre) {
         var wrap = document.createElement('div');
         wrap.className = 'code-block';
+        // Single-line blocks center the button vertically; multi-line keep it top-right.
+        if (pre.textContent.replace(/\\n$/, '').indexOf('\\n') === -1) {
+          wrap.className += ' code-block--single';
+        }
         pre.parentNode.insertBefore(wrap, pre);
         wrap.appendChild(pre);
 
