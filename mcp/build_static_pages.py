@@ -106,6 +106,48 @@ TEMPLATE = """<!DOCTYPE html>
   .content .youtube-embed iframe { width: 100%; max-width: 42rem; aspect-ratio: 16 / 9; border: 0; border-radius: 0.5rem; }
   footer { padding: 2rem 1rem; text-align: center; color: #9ca3af; font-size: 0.875rem; }
   footer p { margin: 0.25rem 0; }
+  .content h2, .content h3 { scroll-margin-top: 1.5rem; }
+  /* Table of contents (ported from web/components/TOCDesktop.tsx + TOCMobile.tsx). */
+  .toc-title {
+    color: var(--av-green); font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; font-size: 0.75rem; margin-bottom: 0.75rem;
+  }
+  .toc-nav ul { list-style: none; margin: 0; padding: 0; }
+  .toc-nav li { margin: 0; }
+  .toc-nav a {
+    display: block; color: #9ca3af; text-decoration: none;
+    padding: 0.25rem 0.6rem; border-left: 2px solid transparent;
+    border-radius: 0 0.25rem 0.25rem 0; line-height: 1.35;
+  }
+  .toc-nav a:hover { color: var(--av-green); text-decoration: none; background-color: rgba(66, 220, 163, 0.08); }
+  .toc-nav a.toc-h3 { padding-left: 1.4rem; font-size: 0.8125rem; }
+  .toc-nav a.active { color: var(--av-green); border-left-color: var(--av-green); background-color: rgba(66, 220, 163, 0.12); }
+  .toc-desktop {
+    position: fixed; left: 2rem; top: 6rem; width: 16rem;
+    max-height: 64vh; overflow-y: auto;
+    background-color: var(--av-card); border: 1px solid var(--av-border);
+    border-radius: 0.5rem; padding: 1rem; font-size: 0.875rem; z-index: 10;
+    display: none;
+  }
+  .toc-toggle {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; width: 3rem; height: 3rem;
+    border-radius: 9999px; background-color: var(--av-green); color: rgb(45, 45, 45);
+    border: none; cursor: pointer; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  .toc-mobile {
+    position: fixed; bottom: 5rem; right: 1.5rem; width: 16rem;
+    max-height: 60vh; overflow-y: auto;
+    background-color: var(--av-card); border: 1px solid var(--av-border);
+    border-radius: 0.5rem; padding: 1rem; font-size: 0.875rem; z-index: 20;
+    display: none;
+  }
+  .toc-mobile.open { display: block; }
+  @media (min-width: 1280px) {
+    .toc-desktop { display: block; }
+    .toc-toggle, .toc-mobile { display: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -126,6 +168,17 @@ TEMPLATE = """<!DOCTYPE html>
       <div class="content" id="content"></div>
     </article>
   </main>
+  <aside class="toc-desktop" aria-label="Table of contents">
+    <div class="toc-title">On this page</div>
+    <nav class="toc-nav" id="toc-desktop-nav"></nav>
+  </aside>
+  <button class="toc-toggle" id="toc-toggle" aria-label="Toggle table of contents" aria-expanded="false">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+  </button>
+  <aside class="toc-mobile" id="toc-mobile" aria-label="Table of contents">
+    <div class="toc-title">On this page</div>
+    <nav class="toc-nav" id="toc-mobile-nav"></nav>
+  </aside>
   <footer>
     <p>Made with love at <a href="https://www.alphavantage.co/" target="_blank" rel="noopener noreferrer">Alpha Vantage</a>. Happy hacking!</p>
     <p><a href="https://www.alphavantage.co/privacy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a></p>
@@ -163,6 +216,53 @@ __README__
     };
     marked.setOptions({ renderer: renderer, gfm: true, breaks: false });
     document.getElementById('content').innerHTML = marked.parse(preprocess(source));
+
+    // Build the table of contents from the already-rendered headings (their ids
+    // were assigned by renderer.heading above), then wire active-section
+    // highlighting and the mobile toggle. Ports web/components/TOCDesktop.tsx +
+    // TOCMobile.tsx + useTocNavigation.tsx into vanilla JS.
+    (function buildToc() {
+      var headings = document.querySelectorAll('#content h2[id], #content h3[id]');
+      if (!headings.length) return;
+      var items = [];
+      headings.forEach(function (h) {
+        var cls = h.tagName === 'H3' ? 'toc-h3' : 'toc-h2';
+        var a = document.createElement('a');
+        a.className = cls;
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        items.push('<li>' + a.outerHTML + '</li>');
+      });
+      var html = '<ul>' + items.join('') + '</ul>';
+      document.getElementById('toc-desktop-nav').innerHTML = html;
+      document.getElementById('toc-mobile-nav').innerHTML = html;
+
+      var links = document.querySelectorAll('.toc-nav a');
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          var target = '#' + entry.target.id;
+          links.forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === target);
+          });
+        });
+      }, { rootMargin: '-20% 0px -80% 0px' });
+      headings.forEach(function (h) { observer.observe(h); });
+
+      // Mobile: floating button reveals the same nav; tapping an item closes it.
+      var toggle = document.getElementById('toc-toggle');
+      var mobile = document.getElementById('toc-mobile');
+      toggle.addEventListener('click', function () {
+        var open = mobile.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.getElementById('toc-mobile-nav').addEventListener('click', function (e) {
+        if (e.target.closest('a')) {
+          mobile.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
   </script>
 </body>
 </html>
