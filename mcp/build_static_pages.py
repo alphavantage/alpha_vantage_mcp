@@ -93,6 +93,19 @@ TEMPLATE = """<!DOCTYPE html>
     padding: 1rem; overflow-x: auto; margin: 1rem 0;
   }
   .content pre code { border: none; padding: 0; background: none; }
+  /* Per-code-block copy button (ported from web/components/Markdown.tsx pre wrapper).
+     Wraps each <pre> in a relative container; the button reveals on hover (top-right)
+     and swaps copy icon -> checkmark for 2s on success. */
+  .content .code-block { position: relative; }
+  .content .copy-btn {
+    position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem;
+    display: flex; align-items: center; justify-content: center;
+    background-color: rgba(66, 220, 163, 0.1); color: var(--av-green);
+    border: none; border-radius: 0.25rem; cursor: pointer;
+    opacity: 0; transition: all 0.2s ease;
+  }
+  .content .code-block:hover .copy-btn { opacity: 1; }
+  .content .copy-btn:hover { background-color: rgba(66, 220, 163, 0.2); transform: scale(1.05); }
   .content hr { border: none; border-top: 1px solid var(--av-border); margin: 2rem 0; }
   .content table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; display: block; overflow-x: auto; }
   .content th { border: 1px solid var(--av-border); color: var(--av-green); background-color: var(--av-card); padding: 0.5rem 1rem; }
@@ -267,6 +280,37 @@ __README__
           mobile.classList.remove('open');
           toggle.setAttribute('aria-expanded', 'false');
         }
+      });
+    })();
+
+    // Wrap every rendered <pre> with a hover-reveal copy-to-clipboard button
+    // (ports the pre wrapper from web/components/Markdown.tsx). Covers the MCP
+    // endpoint URL, which lives in a fenced code block.
+    (function addCopyButtons() {
+      var COPY_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+      var CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+      document.querySelectorAll('#content pre').forEach(function (pre) {
+        var wrap = document.createElement('div');
+        wrap.className = 'code-block';
+        pre.parentNode.insertBefore(wrap, pre);
+        wrap.appendChild(pre);
+
+        var btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.type = 'button';
+        btn.title = 'Copy to clipboard';
+        btn.setAttribute('aria-label', 'Copy to clipboard');
+        btn.innerHTML = COPY_ICON;
+        wrap.appendChild(btn);
+
+        var timer;
+        btn.addEventListener('click', function () {
+          navigator.clipboard.writeText(pre.textContent).then(function () {
+            btn.innerHTML = CHECK_ICON;
+            clearTimeout(timer);
+            timer = setTimeout(function () { btn.innerHTML = COPY_ICON; }, 2000);
+          });
+        });
       });
     })();
   </script>
