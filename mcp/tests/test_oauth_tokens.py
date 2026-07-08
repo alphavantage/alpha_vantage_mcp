@@ -180,7 +180,7 @@ def test_parse_token_apikey_header_beats_bearer():
 
 
 def test_metadata_advertises_only_s256():
-    event = {"headers": {"Host": "mcp.yovy.ai"}}
+    event = {"headers": {"Host": "mcp.alphavantage.dev"}}
     resp = oauth.handle_metadata_discovery(event)
     body = json.loads(resp["body"])
     assert body["code_challenge_methods_supported"] == ["S256"]
@@ -358,11 +358,11 @@ def test_expired_auth_code_rejected():
 
 
 def test_protected_resource_metadata():
-    event = {"headers": {"Host": "mcp.yovy.ai"}}
+    event = {"headers": {"Host": "mcp.alphavantage.dev"}}
     resp = oauth.handle_protected_resource_metadata(event)
     body = json.loads(resp["body"])
-    assert body["resource"] == "https://mcp.yovy.ai/mcp"
-    assert body["authorization_servers"] == ["https://mcp.yovy.ai"]
+    assert body["resource"] == "https://mcp.alphavantage.dev/mcp"
+    assert body["authorization_servers"] == ["https://mcp.alphavantage.dev"]
 
 
 # --- T9: WWW-Authenticate resource_metadata pointer -----------------------------------------
@@ -371,14 +371,14 @@ def test_protected_resource_metadata():
 def test_www_authenticate_includes_resource_metadata(monkeypatch):
     from av_mcp.utils import create_oauth_error_response
 
-    monkeypatch.setenv("DOMAIN_NAME", "mcp.yovy.ai")
+    monkeypatch.setenv("DOMAIN_NAME", "mcp.alphavantage.dev")
     resp = create_oauth_error_response(
         {"error": "invalid_token", "error_description": "bad"}, 401
     )
     www = resp["headers"]["WWW-Authenticate"]
     # Path-aware location for the `/mcp` resource (RFC 9728), not the bare path.
     assert (
-        'resource_metadata="https://mcp.yovy.ai/.well-known/oauth-protected-resource/mcp"'
+        'resource_metadata="https://mcp.alphavantage.dev/.well-known/oauth-protected-resource/mcp"'
         in www
     )
 
