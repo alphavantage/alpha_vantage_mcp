@@ -85,7 +85,7 @@ def parse_log_event(log_event):
     return {
         'created_at': timestamp_str,
         'method': method,
-        'api_key_hash': api_key_hash,
+        'api_key': api_key_hash,
         'platform': platform,
         'tool_name': tool_name,
         'arguments': arguments,

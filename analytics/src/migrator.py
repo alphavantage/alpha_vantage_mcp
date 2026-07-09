@@ -11,7 +11,7 @@ logger.setLevel(logging.INFO)
 
 LOG_PATTERN = re.compile(
     r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*MCP_ANALYTICS: '
-    r'method=([^,]+), api_key=([^,]+), platform=([^,]+), tool_name=([^,]+), arguments=(.*)$'
+    r'method=([^,]+), api_key_hash=([^,]+), platform=([^,]+), tool_name=([^,]+), arguments=(.*)$'
 )
 
 BATCH_SIZE = 200
@@ -197,11 +197,11 @@ async def read_and_parse(s3, bucket, key, semaphore):
         match = LOG_PATTERN.match(line)
         if not match:
             continue
-        ts, method, api_key, platform, tool_name, arguments = match.groups()
+        ts, method, api_key_hash, platform, tool_name, arguments = match.groups()
         parsed.append({
             'created_at': ts,
             'method': method,
-            'api_key': api_key,
+            'api_key': api_key_hash,
             'platform': platform,
             'tool_name': tool_name,
             'arguments': arguments,
