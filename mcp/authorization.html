@@ -57,20 +57,22 @@
                 <!-- Authorization Form -->
                 <form method="POST" action="/authorize">
                     <div class="mb-6">
-                        <label for="api_key" class="block text-sm font-medium text-white mb-3">
-                            Alpha Vantage API Key
-                        </label>
-                        <input 
-                            type="password" 
-                            id="api_key" 
-                            name="api_key" 
-                            required 
+                        <div class="flex justify-between items-center mb-3">
+                            <label for="api_key" class="block text-sm font-medium text-white">
+                                Alpha Vantage API Key
+                            </label>
+                            <div class="text-sm text-gray-400">
+                                Don't have an API key? <a href="https://www.alphavantage.co/support/#api-key" target="_blank" class="text-av-green hover:underline">Get one free</a>
+                            </div>
+                        </div>
+                        <input
+                            type="password"
+                            id="api_key"
+                            name="api_key"
+                            required
                             placeholder="Enter your Alpha Vantage API key"
                             class="w-full px-4 py-3 bg-av-dark border-2 border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-av-green transition-colors"
                         >
-                        <div class="text-xs text-gray-400 mt-2">
-                            Don't have an API key? <a href="https://www.alphavantage.co/support/#api-key" target="_blank" class="text-av-green hover:underline">Get one free</a>
-                        </div>
                     </div>
                     
                     <button 
