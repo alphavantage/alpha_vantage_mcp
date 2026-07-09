@@ -192,6 +192,39 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 🤖📈 _Create agentic workflows for quantitative investing_
 
 <details>
+<summary><b>⭐ (Verified Connector) Connect in Microsoft Azure AI Foundry</b></summary>
+
+**Requirements:**
+- Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
+
+#### Microsoft Azure AI Foundry — Agent Service Connection
+
+To connect a Foundry agent to this MCP server:
+
+1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
+2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Catalog** tab, then search for **Alpha Vantage MCP Server** or filter by **Finance** under the **Category** filter. Click **Create**.
+3. Configure the connection with the following settings:
+   - **Name:** Accept the default generated name, or enter your own
+   - *(read-only)* **Remote MCP Server endpoint:** `https://mcp.alphavantage.co/mcp`
+   - *(read-only)* **Authentication:** Key-based
+   - **Credential — apikey:** Enter your Alpha Vantage API key
+4. Click **Connect**.
+
+**Recommended Agent Instructions:**
+
+Add the following to your agent's system prompt to optimize performance:
+
+```
+You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
+The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
+directly as MCP tools. Call them by name with their parameters, e.g.
+TIME_SERIES_DAILY(symbol="IBM", outputsize="compact").
+Always use Alpha Vantage MCP Server for market data queries. Do not answer from prior knowledge or web search.
+```
+
+</details>
+
+<details>
 <summary><b>Install in 🦞OpenClaw🦞</b></summary>
 
 **Requirements:**
@@ -261,49 +294,6 @@ To use the Alpha Vantage MCP server with OpenAI Agents SDK, see our [example age
 
 The example includes a complete setup guide and configuration templates.
 
-</details>
-
-<details>
-<summary><b>Configure in Microsoft Foundry Agent Service</b></summary>
-
-**Requirements:**
-- Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
-
-#### Microsoft Foundry Agent Service Connection
-
-To connect a Foundry agent to this MCP server:
-
-1. Open your agent (or Create Agent from Home Dashboard) in Azure AI Foundry's Agent playground or Agent designer.
-2. In the **Tools** section of the agent configuration, click **Add** → **Browse All Tools**. Select the **Custom** category underneath "Select a Tool" and select **Model Context Protocol**
-3. Configure the MCP server with the following settings:
-   - Key-based authentication (recommended):
-     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
-     - Server URL: `https://mcp.alphavantage.co/mcp`
-     - Authentication: Select **Key-based authentication**
-     - Credential
-       - Click "Add key value pair"
-       - Key: `apikey`
-       - Value: Enter your Alpha Vantage API key
-   - Unauthenticated (legacy, API key in URL, deprecated):
-     - Server label: `alpha-vantage-mcp-server` (or any name you prefer)
-     - Server URL: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY`
-       - Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
-     - Authentication: Select **Unauthenticated**
-4. Click **Connect**
-
-**Recommended Agent Instructions:**
-
-Add the following instruction to your agent's system prompt to optimize performance:
-
-```
-You are a helpful financial agent with access to market data through Alpha Vantage MCP Server.
-
-The Alpha Vantage functions (TIME_SERIES_DAILY, RSI, COMPANY_OVERVIEW, etc.) are exposed
-directly as MCP tools. Call them by name with their parameters, e.g.
-TIME_SERIES_DAILY(symbol="IBM", outputsize="compact").
-
-Always use Alpha Vantage MCP Server for market data queries. Do not answer from prior knowledge or web search.
-```
 </details>
 
 &nbsp;
