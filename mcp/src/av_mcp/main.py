@@ -11,7 +11,8 @@ import click
 def serve(api_key, api_key_option, verbose):
     """Start MCP server (stdio transport).
 
-    Exposes the full catalog of Alpha Vantage data tools directly as normal MCP tools.
+    Exposes the full catalog of Alpha Vantage data tools directly as normal MCP tools,
+    plus the legacy TOOL_LIST/TOOL_GET/TOOL_CALL meta-tools for backward compatibility.
 
     Examples:
       marketdata-mcp-server YOUR_API_KEY

@@ -6,8 +6,12 @@ from loguru import logger
 from av_api.context import set_api_key
 from av_mcp.decorators import setup_custom_tool_decorator
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
-from av_api.registry import build_data_structured_content
-from av_mcp.tools.registry import register_all_tools
+from av_api.registry import build_data_structured_content, get_tool_list, get_tool_schema, get_tool_schemas
+from av_mcp.tools.registry import register_all_tools, register_meta_tools
+from av_mcp.tools.meta_tools import (
+    META_TOOL_OUTPUT_SCHEMA,
+    build_structured_content as build_meta_tool_structured_content,
+)
 from av_mcp.utils import (
     parse_token_from_request,
     create_oauth_error_response,
@@ -64,17 +68,52 @@ def oauth_misconfig_response() -> dict:
     }
 
 
+def _meta_tool_structured(tool_name: str, arguments: dict, content: list) -> dict | None:
+    """Build a meta-tool call's structuredContent (matching its declared META_TOOL_OUTPUT_SCHEMA).
+
+    TOOL_LIST/TOOL_GET re-read the in-process tool registry (pure, no network) instead of
+    parsing the response text, because the awslabs handler serializes non-str/bytes results
+    with ``str(result)`` (Python repr, not JSON) — their raw list/dict results can't be
+    reliably round-tripped through the text content. TOOL_CALL reuses the already-computed
+    text content (which reflects large-response processing) instead of re-running the
+    proxied data tool.
+    """
+    if tool_name == "TOOL_LIST":
+        return build_meta_tool_structured_content(tool_name, get_tool_list())
+    if tool_name == "TOOL_GET":
+        tn = arguments.get("tool_name")
+        if not tn:
+            return None
+        raw = get_tool_schemas(tn) if isinstance(tn, list) else get_tool_schema(tn)
+        return build_meta_tool_structured_content(tool_name, raw)
+    # TOOL_CALL: derive from the returned text content.
+    text = next(
+        (c.get("text") for c in content if isinstance(c, dict) and c.get("type") == "text"),
+        None,
+    )
+    if text is None:
+        return None
+    return build_meta_tool_structured_content(tool_name, text)
+
+
 def add_data_tool_structured_content(parsed_request: dict, response: dict) -> None:
     """Inject structuredContent into a tools/call response (in place).
 
-    The awslabs handler only emits `content`, but every data tool declares the shared
-    DATA_TOOL_OUTPUT_SCHEMA, and MCP requires structuredContent whenever outputSchema is
-    declared. The structuredContent is built from the already-returned text content
-    (which reflects large-response processing) — it never re-runs the tool. Error results
-    are skipped (validation is not applied to isError responses).
+    The awslabs handler only emits `content`, but every tool (data tool or legacy
+    meta-tool) declares an outputSchema, and MCP requires structuredContent whenever
+    outputSchema is declared. Error results are skipped (validation is not applied to
+    isError responses).
+
+    Meta-tools (TOOL_LIST/TOOL_GET/TOOL_CALL) declare their own, more specific
+    outputSchema (META_TOOL_OUTPUT_SCHEMA) and get their structuredContent via
+    _meta_tool_structured(); every other tool falls back to the generic
+    DATA_TOOL_OUTPUT_SCHEMA shape, built from the already-returned text content (which
+    reflects large-response processing) — never re-running the tool.
     """
     if not isinstance(parsed_request, dict) or parsed_request.get("method") != "tools/call":
         return
+    params = parsed_request.get("params") or {}
+    tool_name = params.get("name")
     try:
         resp_body = json.loads(response["body"])
     except (json.JSONDecodeError, TypeError, KeyError):
@@ -86,6 +125,13 @@ def add_data_tool_structured_content(parsed_request: dict, response: dict) -> No
         or "structuredContent" in result
         or result.get("isError")
     ):
+        return
+    if tool_name in META_TOOL_OUTPUT_SCHEMA:
+        structured = _meta_tool_structured(tool_name, params.get("arguments") or {}, result["content"])
+        if structured is None:
+            return
+        result["structuredContent"] = structured
+        response["body"] = json.dumps(resp_body)
         return
     text = next(
         (
@@ -124,8 +170,11 @@ def create_mcp_handler() -> MCPLambdaHandler:
     # Set up custom tool decorator for UPPER_SNAKE_CASE tool names
     setup_custom_tool_decorator(mcp)
 
-    # Register the full catalog of real Alpha Vantage tools directly
+    # Register the full catalog of real Alpha Vantage tools directly, plus the legacy
+    # TOOL_LIST/TOOL_GET/TOOL_CALL meta-tools alongside them for backward compatibility
+    # with historical clients that still have the meta-tools cached (todo 2764).
     register_all_tools(mcp)
+    register_meta_tools(mcp)
     logger.info(f"Registered {len(mcp.tools)} Alpha Vantage tools")
 
     return mcp

@@ -35,7 +35,7 @@ uv run pytest                              # Run tests
 ## Key Patterns
 
 ### Direct Tool Exposure
-All ~100 real Alpha Vantage tools are listed directly as normal MCP tools in both the stdio and Lambda paths, with direct `tools/call` dispatch. Clients do their own (client-side) discovery over the listed tools. Each tool carries behavior hints (readOnly/destructive/openWorld), a derived human-readable title, and a permissive outputSchema (with matching structuredContent).
+All ~100 real Alpha Vantage tools are listed directly as normal MCP tools in both the stdio and Lambda paths, with direct `tools/call` dispatch. Clients do their own (client-side) discovery over the listed tools. Each tool carries behavior hints (readOnly/destructive/openWorld), a derived human-readable title, and a permissive outputSchema (with matching structuredContent). The legacy `TOOL_LIST`/`TOOL_GET`/`TOOL_CALL` meta-tools (`mcp/src/av_mcp/tools/meta_tools.py`) are additively registered alongside the flat catalog in both transports, for backward compatibility with historical clients that still have them cached.
 
 ### Tool Definition
 - Tools defined with `@tool` decorator in `api/src/av_api/tools/` by category

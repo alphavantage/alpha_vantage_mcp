@@ -5,7 +5,9 @@ This server provides MCP (Model Context Protocol) access to Alpha Vantage financ
 via stdio transport, suitable for use with local MCP clients.
 
 Exposes the full catalog of Alpha Vantage data tools directly as normal MCP tools, with
-direct tools/call dispatch (clients do their own discovery over the listed tools).
+direct tools/call dispatch (clients do their own discovery over the listed tools). Also
+exposes the legacy TOOL_LIST/TOOL_GET/TOOL_CALL meta-tools alongside the flat catalog for
+backward compatibility with historical clients that still have them cached.
 """
 
 import json
@@ -30,6 +32,87 @@ from av_api.registry import (
     _build_parameter_schema,
 )
 import av_mcp.common  # noqa: F401 — registers response processor for large responses
+from .tools.meta_tools import (
+    META_TOOL_OPEN_WORLD_HINT,
+    META_TOOL_OUTPUT_SCHEMA,
+    build_structured_content as build_meta_tool_structured_content,
+    tool_list,
+    tool_get,
+    tool_call,
+)
+
+
+# Legacy meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL), kept alongside the flat tool catalog
+# for backward compatibility with historical clients that still have them cached from the
+# old progressive-discovery mode (todo 2764). Descriptions are derived from meta_tools.py
+# docstrings. All meta-tools are read-only and non-destructive; openWorldHint varies per
+# tool (see META_TOOL_OPEN_WORLD_HINT) since only TOOL_CALL reaches the public internet.
+def _meta_annotations(tool_name: str) -> types.ToolAnnotations:
+    return types.ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        openWorldHint=META_TOOL_OPEN_WORLD_HINT[tool_name],
+    )
+
+
+META_TOOLS = [
+    types.Tool(
+        name="TOOL_LIST",
+        description=extract_description(tool_list),
+        inputSchema={
+            "type": "object",
+            "properties": {},
+            "required": []
+        },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_LIST"],
+        annotations=_meta_annotations("TOOL_LIST"),
+    ),
+    types.Tool(
+        name="TOOL_GET",
+        description=extract_description(tool_get),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "tool_name": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "The name of the tool to get schema for (e.g., 'TIME_SERIES_DAILY')"
+                        },
+                        {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "A list of tool names to get schemas for (e.g., ['TIME_SERIES_DAILY', 'TIME_SERIES_INTRADAY'])"
+                        }
+                    ]
+                }
+            },
+            "required": ["tool_name"]
+        },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_GET"],
+        annotations=_meta_annotations("TOOL_GET"),
+    ),
+    types.Tool(
+        name="TOOL_CALL",
+        description=extract_description(tool_call),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "tool_name": {
+                    "type": "string",
+                    "description": "The name of the tool to call (e.g., 'TIME_SERIES_DAILY')"
+                },
+                "arguments": {
+                    "type": "object",
+                    "description": "Dictionary of arguments matching the tool's parameter schema"
+                }
+            },
+            "required": ["tool_name", "arguments"]
+        },
+        outputSchema=META_TOOL_OUTPUT_SCHEMA["TOOL_CALL"],
+        annotations=_meta_annotations("TOOL_CALL"),
+    )
+]
 
 
 def build_tools() -> list[types.Tool]:
@@ -59,13 +142,18 @@ def build_tools() -> list[types.Tool]:
 
 
 class StdioMCPServer:
-    """Stdio MCP Server for Alpha Vantage exposing the real tool catalog directly."""
+    """Stdio MCP Server for Alpha Vantage exposing the real tool catalog directly.
+
+    Also exposes the legacy TOOL_LIST/TOOL_GET/TOOL_CALL meta-tools alongside the flat
+    catalog for backward compatibility with historical clients that still have them
+    cached from the old progressive-discovery mode (todo 2764).
+    """
 
     def __init__(self, api_key: str, verbose: bool = False):
         self.api_key = api_key
         self.verbose = verbose
         self.server = Server("alphavantage-mcp")
-        self.tools = build_tools()
+        self.tools = build_tools() + META_TOOLS
 
         # Set up the API key context
         set_api_key(api_key)
@@ -88,26 +176,44 @@ class StdioMCPServer:
         async def handle_call_tool(
             name: str, arguments: dict[str, Any]
         ) -> tuple[list[types.TextContent], dict[str, Any]]:
-            """Dispatch a tool call directly to the named Alpha Vantage tool.
+            """Dispatch a tool call to a meta-tool or directly to a named Alpha Vantage tool.
 
             Returns both unstructured text content and structuredContent matching the
             declared outputSchema (the lowlevel server validates the latter).
             Exceptions propagate to the lowlevel handler, which renders an isError result.
             """
             try:
-                result = call_tool(name, arguments)
+                if name == "TOOL_LIST":
+                    result = tool_list()
+                elif name == "TOOL_GET":
+                    tool_name = arguments.get("tool_name")
+                    if not tool_name:
+                        raise ValueError("tool_name is required")
+                    result = tool_get(tool_name)
+                elif name == "TOOL_CALL":
+                    tool_name = arguments.get("tool_name")
+                    tool_args = arguments.get("arguments", {})
+                    if not tool_name:
+                        raise ValueError("tool_name is required")
+                    result = tool_call(tool_name, tool_args)
+                else:
+                    result = call_tool(name, arguments)
+
+                # Unstructured text (back-compat) + structuredContent (matches outputSchema),
+                # both derived from the same already-returned result (no re-fetch).
+                text = result if isinstance(result, str) else json.dumps(result, indent=2)
+                content = [types.TextContent(type="text", text=text)]
+                structured = (
+                    build_meta_tool_structured_content(name, result)
+                    if name in META_TOOL_OUTPUT_SCHEMA
+                    else build_data_structured_content(result)
+                )
+                return content, structured
             except Exception as e:
                 # Re-raise so the lowlevel server builds a proper isError CallToolResult
                 # instead of a text body that would fail outputSchema validation.
                 logger.error(f"Error calling tool {name}: {e}")
                 raise
-
-            # Unstructured text (back-compat) + structuredContent (matches outputSchema),
-            # both derived from the same already-returned result (no re-fetch).
-            text = result if isinstance(result, str) else json.dumps(result, indent=2)
-            content = [types.TextContent(type="text", text=text)]
-            structured = build_data_structured_content(result)
-            return content, structured
 
     async def run(self):
         """Run the low-level server"""

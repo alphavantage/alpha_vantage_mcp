@@ -12,6 +12,9 @@ from av_api.registry import (  # noqa: F401
     ensure_tools_loaded,
     extract_description,
     call_tool,
+    get_tool_list,
+    get_tool_schema,
+    get_tool_schemas,
 )
 
 
@@ -61,3 +64,42 @@ def register_all_tools(mcp):
         # The decorator stores the raw func as the implementation; swap in the
         # JSON-serializing wrapper for dispatch (schema was already built from the raw func).
         mcp.tool_implementations[tool_name] = _json_serialize_result(func)
+
+
+def register_meta_tools(mcp):
+    """Register the legacy meta-tools (TOOL_LIST, TOOL_GET, TOOL_CALL) as normal MCP tools.
+
+    Additive, back-compat registration alongside register_all_tools(): some historical
+    clients still have these cached from the old progressive-discovery mode and call them
+    directly, so they must keep working even though the full flat tool catalog is also
+    registered (todo 2764).
+    """
+    from mcp.types import ToolAnnotations
+    from av_mcp.tools.meta_tools import (
+        META_TOOL_OPEN_WORLD_HINT,
+        META_TOOL_OUTPUT_SCHEMA,
+        tool_list,
+        tool_get,
+        tool_call,
+    )
+
+    # Each meta-tool gets a human-readable `title` annotation (Software Directory
+    # Policy 5.E) plus behavior hints. All are read-only and non-destructive;
+    # openWorldHint varies per tool (only TOOL_CALL reaches the public internet).
+    meta_tools = [
+        (tool_list, "List Alpha Vantage Tools"),
+        (tool_get, "Get Alpha Vantage Tool Schema"),
+        (tool_call, "Call Alpha Vantage Tool"),
+    ]
+    for func, title in meta_tools:
+        tool_name = func.__name__.upper()
+        annotations = ToolAnnotations(
+            title=title,
+            readOnlyHint=True,
+            destructiveHint=False,
+            openWorldHint=META_TOOL_OPEN_WORLD_HINT[tool_name],
+        )
+        mcp.tool(
+            annotations=annotations,
+            output_schema=META_TOOL_OUTPUT_SCHEMA[tool_name],
+        )(func)
