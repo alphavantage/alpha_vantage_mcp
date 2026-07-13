@@ -45,34 +45,17 @@ uvx marketdata-mcp-server YOUR_API_KEY
 <summary><b>Install in Claude</b></summary>
 
 **Requirements:**
-- Claude Pro account (or higher tier)
+- Any free or paid Claude account
   
 #### Claude Remote Server Connection
-
-To connect Claude (Web or Desktop) to this MCP server:
-
-📺 Watch the **setup tutorial** - Click the image below to watch a step-by-step video guide:
-
-[![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/W69x2qJcYmI/maxresdefault.jpg)](https://www.youtube.com/watch?v=W69x2qJcYmI)
-
-
-📺 Already have your Alpha Vantage MCP server set up? Below are a few examples of Claude performing various stock analysis & charting tasks:
-
-[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/tyl9E7fddvU/maxresdefault.jpg)](https://www.youtube.com/watch?v=tyl9E7fddvU)
-
-**OAuth Option (Recommended):**
-1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
-2. Click "Add Custom Connector"
-3. Add the MCP server URL: `https://mcp.alphavantage.co/mcp`
-4. Click "Connect"
-5. Enter your Alpha Vantage API key
-6. Click "Authorize Access"
-
-**API Key in URL (Legacy, deprecated):**
-1. Go to [claude.ai/settings/connectors](https://claude.ai/settings/connectors) (Web) or Settings → Connectors (Desktop)
-2. Click "Add Custom Connector"
-3. Add the MCP server URL with your API key: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key)
-4. Click "Connect"
+Claude has already reviewed and included the Alpha Vantage MCP Server in its official Connectors directory. Getting started is easy:
+1. Go to [https://claude.ai/new#settings/customize-connectors](https://claude.ai/new#settings/customize-connectors) (Web) or Settings → Connectors (Desktop)
+2. Click the "Add" button in the upper-right corner and choose "Browse connectors" in the dropdown menu
+3. Search for "Alpha Vantage" in the search box
+4. Click on the "Alpha Vantage MCP Server" tile returned by the search result
+5. Click "Connect" near the top-left of the page
+6. Enter your Alpha Vantage API key in the pop-up authentication page
+7. Click "Authorize Access"
 
 #### Claude Local Server Connection
 See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
