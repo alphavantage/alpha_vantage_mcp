@@ -22,7 +22,7 @@ The Alpha Vantage functions are exposed directly as MCP tools. MCP clients disco
 ```
 https://mcp.alphavantage.co/mcp
 ```
-When you connect, a consent page opens where you enter and authorize your Alpha Vantage API key.
+When you connect, an authentication page opens where you enter and authorize your Alpha Vantage API key. If you would like to update/rotate the API key, simple disconnect then reconnect the MCP server and enter the new key in the authentication page. 
 
 **Remote Server Connection (Legacy, API key in URL, deprecated):**
 ```
