@@ -42,7 +42,7 @@ uvx marketdata-mcp-server YOUR_API_KEY
 
 
 <details>
-<summary><b>Install in Claude</b></summary>
+<summary><b>⭐ (Verified Connector) Install in Claude</b></summary>
 
 **Requirements:**
 - Any free or paid Claude account
@@ -286,6 +286,49 @@ The example includes a complete setup guide and configuration templates.
 💻💵 _Code up fintech apps_
 
 <details>
+<summary><b>⭐ (Verified Connector) Install in Claude Code</b></summary>
+
+**Requirements:**
+- Any free or paid Claude account
+  
+#### Claude Remote Server Connection
+The Alpha Vantage MCP Server in already listed in Claude's official Connectors directory. Getting started is easy:
+1. Go to [https://claude.ai/new#settings/customize-connectors](https://claude.ai/new#settings/customize-connectors) (Web) or Settings → Connectors (Desktop)
+2. Click the "Add" button in the upper-right corner and choose "Browse connectors" in the dropdown menu
+3. Search for "Alpha Vantage" in the search box
+4. Click on the "Alpha Vantage MCP Server" tile returned by the search result
+5. Click "Connect" near the top-right of the page
+6. Enter your Alpha Vantage API key in the pop-up authentication page 
+7. Click "Authorize Access"
+
+If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #6 and #7 again.
+
+#### Claude Code Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then run:
+
+```bash
+claude mcp add alphavantage -- uvx marketdata-mcp-server YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+Run `claude` in your terminal from your project directory.
+
+Then connect with:
+```
+/mcp
+```
+
+</details>
+
+<details>
 <summary><b>Install in OpenAI Codex</b></summary>
 
 **Requirements:**
@@ -337,50 +380,6 @@ Then connect with:
 ```
 
 </details>
-
-<details>
-<summary><b>Install in Claude Code</b></summary>
-
-  **Requirements:**
-- Claude Pro account (or higher tier)
-  
-See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp) for more information.
-
-Run one of the following commands, depending on whether you’re connecting remotely or running the server locally.
-
-#### Claude Code Remote Server Connection
-
-```bash
-claude mcp add -t http alphavantage https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
-```
-
-Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
-
-#### Claude Code Local Server Connection
-
-First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Then run:
-
-```bash
-claude mcp add alphavantage -- uvx marketdata-mcp-server YOUR_API_KEY
-```
-
-Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
-
-Run `claude` in your terminal from your project directory.
-
-Then connect with:
-```
-/mcp
-```
-
-</details>
-
 
 <details>
 <summary><b>Install in VS Code (Visual Studio Code)</b></summary>
