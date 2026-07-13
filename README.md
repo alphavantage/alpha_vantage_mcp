@@ -22,7 +22,7 @@ The Alpha Vantage functions are exposed directly as MCP tools. MCP clients disco
 ```
 https://mcp.alphavantage.co/mcp
 ```
-When you connect, an authentication page opens where you enter and authorize your Alpha Vantage API key. If you would like to update/rotate the API key, simple disconnect then reconnect the MCP server and enter the new key in the authentication page. 
+When you connect, an authentication page opens where you enter and authorize your Alpha Vantage API key. If you would like to update/rotate the API key in the future, simple disconnect then reconnect the MCP server and enter the new key in the authentication page. 
 
 **Remote Server Connection (Legacy, API key in URL, deprecated):**
 ```
@@ -53,9 +53,11 @@ Claude has already reviewed and published the Alpha Vantage MCP Server in its of
 2. Click the "Add" button in the upper-right corner and choose "Browse connectors" in the dropdown menu
 3. Search for "Alpha Vantage" in the search box
 4. Click on the "Alpha Vantage MCP Server" tile returned by the search result
-5. Click "Connect" near the top-left of the page
-6. Enter your Alpha Vantage API key in the pop-up authentication page
+5. Click "Connect" near the top-right of the page
+6. Enter your Alpha Vantage API key in the pop-up authentication page 
 7. Click "Authorize Access"
+
+If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #6 and #7 again.
 
 #### Claude Local Server Connection
 See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
