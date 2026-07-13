@@ -36,7 +36,7 @@ uvx marketdata-mcp-server YOUR_API_KEY
 
 &nbsp;
 
-### Setup Instructions by Use Case
+### Setup Instructions by Platform
 
 💬📊 _Power your chatbot with financial data_
 
