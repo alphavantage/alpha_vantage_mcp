@@ -38,7 +38,7 @@ uvx marketdata-mcp-server YOUR_API_KEY
 
 ### Setup Instructions by Platform
 
-💬📊 _Power your chatbot with financial data_
+💬📊 _Chatbots_
 
 
 <details>
@@ -174,7 +174,7 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 
 &nbsp;
 
-🤖📈 _Create agentic workflows for quantitative investing_
+🤖📈 _Agentic systems_
 
 <details>
 <summary><b>⭐ (Microsoft-Verified Connector) Connect in Microsoft Azure AI Foundry</b></summary>
@@ -283,7 +283,7 @@ The example includes a complete setup guide and configuration templates.
 
 &nbsp;
 
-💻💵 _Code up fintech apps_
+💻💵 _Coding tools_
 
 <details>
 <summary><b>⭐ (Anthropic-Verified Connector) Install in Claude Code</b></summary>
