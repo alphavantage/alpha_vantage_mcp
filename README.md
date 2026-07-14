@@ -42,7 +42,7 @@ uvx marketdata-mcp-server YOUR_API_KEY
 
 
 <details>
-<summary><b>⭐ (Verified Connector) Install in Claude</b></summary>
+<summary><b>⭐ (Anthropic-Verified Connector) Install in Claude</b></summary>
 
 **Requirements:**
 - Any free or paid Claude account
@@ -177,7 +177,7 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 🤖📈 _Create agentic workflows for quantitative investing_
 
 <details>
-<summary><b>⭐ (Verified Connector) Connect in Microsoft Azure AI Foundry</b></summary>
+<summary><b>⭐ (Microsoft-Verified Connector) Connect in Microsoft Azure AI Foundry</b></summary>
 
 **Requirements:**
 - Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
@@ -286,7 +286,7 @@ The example includes a complete setup guide and configuration templates.
 💻💵 _Code up fintech apps_
 
 <details>
-<summary><b>⭐ (Verified Connector) Install in Claude Code</b></summary>
+<summary><b>⭐ (Anthropic-Verified Connector) Install in Claude Code</b></summary>
 
 **Requirements:**
 - Any free or paid Claude account
