@@ -182,6 +182,10 @@ While Developer mode is available for both **Plus** and **Pro** accounts, on **P
 **Requirements:**
 - Azure subscription with access to [Azure AI Foundry](https://ai.azure.com)
 
+📺 Watch the **setup tutorial**. (Click image below.)
+
+[![1-Min Financial AI Agents: Alpha Vantage MCP + Azure AI Foundry](https://i3.ytimg.com/vi/_Du-NkmevK0/hqdefault.jpg)](https://youtu.be/_Du-NkmevK0)
+
 #### Microsoft Azure AI Foundry — Agent Service Connection
 
 To connect a Foundry agent to this MCP server:
