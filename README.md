@@ -52,7 +52,7 @@ uvx marketdata-mcp-server YOUR_API_KEY
 [![Alpha Vantage MCP Server: Official Claude Connector Setup](https://i3.ytimg.com/vi/-I7auJJ4jy8/hqdefault.jpg)](https://www.youtube.com/watch?v=-I7auJJ4jy8)
 
 #### Claude Remote Server Connection (Recommended, OAuth)
-The Alpha Vantage MCP Server in already listed in Claude's official Connectors directory. Getting started is easy:
+The Alpha Vantage MCP Server is already listed in Claude's official Connectors directory. Getting started is easy:
 1. Go to [https://claude.ai/new#settings/customize-connectors](https://claude.ai/new#settings/customize-connectors) (Web) or Settings → Connectors (Desktop)
 2. Click the "Add" button in the upper-right corner and choose "Browse connectors" in the dropdown menu
 3. Search for "Alpha Vantage" in the search box
@@ -300,7 +300,7 @@ The example includes a complete setup guide and configuration templates.
 - Any free or paid Claude account
   
 #### Claude Remote Server Connection (Recommended, OAuth)
-The Alpha Vantage MCP Server in already listed in Claude's official Connectors directory. Getting started is easy:
+The Alpha Vantage MCP Server is already listed in Claude's official Connectors directory. Getting started is easy:
 1. Go to [https://claude.ai/new#settings/customize-connectors](https://claude.ai/new#settings/customize-connectors) (Web) or Settings → Connectors (Desktop)
 2. Click the "Add" button in the upper-right corner and choose "Browse connectors" in the dropdown menu
 3. Search for "Alpha Vantage" in the search box
