@@ -106,5 +106,6 @@ marketdata-cli ipo_calendar
 ```bash
 marketdata-cli realtime_options AAPL
 marketdata-cli historical_options AAPL
+marketdata-cli historical_options AAPL --date 2024-01-15 --expiration 2024-06-21
 ```
 

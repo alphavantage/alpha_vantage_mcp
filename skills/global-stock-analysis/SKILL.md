@@ -88,6 +88,7 @@ marketdata-cli realtime_options AAPL --require_greeks --expiration 2026-06-19
 marketdata-cli realtime_options_fmv AAPL --expiration 2026-06-19
 marketdata-cli realtime_put_call_ratio SPY
 marketdata-cli historical_options AAPL --date 2024-01-15
+marketdata-cli historical_options AAPL --date 2024-01-15 --expiration 2024-06-21
 marketdata-cli historical_put_call_ratio SPY --date 2024-01-15
 ```
 

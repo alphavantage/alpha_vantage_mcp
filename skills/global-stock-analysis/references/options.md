@@ -60,10 +60,11 @@ The realtime endpoints return ratios for the entire chain *and* per expiration d
 
 ## 5. Historical comparison
 
-Pull the same option chain or sentiment ratios as of any past trading day. Greeks and IV are always included for `historical_options`. Defaults to the previous trading session if `--date` is omitted.
+Pull the same option chain or sentiment ratios as of any past trading day. Greeks and IV are always included for `historical_options`. Defaults to the previous trading session if `--date` is omitted. Optionally narrow to a single contract expiration with `--expiration` (`YYYY-MM-DD`); omit it to return contracts across all expiration dates.
 
 ```bash
 marketdata-cli historical_options AAPL --date 2024-01-15
+marketdata-cli historical_options AAPL --date 2024-01-15 --expiration 2024-06-21
 marketdata-cli historical_put_call_ratio SPY --date 2024-01-15
 marketdata-cli historical_volume_open_interest_ratio SPY --date 2024-01-15
 ```

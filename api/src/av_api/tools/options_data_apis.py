@@ -141,6 +141,7 @@ def historical_options(
     symbol: str,
     date: str = None,
     contract: str = None,
+    expiration: str = None,
     datatype: str = "csv"
 ) -> dict[str, str] | str:
     """Returns the full historical options chain for a specific symbol on a specific date.
@@ -155,6 +156,8 @@ def historical_options(
               Any date later than 2008-01-01 is accepted. For example, date=2017-11-15.
         contract: The US options contract ID you would like to specify. By default, the contract parameter
                  is not set and the entire option chain for a given symbol will be returned.
+        expiration: The contract expiration date in YYYY-MM-DD format. By default, expiration is not set and
+                    contracts across all expiration dates are returned.
         datatype: By default, datatype=csv. Strings json and csv are accepted with the following specifications:
                   json returns the options data in JSON format; csv returns the data as a CSV (comma separated value) file.
 
@@ -170,6 +173,8 @@ def historical_options(
         params["date"] = date
     if contract:
         params["contract"] = contract
+    if expiration:
+        params["expiration"] = expiration
 
     return _make_api_request("HISTORICAL_OPTIONS", params)
 
