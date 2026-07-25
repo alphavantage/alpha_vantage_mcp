@@ -57,6 +57,9 @@ class AnalyticsEmitter:
         """Create an emitter only when Manufact S3 analytics is configured."""
         bucket = os.getenv("ANALYTICS_LOGS_BUCKET")
         if not bucket:
+            logger.info(
+                "MCP_ANALYTICS: emitter=DISABLED, reason=ANALYTICS_LOGS_BUCKET not set"
+            )
             return None
 
         try:
@@ -65,10 +68,14 @@ class AnalyticsEmitter:
             s3_client = boto3.client(
                 "s3", region_name=os.getenv("AWS_REGION", "us-east-1")
             )
-        except Exception:
-            logger.error("Analytics S3 emitter disabled: unable to create S3 client")
+        except Exception as e:
+            logger.error(
+                "MCP_ANALYTICS: emitter=DISABLED, reason=unable to create S3 client, error={}",
+                e,
+            )
             return None
 
+        logger.info("MCP_ANALYTICS: emitter=ENABLED, bucket={}", bucket)
         return cls(
             bucket,
             s3_client,
@@ -120,6 +127,10 @@ class AnalyticsEmitter:
         with self._lock:
             if len(self._records) >= self.max_queue_size:
                 self._records.popleft()
+                logger.warning(
+                    "MCP_ANALYTICS: queue_overflow, dropped=1, max_queue_size={}",
+                    self.max_queue_size,
+                )
             self._records.append(record)
             if len(self._records) >= self.batch_size:
                 self._flush_requested.set()
@@ -147,10 +158,19 @@ class AnalyticsEmitter:
                     Body=content.encode("utf-8"),
                     ContentType="application/jsonlines",
                 )
-            except Exception:
+            except Exception as e:
                 logger.warning(
-                    "Analytics S3 upload failed; dropped {} queued events", len(records)
+                    "MCP_ANALYTICS: flush=failed, events={}, error={}",
+                    len(records),
+                    e,
                 )
+                return
+
+            logger.info(
+                "MCP_ANALYTICS: flush=success, events={}, key={}",
+                len(records),
+                key,
+            )
 
     def close(self) -> None:
         """Stop the worker and synchronously flush events left in memory."""
