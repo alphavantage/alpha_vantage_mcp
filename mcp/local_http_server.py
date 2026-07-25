@@ -4,9 +4,10 @@
 import json
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from lambda_function import lambda_handler
+import lambda_function
 import sys
 import os
+from av_mcp.analytics_emitter import AnalyticsEmitter
 
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +16,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # across the ThreadingHTTPServer request threads). Lambda never imports this
 # module and never sets AV_HTTP_POOL, so its per-request client path is unchanged.
 os.environ.setdefault('AV_HTTP_POOL', '1')
+
+lambda_handler = lambda_function.lambda_handler
+_parse_and_log_mcp_analytics = lambda_function.parse_and_log_mcp_analytics
+
+
+def configure_analytics_emitter(emitter: AnalyticsEmitter | None) -> None:
+    """Add S3 delivery to the local Manufact path without changing Lambda behavior."""
+    lambda_function.parse_and_log_mcp_analytics = _parse_and_log_mcp_analytics
+    if emitter is None:
+        return
+
+    def parse_log_and_emit(body, api_key, platform):
+        _parse_and_log_mcp_analytics(body, api_key, platform)
+        emitter.emit_mcp_request(body, api_key, platform)
+
+    lambda_function.parse_and_log_mcp_analytics = parse_log_and_emit
 
 class LambdaRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -96,6 +113,11 @@ class LambdaRequestHandler(BaseHTTPRequestHandler):
         print(f"[{self.date_time_string()}] {format % args}")
 
 def run_server(port=8000):
+    analytics_emitter = AnalyticsEmitter.from_environment()
+    configure_analytics_emitter(analytics_emitter)
+    if analytics_emitter:
+        analytics_emitter.install_shutdown_hooks()
+
     server_address = ('', port)
     # ThreadingHTTPServer serves each request in its own thread, so blocking
     # upstream Alpha Vantage calls overlap instead of queuing serially. Per-request
@@ -109,6 +131,9 @@ def run_server(port=8000):
     except KeyboardInterrupt:
         print("\nShutting down server...")
         httpd.shutdown()
+    finally:
+        if analytics_emitter:
+            analytics_emitter.close()
 
 if __name__ == '__main__':
     import argparse

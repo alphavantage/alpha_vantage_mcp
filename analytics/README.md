@@ -34,6 +34,34 @@ The scripts use the following environment variables (can be set in `.env` file):
 - `LAMBDA_LOG_GROUP_NAME` - CloudWatch Log Group name for Lambda functions
 - `AWS_PROFILE` - AWS profile to use (optional)
 
+## Manufact Direct Ingestion
+
+The Manufact container can deliver MCP analytics directly to this bucket when
+`ANALYTICS_S3_BUCKET` is set. This is intentionally separate from the Lambda
+deployment's `ANALYTICS_LOGS_BUCKET`: only `mcp/local_http_server.py` reads the
+Manufact setting, so Lambda continues using its existing CloudWatch subscription
+path and cannot double-count events.
+
+- Set `ANALYTICS_S3_BUCKET` in the Manufact service to the bucket backing this
+  pipeline. `AWS_REGION` is optional and defaults to `us-east-1`.
+- The container identity needs `s3:PutObject` for
+  `arn:aws:s3:::<analytics-bucket>/jsonl/*`; retain bucket encryption and block
+  public access. Confirm this separately because credentials that can write the
+  response-CDN bucket may not have access to the analytics bucket.
+- The emitter batches asynchronously every 30 seconds or 100 events by default.
+  `ANALYTICS_S3_FLUSH_INTERVAL_SECONDS`, `ANALYTICS_S3_BATCH_SIZE`, and
+  `ANALYTICS_S3_MAX_QUEUE_SIZE` can tune those bounds. Queue overflow drops the
+  oldest event rather than delaying MCP requests.
+- Each object uses `jsonl/YYYY/MM/DD/HH/...jsonl` and the existing Glue schema:
+  `created_at`, `method`, `api_key`, `platform`, `tool_name`, and `arguments`.
+  The `api_key` field is the raw credential by the owner-approved private-data
+  design. Do not log, copy into error reports, or expose these objects publicly.
+- Manufact/Docker `SIGTERM` and normal interpreter exit synchronously flush the
+  remaining queue. A hard kill can still lose at most the in-memory batch.
+
+Paid/free classification, payment-source lookups, aggregation, and new-versus-
+existing-user logic remain outside this public repository.
+
 ## Pipeline Components
 
 - **CloudWatch Logs**: `/aws/lambda/[function-name]`
