@@ -37,13 +37,18 @@ The scripts use the following environment variables (can be set in `.env` file):
 ## Manufact Direct Ingestion
 
 The Manufact container can deliver MCP analytics directly to this bucket when
-`ANALYTICS_S3_BUCKET` is set. This is intentionally separate from the Lambda
-deployment's `ANALYTICS_LOGS_BUCKET`: only `mcp/local_http_server.py` reads the
-Manufact setting, so Lambda continues using its existing CloudWatch subscription
-path and cannot double-count events.
+`ANALYTICS_LOGS_BUCKET` is set, using the same variable this pipeline already
+uses above. Double counting is structurally impossible, not just
+coincidentally avoided: `AnalyticsEmitter.from_environment()` is only called
+from `mcp/local_http_server.py`'s `run_server()`, and the Lambda deployment
+(`template.yaml`, `.github/workflows/deploy.yml`) never sets this variable or
+constructs an emitter, so the Lambda process cannot ship these events even if
+the variable were present in its environment.
 
-- Set `ANALYTICS_S3_BUCKET` in the Manufact service to the bucket backing this
-  pipeline. `AWS_REGION` is optional and defaults to `us-east-1`.
+- Set `ANALYTICS_LOGS_BUCKET` in the Manufact service to the bucket backing
+  this pipeline (currently `alphavantage-mcp-analytics-logs-test`, the live
+  bucket despite its `-test` suffix). `AWS_REGION` is optional and defaults to
+  `us-east-1`.
 - The container identity needs `s3:PutObject` for
   `arn:aws:s3:::<analytics-bucket>/jsonl/*`; retain bucket encryption and block
   public access. Confirm this separately because credentials that can write the
@@ -56,6 +61,12 @@ path and cannot double-count events.
   `created_at`, `method`, `api_key`, `platform`, `tool_name`, and `arguments`.
   The `api_key` field is the raw credential by the owner-approved private-data
   design. Do not log, copy into error reports, or expose these objects publicly.
+- The emitter itself is a pure append-only writer: it never produces the
+  hourly `compacted.jsonl` file. That invariant is maintained by the separate
+  `mcp-logs-compactor` Lambda (`src/compactor.py`), which runs hourly, merges
+  the just-closed hour's per-flush objects into one `compacted.jsonl`, and
+  deletes the parts it merged. A ~24 hour lookback sweep lets it self-heal any
+  hour a missed schedule tick left uncompacted.
 - Manufact/Docker `SIGTERM` and normal interpreter exit synchronously flush the
   remaining queue. A hard kill can still lose at most the in-memory batch.
 

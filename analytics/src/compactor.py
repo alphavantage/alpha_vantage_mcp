@@ -8,20 +8,16 @@ logger.setLevel(logging.INFO)
 
 s3_client = boto3.client('s3')
 
+DEFAULT_LOOKBACK_HOURS = 24
 
-def lambda_handler(event, context):
+
+def compact_hour(bucket, prefix, s3_client):
     """
-    Hourly compaction: merge all small .jsonl files from the previous hour
-    into a single file, then delete the originals.
+    Merge all small .jsonl files under an hour prefix into compacted.jsonl,
+    then delete the originals. A no-op if the prefix is empty or already
+    consists solely of compacted.jsonl.
     """
-    bucket = os.environ['S3_BUCKET']
-
-    # Compact the previous hour
-    now = datetime.now(timezone.utc)
-    target = now - timedelta(hours=1)
-    prefix = f"jsonl/{target.year}/{target.month:02d}/{target.day:02d}/{target.hour:02d}/"
-
-    logger.info(f"Compacting {prefix} in {bucket}")
+    merged_key = f"{prefix}compacted.jsonl"
 
     # List all objects under the prefix
     keys = []
@@ -30,9 +26,9 @@ def lambda_handler(event, context):
         for obj in page.get('Contents', []):
             keys.append(obj['Key'])
 
-    if len(keys) <= 1:
-        logger.info(f"Nothing to compact: {len(keys)} file(s)")
-        return {'compacted': 0}
+    if not keys or keys == [merged_key]:
+        logger.info(f"Nothing to compact for {prefix}: already compacted or empty")
+        return 0
 
     # Download and concatenate all files
     lines = []
@@ -43,7 +39,6 @@ def lambda_handler(event, context):
             lines.append(body)
 
     merged = '\n'.join(lines)
-    merged_key = f"{prefix}compacted.jsonl"
 
     # Write merged file
     s3_client.put_object(
@@ -61,4 +56,29 @@ def lambda_handler(event, context):
 
     logger.info(f"Deleted {len(keys)} original files")
 
-    return {'compacted': len(keys), 'merged_key': merged_key}
+    return len(keys)
+
+
+def lambda_handler(event, context):
+    """
+    Hourly compaction with a lookback sweep: merge the just-closed hour, and
+    re-check the previous ~24 hours so a missed schedule tick self-heals
+    instead of leaving that hour permanently uncompacted.
+    """
+    bucket = os.environ['S3_BUCKET']
+    lookback_hours = int(os.environ.get('COMPACTOR_LOOKBACK_HOURS', DEFAULT_LOOKBACK_HOURS))
+
+    now = datetime.now(timezone.utc)
+    compacted_hours = {}
+    for hours_ago in range(1, lookback_hours + 1):
+        target = now - timedelta(hours=hours_ago)
+        prefix = f"jsonl/{target.year}/{target.month:02d}/{target.day:02d}/{target.hour:02d}/"
+        logger.info(f"Checking {prefix} in {bucket}")
+        compacted = compact_hour(bucket, prefix, s3_client)
+        if compacted:
+            compacted_hours[prefix] = compacted
+
+    return {
+        'compacted_total': sum(compacted_hours.values()),
+        'hours': compacted_hours,
+    }

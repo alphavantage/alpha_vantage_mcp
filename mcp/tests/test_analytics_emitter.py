@@ -101,6 +101,19 @@ def test_emitter_flushes_when_batch_size_is_reached():
     assert len(s3_client.calls) == 1
 
 
+def test_from_environment_gates_on_analytics_logs_bucket(monkeypatch):
+    monkeypatch.delenv("ANALYTICS_LOGS_BUCKET", raising=False)
+    assert AnalyticsEmitter.from_environment() is None
+
+    monkeypatch.setenv("ANALYTICS_LOGS_BUCKET", "unit-analytics-bucket")
+    emitter = AnalyticsEmitter.from_environment()
+    try:
+        assert emitter is not None
+        assert emitter.bucket == "unit-analytics-bucket"
+    finally:
+        emitter.close()
+
+
 def test_emitter_never_logs_raw_api_key_on_upload_failure():
     messages = []
     sink_id = logger.add(messages.append, format="{message}")

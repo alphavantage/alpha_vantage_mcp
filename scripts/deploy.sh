@@ -51,7 +51,6 @@ if [ -f "samconfig.toml" ]; then
     add_param "CdnBucketName" "CDN_BUCKET_NAME"
     add_param "CdnDomain" "CDN_DOMAIN"
     add_param "StaticFilesBucket" "STATIC_FILES_BUCKET"
-    add_param "AnalyticsLogsBucket" "ANALYTICS_LOGS_BUCKET"
     add_param "SubnetIds" "SUBNET_IDS"
     add_param "LambdaSecurityGroupId" "LAMBDA_SECURITY_GROUP_ID"
     if [ -n "$PARAM_OVERRIDES" ]; then

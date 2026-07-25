@@ -55,7 +55,7 @@ class AnalyticsEmitter:
     @classmethod
     def from_environment(cls) -> "AnalyticsEmitter | None":
         """Create an emitter only when Manufact S3 analytics is configured."""
-        bucket = os.getenv("ANALYTICS_S3_BUCKET")
+        bucket = os.getenv("ANALYTICS_LOGS_BUCKET")
         if not bucket:
             return None
 
