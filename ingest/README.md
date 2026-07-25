@@ -94,23 +94,73 @@ the MCP function already uses (`template.yaml`'s `S3IngestFunction`); no
 CloudFront or routing change is needed since API Gateway prefers an explicit
 resource over the MCP function's greedy `/{proxy+}`.
 
-It runs under its own IAM role, `mcp-s3-ingest-role`, created out-of-band by
-`scripts/create-ingest-role.sh` (the same "admin runs a script once, then the
-role is referenced by ARN" pattern as `scripts/create-lambda-role.sh` and
-`analytics/create-logs-processor-role.sh`) rather than reusing
-`mcp-server-lambda-execution-role`: its permissions are scoped to exactly
-`s3:PutObject` on `<analytics bucket>/jsonl/*` and `s3:PutObject` +
-`s3:PutObjectTagging` on `<cdn bucket>/mcp-responses/*`, instead of that role's
-broader `AWSLambdaExecute` grant (`s3:PutObject` on `arn:aws:s3:::*`). Run the
-script once per account, with that account's own bucket names, **before** the
-first deploy that includes `S3IngestFunction`: the CI deploy role can
-`iam:PassRole` to `lambda.amazonaws.com` but cannot create or patch IAM
-resources itself.
+It runs under its own IAM role (default name `mcp-s3-ingest-role`, overridable
+via the `S3IngestRoleName` stack parameter / `S3_INGEST_ROLE_NAME` CONFIG key),
+created out-of-band by `scripts/create-ingest-role.sh` (the same "operator runs
+a script once, then the role is referenced by ARN" pattern as
+`scripts/create-lambda-role.sh` and `analytics/create-logs-processor-role.sh`)
+rather than reusing `mcp-server-lambda-execution-role`: its permissions are
+scoped to exactly `s3:PutObject` on `<analytics bucket>/jsonl/*` and
+`s3:PutObject` + `s3:PutObjectTagging` on `<cdn bucket>/mcp-responses/*`,
+instead of that role's broader `AWSLambdaExecute` grant (`s3:PutObject` on
+`arn:aws:s3:::*`). Run the script once per account, with that account's own
+bucket names, **before** the first deploy that materialises `S3IngestFunction`:
+the CI deploy role can `iam:PassRole` to `lambda.amazonaws.com` but cannot
+create IAM resources itself.
 
 `S3_INGEST_SECRET` and `ANALYTICS_LOGS_BUCKET` come from each GitHub
 Environment's `CONFIG` JSON secret (see `.github/workflows/deploy.yml`), with a
-different secret per account. An empty secret makes the endpoint fail closed
-(`503`) rather than deploy silently open.
+different secret per account. **An empty secret also omits the function from
+the stack** (`HasS3IngestSecret` CFN Condition on `S3IngestFunction`): a
+`main`/prod release without the secret ready will not create the function and
+cannot roll back the rest of the MCP stack over a missing role. When the secret
+is set but the runtime env is empty for some other reason, the handler still
+fails closed with `503`.
+
+### Prod IAM: what the operator can and cannot do
+
+The production SSO permission set is **not** vanilla `PowerUserAccess`. Measured
+action-by-action (non-mutating probes only):
+
+| Action | Prod SSO principal |
+|---|---|
+| `iam:CreateRole` | allowed |
+| `iam:CreatePolicy` | allowed |
+| `iam:AttachRolePolicy` | allowed |
+| `iam:PutRolePolicy` (inline) | **denied** |
+| `iam:CreatePolicyVersion` / `DeletePolicyVersion` | **denied** |
+| IAM reads (`GetRole`, `ListAttachedRolePolicies`, `GetPolicy`, `ListPolicies`, …) | **denied** (except `iam:ListRoles`) |
+
+Staging can still use inline policies; prod cannot. That is why
+`scripts/create-ingest-role.sh` has a `POLICY_MODE` switch:
+
+```bash
+# Staging (default): inline policy via PutRolePolicy
+ANALYTICS_LOGS_BUCKET=alphavantage-mcp-analytics-logs-test \
+  CDN_BUCKET_NAME=alphavantage-cdn-<STAGING_AWS_ACCOUNT_ID> \
+  ./scripts/create-ingest-role.sh
+
+# Prod: customer-managed least-privilege policy (create-only)
+AWS_PROFILE=<prod-profile> POLICY_MODE=managed \
+  ANALYTICS_LOGS_BUCKET=alphavantage-mcp-analytics-logs-prod \
+  CDN_BUCKET_NAME=alphavantage-cdn-<PROD_AWS_ACCOUNT_ID> \
+  ./scripts/create-ingest-role.sh
+```
+
+Both modes build the **same** least-privilege JSON once. `managed` creates
+customer-managed policy `MCPS3IngestAccess` then attaches it. Because
+`CreatePolicyVersion` is denied in prod, that policy is **create-only**: a later
+grant change needs a new policy name (e.g. `MCPS3IngestAccess-v2`) and a fresh
+attach; the script never updates an existing policy and tolerates
+`EntityAlreadyExists` on re-run instead of pre-checking with IAM reads it does
+not have.
+
+Optional escape hatch (security debt, not the normal path): set
+`S3_POLICY_ARN=arn:aws:iam::aws:policy/AmazonS3FullAccess` under `POLICY_MODE=managed`
+to skip `CreatePolicy` and attach that AWS-managed policy instead. Role choice
+itself is a CONFIG edit (`S3_INGEST_ROLE_NAME`), not a code change: the template
+parameter defaults to `mcp-s3-ingest-role` and can point at another pre-existing
+role (e.g. `LogsProcessorRole-mcp`) if IAM write is unavailable after all.
 
 ## Payload ceiling
 

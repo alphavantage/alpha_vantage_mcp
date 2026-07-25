@@ -87,6 +87,7 @@ jobs:
           [ -n "$AV_APIKEY_ENC_KEY" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES AvApikeyEncKey=$AV_APIKEY_ENC_KEY"
           [ -n "$S3_INGEST_SECRET" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES S3IngestSecret=$S3_INGEST_SECRET"
           [ -n "$ANALYTICS_LOGS_BUCKET" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES AnalyticsLogsBucket=$ANALYTICS_LOGS_BUCKET"
+          [ -n "$S3_INGEST_ROLE_NAME" ] && PARAM_OVERRIDES="$PARAM_OVERRIDES S3IngestRoleName=$S3_INGEST_ROLE_NAME"
           if [ -n "$PARAM_OVERRIDES" ]; then
             sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --parameter-overrides $PARAM_OVERRIDES
           else

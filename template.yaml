@@ -48,6 +48,17 @@ Parameters:
     Type: String
     Default: ''
     Description: S3 bucket for the mcp-s3-ingest 'analytics' target (per-account; no default so a staging value can never leak into prod)
+  S3IngestRoleName:
+    Type: String
+    Default: mcp-s3-ingest-role
+    Description: IAM role name for mcp-s3-ingest (pre-created out of band; default is the dedicated least-privilege role, override to reuse another role e.g. LogsProcessorRole-mcp)
+
+Conditions:
+  # Only materialise S3IngestFunction when a secret is configured. Protects a
+  # main/prod release from rolling back the whole stack if the ingest role or
+  # CONFIG keys are not ready yet (todo 2842, D29). Staging keeps a non-empty
+  # secret so the function stays present there.
+  HasS3IngestSecret: !Not [!Equals [!Ref S3IngestSecret, '']]
 
 Resources:
   # S3 bucket for static files. No longer fronted by CloudFront (the Lambda serves
@@ -216,11 +227,14 @@ Resources:
   # of their own (todo 2842, round 6). Self-contained (stdlib + runtime boto3), so it
   # skips the MCP function's tool-catalog cold start and keeps its own log group
   # outside the "MCP_ANALYTICS" subscription filter. Runs under a dedicated role
-  # (mcp-s3-ingest-role, created out-of-band by scripts/create-ingest-role.sh) rather
-  # than mcp-server-lambda-execution-role, so its S3 access is scoped to exactly the
-  # two allowlisted prefixes instead of that role's broader AWSLambdaExecute grant.
+  # (S3IngestRoleName, default mcp-s3-ingest-role, created out-of-band by
+  # scripts/create-ingest-role.sh) rather than mcp-server-lambda-execution-role, so
+  # its S3 access is scoped to exactly the two allowlisted prefixes instead of that
+  # role's broader AWSLambdaExecute grant. Conditioned on a non-empty secret (D29)
+  # so a prod release without CONFIG/role ready cannot roll back the whole stack.
   S3IngestFunction:
     Type: AWS::Serverless::Function
+    Condition: HasS3IngestSecret
     Properties:
       FunctionName: mcp-s3-ingest
       CodeUri: ingest/
@@ -230,7 +244,7 @@ Resources:
         - x86_64
       MemorySize: 512
       Timeout: 15
-      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/mcp-s3-ingest-role'
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${S3IngestRoleName}'
       Events:
         S3IngestApi:
           Type: Api
