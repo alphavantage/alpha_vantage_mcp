@@ -67,6 +67,7 @@ def test_default_cap_allows_earnings_without_preview(monkeypatch):
 
 def test_large_response_previews_unless_return_full_data(monkeypatch):
     monkeypatch.setattr(client.httpx, "Client", FakeClient)
+    monkeypatch.setattr(common, "is_upload_configured", lambda: True)
     monkeypatch.setattr(common, "upload_to_object_storage", lambda text, datatype: "data:application/json;base64,stub")
     ensure_tools_loaded()
 

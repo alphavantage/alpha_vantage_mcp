@@ -39,6 +39,15 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: Fernet key for field-encrypting the Alpha Vantage apikey claim (sourced from config/SSM)
+  S3IngestSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: Shared secret the mcp-s3-ingest endpoint requires on every request (per-account, sourced from config/SSM); empty disables the endpoint
+  AnalyticsLogsBucket:
+    Type: String
+    Default: ''
+    Description: S3 bucket for the mcp-s3-ingest 'analytics' target (per-account; no default so a staging value can never leak into prod)
 
 Resources:
   # S3 bucket for static files. No longer fronted by CloudFront (the Lambda serves
@@ -202,6 +211,38 @@ Resources:
           CDN_DOMAIN: !Ref CdnDomain
           JWT_SECRET_KEY: !Ref JwtSecretKey
           AV_APIKEY_ENC_KEY: !Ref AvApikeyEncKey
+
+  # Dedicated bucket-put proxy for Manufact containers, which hold no AWS credentials
+  # of their own (todo 2842, round 6). Self-contained (stdlib + runtime boto3), so it
+  # skips the MCP function's tool-catalog cold start and keeps its own log group
+  # outside the "MCP_ANALYTICS" subscription filter. Runs under a dedicated role
+  # (mcp-s3-ingest-role, created out-of-band by scripts/create-ingest-role.sh) rather
+  # than mcp-server-lambda-execution-role, so its S3 access is scoped to exactly the
+  # two allowlisted prefixes instead of that role's broader AWSLambdaExecute grant.
+  S3IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: mcp-s3-ingest
+      CodeUri: ingest/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Timeout: 15
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/mcp-s3-ingest-role'
+      Events:
+        S3IngestApi:
+          Type: Api
+          Properties:
+            Path: /internal/s3-put
+            Method: post
+      Environment:
+        Variables:
+          S3_INGEST_SECRET: !Ref S3IngestSecret
+          ANALYTICS_LOGS_BUCKET: !Ref AnalyticsLogsBucket
+          CDN_BUCKET_NAME: !Ref CdnBucketName
+          CDN_DOMAIN: !Ref CdnDomain
 
 Outputs:
   MCPApi:

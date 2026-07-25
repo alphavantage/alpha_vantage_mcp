@@ -7,15 +7,65 @@ import json
 import os
 import signal
 import threading
-from typing import Any
+from typing import Any, Protocol
 from uuid import uuid4
 
 from loguru import logger
+
+from av_mcp import s3_ingest_client
 
 
 DEFAULT_FLUSH_INTERVAL_SECONDS = 30
 DEFAULT_BATCH_SIZE = 100
 DEFAULT_QUEUE_SIZE = 1_000
+
+# Forced by the emitter regardless of transport; the ingest proxy's server-side
+# "analytics" target composes the identical prefix on its own, so the resulting S3
+# key is the same whether written directly or through the proxy.
+ANALYTICS_KEY_PREFIX = "jsonl/"
+
+
+class AnalyticsWriter(Protocol):
+    """Delivers one flushed JSONL batch somewhere; never raises."""
+
+    def write(self, key_suffix: str, body: bytes) -> tuple[bool, str | None]:
+        """Return (success, key-on-success | error-message-on-failure)."""
+        ...
+
+
+class S3DirectWriter:
+    """Write objects straight to S3 via boto3 (local/dev, or any deployment that
+    still holds AWS credentials of its own)."""
+
+    def __init__(self, bucket: str, s3_client: Any) -> None:
+        self.bucket = bucket
+        self.s3_client = s3_client
+
+    def write(self, key_suffix: str, body: bytes) -> tuple[bool, str | None]:
+        key = ANALYTICS_KEY_PREFIX + key_suffix
+        try:
+            self.s3_client.put_object(
+                Bucket=self.bucket,
+                Key=key,
+                Body=body,
+                ContentType="application/jsonlines",
+            )
+        except Exception as e:
+            return False, str(e)
+        return True, key
+
+
+class IngestProxyWriter:
+    """Write objects through the mcp-s3-ingest proxy Lambda (no AWS credentials
+    needed in the container)."""
+
+    def write(self, key_suffix: str, body: bytes) -> tuple[bool, str | None]:
+        result = s3_ingest_client.put_object(
+            "analytics", key_suffix, body, "application/jsonlines"
+        )
+        if result is None:
+            return False, "ingest proxy request failed"
+        return True, ANALYTICS_KEY_PREFIX + key_suffix
 
 
 class AnalyticsEmitter:
@@ -23,16 +73,14 @@ class AnalyticsEmitter:
 
     def __init__(
         self,
-        bucket: str,
-        s3_client: Any,
+        writer: AnalyticsWriter,
         *,
         flush_interval_seconds: float = DEFAULT_FLUSH_INTERVAL_SECONDS,
         batch_size: int = DEFAULT_BATCH_SIZE,
         max_queue_size: int = DEFAULT_QUEUE_SIZE,
         start_thread: bool = True,
     ) -> None:
-        self.bucket = bucket
-        self.s3_client = s3_client
+        self.writer = writer
         self.flush_interval_seconds = flush_interval_seconds
         self.batch_size = batch_size
         self.max_queue_size = max_queue_size
@@ -54,8 +102,36 @@ class AnalyticsEmitter:
 
     @classmethod
     def from_environment(cls) -> "AnalyticsEmitter | None":
-        """Create an emitter only when Manufact S3 analytics is configured."""
+        """Create an emitter using whichever S3 write path this deployment can reach.
+
+        ``S3_INGEST_URL`` set -> proxy through mcp-s3-ingest (Manufact has no AWS
+        credentials); else ``ANALYTICS_LOGS_BUCKET`` set -> direct boto3 write
+        (local/dev, or a deployment that does hold credentials); neither set ->
+        disabled.
+        """
+        ingest_url = os.getenv("S3_INGEST_URL")
         bucket = os.getenv("ANALYTICS_LOGS_BUCKET")
+        kwargs = dict(
+            flush_interval_seconds=_positive_float_env(
+                "ANALYTICS_S3_FLUSH_INTERVAL_SECONDS",
+                DEFAULT_FLUSH_INTERVAL_SECONDS,
+            ),
+            batch_size=_positive_int_env("ANALYTICS_S3_BATCH_SIZE", DEFAULT_BATCH_SIZE),
+            max_queue_size=_positive_int_env(
+                "ANALYTICS_S3_MAX_QUEUE_SIZE", DEFAULT_QUEUE_SIZE
+            ),
+        )
+
+        if ingest_url:
+            if not os.getenv("S3_INGEST_SECRET"):
+                logger.info(
+                    "MCP_ANALYTICS: emitter=DISABLED, "
+                    "reason=S3_INGEST_URL set without S3_INGEST_SECRET"
+                )
+                return None
+            logger.info("MCP_ANALYTICS: emitter=ENABLED, transport=proxy")
+            return cls(IngestProxyWriter(), **kwargs)
+
         if not bucket:
             logger.info(
                 "MCP_ANALYTICS: emitter=DISABLED, reason=ANALYTICS_LOGS_BUCKET not set"
@@ -75,19 +151,10 @@ class AnalyticsEmitter:
             )
             return None
 
-        logger.info("MCP_ANALYTICS: emitter=ENABLED, bucket={}", bucket)
-        return cls(
-            bucket,
-            s3_client,
-            flush_interval_seconds=_positive_float_env(
-                "ANALYTICS_S3_FLUSH_INTERVAL_SECONDS",
-                DEFAULT_FLUSH_INTERVAL_SECONDS,
-            ),
-            batch_size=_positive_int_env("ANALYTICS_S3_BATCH_SIZE", DEFAULT_BATCH_SIZE),
-            max_queue_size=_positive_int_env(
-                "ANALYTICS_S3_MAX_QUEUE_SIZE", DEFAULT_QUEUE_SIZE
-            ),
+        logger.info(
+            "MCP_ANALYTICS: emitter=ENABLED, transport=s3direct, bucket={}", bucket
         )
+        return cls(S3DirectWriter(bucket, s3_client), **kwargs)
 
     def emit_mcp_request(
         self, body: str | dict[str, Any], api_key: str, platform: str
@@ -145,31 +212,27 @@ class AnalyticsEmitter:
                 self._records.clear()
 
             now = datetime.now(timezone.utc)
-            key = (
-                f"jsonl/{now.year}/{now.month:02d}/{now.day:02d}/{now.hour:02d}/"
+            key_suffix = (
+                f"{now.year}/{now.month:02d}/{now.day:02d}/{now.hour:02d}/"
                 f"{now.strftime('%Y%m%d_%H%M%S_%f')}_{uuid4().hex}.jsonl"
             )
             content = "\n".join(json.dumps(record) for record in records) + "\n"
 
-            try:
-                self.s3_client.put_object(
-                    Bucket=self.bucket,
-                    Key=key,
-                    Body=content.encode("utf-8"),
-                    ContentType="application/jsonlines",
-                )
-            except Exception as e:
+            success, key_or_error = self.writer.write(
+                key_suffix, content.encode("utf-8")
+            )
+            if not success:
                 logger.warning(
                     "MCP_ANALYTICS: flush=failed, events={}, error={}",
                     len(records),
-                    e,
+                    key_or_error,
                 )
                 return
 
             logger.info(
                 "MCP_ANALYTICS: flush=success, events={}, key={}",
                 len(records),
-                key,
+                key_or_error,
             )
 
     def close(self) -> None:

@@ -6,6 +6,12 @@ import time
 from typing import Any
 from loguru import logger
 
+from av_mcp import s3_ingest_client
+
+# Forced by the ingest proxy's "cdn" target regardless of transport, so both the
+# direct-boto3 and proxy branches below produce the identical S3 key.
+CDN_KEY_PREFIX = "mcp-responses/"
+
 
 def cors_headers() -> dict[str, str]:
     """Browser-grade CORS headers applied to every Lambda response (todo 2583).
@@ -122,16 +128,36 @@ def estimate_tokens(data: Any) -> int:
         return len(str(data)) // 4
 
 
+def is_upload_configured() -> bool:
+    """True when some CDN destination is actually reachable (proxy or direct boto3).
+
+    Distinguishes "no CDN configured at all" (e.g. local stdio usage, where
+    ``upload_to_object_storage`` returning ``None`` is the normal, expected
+    outcome) from "configured but the upload failed", which the caller should
+    treat as an error (todo 2842).
+    """
+    import os
+
+    if s3_ingest_client.is_configured():
+        return True
+    return bool(os.getenv("CDN_BUCKET_NAME")) and bool(os.getenv("CDN_DOMAIN"))
+
+
 def generate_storage_key(data: str, datatype: str = "json") -> str:
     """Generate a unique storage key for temporary data storage."""
     data_hash = hashlib.sha256(data.encode()).hexdigest()[:8]
     timestamp = int(time.time())
     extension = "csv" if datatype == "csv" else "json"
-    return f"mcp-responses/{timestamp}-{data_hash}.{extension}"
+    return f"{CDN_KEY_PREFIX}{timestamp}-{data_hash}.{extension}"
 
 
 def upload_to_object_storage(data: str, datatype: str = "json") -> str | None:
     """Upload data to S3 object storage and return a CDN URL.
+
+    Routes through the mcp-s3-ingest proxy when configured (``S3_INGEST_URL`` +
+    ``S3_INGEST_SECRET``, todo 2842 round 6) because Manufact containers hold no AWS
+    credentials of their own; otherwise falls back to a direct boto3 PutObject (local/dev,
+    or the Lambda deployment, which still has credentials).
 
     Args:
         data: The data to upload (as string)
@@ -140,6 +166,19 @@ def upload_to_object_storage(data: str, datatype: str = "json") -> str | None:
     Returns:
         CDN URL to access the data, or None if upload fails
     """
+    key = generate_storage_key(data, datatype)
+    content_type = "text/csv" if datatype == "csv" else "application/json"
+    body = data.encode("utf-8")
+
+    if s3_ingest_client.is_configured():
+        result = s3_ingest_client.put_object(
+            "cdn", key[len(CDN_KEY_PREFIX) :], body, content_type
+        )
+        if result is None:
+            logger.error("Failed to upload to object storage via ingest proxy")
+            return None
+        return result.get("public_url")
+
     import os
     import boto3
 
@@ -154,13 +193,11 @@ def upload_to_object_storage(data: str, datatype: str = "json") -> str | None:
             return None
 
         s3_client = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"))
-        key = generate_storage_key(data, datatype)
-        content_type = "text/csv" if datatype == "csv" else "application/json"
 
         s3_client.put_object(
             Bucket=bucket_name,
             Key=key,
-            Body=data.encode("utf-8"),
+            Body=body,
             ContentType=content_type,
             CacheControl="public, max-age=3600",
             Metadata={"created": str(int(time.time()))},

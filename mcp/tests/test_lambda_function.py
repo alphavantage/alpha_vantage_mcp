@@ -138,6 +138,7 @@ def test_lambda_dict_result_is_valid_json_and_structured(monkeypatch):
 
 def test_lambda_large_preview_result_is_valid_json_and_structured(monkeypatch):
     monkeypatch.setattr(client.httpx, "Client", _FakeClient)
+    monkeypatch.setattr(common, "is_upload_configured", lambda: True)
     monkeypatch.setattr(
         common, "upload_to_object_storage", lambda text, datatype: "data:application/json;base64,stub"
     )

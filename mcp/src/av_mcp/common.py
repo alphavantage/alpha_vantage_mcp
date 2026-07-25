@@ -1,6 +1,6 @@
 import json
 from av_api.client import _make_api_request, set_response_processor, MAX_RESPONSE_TOKENS  # noqa: F401
-from av_mcp.utils import upload_to_object_storage
+from av_mcp.utils import upload_to_object_storage, is_upload_configured
 
 
 # Heuristic: top-level dicts with more than this many keys are treated as
@@ -103,18 +103,34 @@ def _server_response_processor(response_text: str, datatype: str, estimated_toke
         parsed = None
     effective_datatype = "json" if parsed is not None else datatype
 
-    try:
-        data_url = upload_to_object_storage(response_text, datatype=effective_datatype)
-
-        # Create preview with data URL
+    if not is_upload_configured():
+        # No CDN destination is configured at all (e.g. local stdio usage): a null
+        # data_url here is normal, not a failure, and return_full_data still works,
+        # so keep the original friendly preview with no error (todo 2842).
         preview = _create_preview(response_text, effective_datatype, estimated_tokens, parsed=parsed)
-        preview["data_url"] = data_url
-
+        preview["data_url"] = None
         return preview
 
+    try:
+        data_url = upload_to_object_storage(response_text, datatype=effective_datatype)
     except Exception as e:
-        # If upload fails, return error with preview
+        # If upload raises, return error with preview
         return _create_preview(response_text, effective_datatype, estimated_tokens, parsed=parsed, error=str(e))
+
+    if data_url is None:
+        # A configured upload path returning None (not raising) is still a failure;
+        # surface it as an error instead of a healthy-looking null data_url (todo 2842).
+        return _create_preview(
+            response_text,
+            effective_datatype,
+            estimated_tokens,
+            parsed=parsed,
+            error="upload_to_object_storage returned no URL",
+        )
+
+    preview = _create_preview(response_text, effective_datatype, estimated_tokens, parsed=parsed)
+    preview["data_url"] = data_url
+    return preview
 
 
 # Install the server-specific response processor at import time
