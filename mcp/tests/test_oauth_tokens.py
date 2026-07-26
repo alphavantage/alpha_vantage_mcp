@@ -122,7 +122,7 @@ def test_token_config_error_is_token_error():
 # --- Credential resolution: unified resolver, raw key wins over Bearer (todo 2889) ----------
 
 
-def test_resolve_credential_jwt_shaped_bearer_is_oauth_candidate():
+def test_resolve_credential_bearer_is_oauth_candidate():
     event = {"headers": {"Authorization": "Bearer abc.def.ghi"}}
     assert resolve_credential(event) == ("", "abc.def.ghi")
 
@@ -174,31 +174,17 @@ def test_resolve_credential_apikey_header_beats_bearer():
     assert resolve_credential(event) == ("HDRKEY", "")
 
 
-def test_resolve_credential_raw_key_in_authorization_with_bearer_prefix():
-    # Header-auth clients send the raw AV key (no dots) as `Authorization: Bearer <key>`.
+def test_resolve_credential_authorization_is_never_a_raw_key():
+    # A raw AV key in Authorization stays a bearer candidate (later 401s in
+    # decode_access_token); Authorization must not smuggle arbitrary strings past
+    # connection-level auth as raw apikeys.
     event = {"headers": {"Authorization": "Bearer 1VCKZ7JS90AN00FP"}}
-    assert resolve_credential(event) == ("1VCKZ7JS90AN00FP", "")
+    assert resolve_credential(event) == ("", "1VCKZ7JS90AN00FP")
 
 
-def test_resolve_credential_raw_key_in_authorization_without_prefix():
+def test_resolve_credential_bare_authorization_is_bearer_candidate():
     event = {"headers": {"Authorization": "1VCKZ7JS90AN00FP"}}
-    assert resolve_credential(event) == ("1VCKZ7JS90AN00FP", "")
-
-
-def test_resolve_credential_dot_count_discrimination():
-    # Exactly two dots = JWT-shaped (OAuth candidate); any other dot count is a raw key.
-    assert resolve_credential({"headers": {"Authorization": "Bearer a.b"}}) == (
-        "a.b",
-        "",
-    )
-    assert resolve_credential({"headers": {"Authorization": "Bearer a.b.c.d"}}) == (
-        "a.b.c.d",
-        "",
-    )
-    assert resolve_credential({"headers": {"Authorization": "Bearer a.b.c"}}) == (
-        "",
-        "a.b.c",
-    )
+    assert resolve_credential(event) == ("", "1VCKZ7JS90AN00FP")
 
 
 def test_resolve_credential_no_credential():

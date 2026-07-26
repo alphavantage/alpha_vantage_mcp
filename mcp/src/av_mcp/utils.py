@@ -34,14 +34,15 @@ def resolve_credential(event: dict) -> tuple[str, str]:
     Returns ``(raw_key, bearer)`` where at most one is non-empty:
 
     - ``raw_key``: an explicit raw AV apikey, from (in priority order) the request body >
-      ``?apikey=`` query > ``apikey`` / ``X-API-Key`` header > a non-JWT-shaped
-      ``Authorization`` value (with or without the ``Bearer `` prefix). An explicit raw key
-      is the most recent credential the caller configured, so it wins over any cached OAuth
-      Bearer token (which embeds the apikey captured at consent time and would otherwise pin
-      a stale key across reconnects).
-    - ``bearer``: a JWT-shaped ``Authorization`` value (exactly two dots — AV apikeys are
-      alphanumeric and never contain dots), the OAuth access-token candidate the caller must
-      validate via ``decode_access_token``. Invalid/expired JWTs stay a 401 there (RFC 6750).
+      ``?apikey=`` query > ``apikey`` / ``X-API-Key`` header. An explicit raw key is the
+      most recent credential the caller configured, so it wins over any cached OAuth Bearer
+      token (which embeds the apikey captured at consent time and would otherwise pin a
+      stale key across reconnects).
+    - ``bearer``: the ``Authorization`` value (with or without the ``Bearer `` prefix),
+      strictly the OAuth access-token candidate the caller must validate via
+      ``decode_access_token``. Raw apikeys are NOT accepted here (accepting arbitrary
+      strings would let any value through connection-level auth), so non-JWT values stay
+      a 401 invalid_token there (RFC 6750), as do invalid/expired JWTs.
     - ``("", "")``: no credential present anywhere in the request.
     """
     # Check request body first (highest priority)
@@ -72,16 +73,11 @@ def resolve_credential(event: dict) -> tuple[str, str]:
         if lower_headers.get(name):
             return lower_headers[name], ""
 
-    # Authorization header: JWT-shaped values are OAuth access-token candidates; anything
-    # else is treated as a raw apikey (header-auth clients send `Authorization: Bearer <key>`
-    # or `Authorization: <key>`).
+    # Authorization header is strictly the OAuth access-token candidate; raw apikeys are
+    # not accepted via Authorization (any value fails decode_access_token -> 401).
     auth_header = lower_headers.get("authorization") or ""
-    candidate = auth_header[7:] if auth_header.startswith("Bearer ") else auth_header
-    if not candidate:
-        return "", ""
-    if candidate.count(".") == 2:
-        return "", candidate
-    return candidate, ""
+    bearer = auth_header[7:] if auth_header.startswith("Bearer ") else auth_header
+    return "", bearer
 
 
 def extract_client_platform(event: dict) -> str:

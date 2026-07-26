@@ -7,7 +7,9 @@ it failed strict JWT decoding. Scenarios:
 
 - A: valid Bearer carrying OLD key + ``?apikey=NEW`` must resolve NEW (raw key wins).
 - B: ``Authorization: Bearer <raw key>`` (and bare ``Authorization: <raw key>``) must be
-  accepted as a raw apikey with 200.
+  rejected with 401 invalid_token — the Authorization header is strictly an OAuth access
+  token; accepting raw apikeys there would let arbitrary strings through connection-level
+  auth (user decision, partial revert of the original fix).
 - C: ``?apikey=NEW`` only resolves NEW (control, unchanged).
 
 JWT-shaped-but-invalid Bearer values must still 401 (RFC 6750), and a credential-less
@@ -72,20 +74,22 @@ def test_scenario_a_explicit_query_apikey_wins_over_stale_bearer(monkeypatch):
     assert captured["key"] == NEW_KEY
 
 
-def test_scenario_b_raw_apikey_as_bearer_authorization(monkeypatch):
+def test_scenario_b_raw_apikey_as_bearer_authorization_rejected(monkeypatch):
     captured = _capture_resolved_key(monkeypatch)
     event = _tools_list_event(headers={"Authorization": f"Bearer {NEW_KEY}"})
     response = lambda_function.lambda_handler(event, None)
-    assert response["statusCode"] == 200
-    assert captured["key"] == NEW_KEY
+    assert response["statusCode"] == 401
+    assert json.loads(response["body"])["error"] == "invalid_token"
+    assert "key" not in captured
 
 
-def test_scenario_b_raw_apikey_as_bare_authorization(monkeypatch):
+def test_scenario_b_raw_apikey_as_bare_authorization_rejected(monkeypatch):
     captured = _capture_resolved_key(monkeypatch)
     event = _tools_list_event(headers={"Authorization": NEW_KEY})
     response = lambda_function.lambda_handler(event, None)
-    assert response["statusCode"] == 200
-    assert captured["key"] == NEW_KEY
+    assert response["statusCode"] == 401
+    assert json.loads(response["body"])["error"] == "invalid_token"
+    assert "key" not in captured
 
 
 def test_scenario_c_query_only_control(monkeypatch):

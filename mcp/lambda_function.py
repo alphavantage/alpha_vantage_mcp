@@ -274,11 +274,11 @@ def _handle_request(event, context):
             return oauth_misconfig_response()
 
     # Resolve the caller's credential (todo 2889). An explicit raw apikey (body > query >
-    # apikey/X-API-Key header > non-JWT-shaped Authorization value) wins over an OAuth Bearer
-    # token: the raw key is the most recent credential the caller configured, while a cached
-    # OAuth token embeds the apikey captured at consent time and would otherwise pin a stale
-    # key across reconnects. A JWT-shaped Authorization value is still validated as an OAuth
-    # access token by jwt.decode (signature + exp) + Fernet decrypt of the apikey claim.
+    # apikey/X-API-Key header) wins over an OAuth Bearer token: the raw key is the most
+    # recent credential the caller configured, while a cached OAuth token embeds the apikey
+    # captured at consent time and would otherwise pin a stale key across reconnects. The
+    # Authorization value is strictly an OAuth access token, validated by jwt.decode
+    # (signature + exp) + Fernet decrypt of the apikey claim; raw apikeys there 401.
     raw_key, bearer = resolve_credential(event)
 
     if raw_key:
