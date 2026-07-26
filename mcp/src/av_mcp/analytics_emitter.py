@@ -13,6 +13,7 @@ from uuid import uuid4
 from loguru import logger
 
 from av_mcp import s3_ingest_client
+from av_mcp.utils import normalize_analytics_field
 
 
 DEFAULT_FLUSH_INTERVAL_SECONDS = 30
@@ -181,10 +182,12 @@ class AnalyticsEmitter:
                 "created_at": datetime.now(timezone.utc).strftime(
                     "%Y-%m-%d %H:%M:%S.%f"
                 ),
-                "method": str(parsed_body["method"]),
-                "api_key": api_key,
-                "platform": platform,
-                "tool_name": str(mcp_params.get("name", "unknown")),
+                "method": normalize_analytics_field(parsed_body["method"]),
+                "api_key": normalize_analytics_field(api_key),
+                "platform": normalize_analytics_field(platform),
+                "tool_name": normalize_analytics_field(
+                    mcp_params.get("name", "unknown")
+                ),
                 "arguments": json.dumps(tool_args),
             }
         )

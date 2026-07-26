@@ -219,6 +219,12 @@ def upload_to_object_storage(data: str, datatype: str = "json") -> str | None:
         return None
 
 
+def normalize_analytics_field(value: Any) -> str:
+    """Strip surrounding whitespace from an identifier field before it is logged,
+    hashed, or used as an analytics grouping key (todo 2892)."""
+    return "" if value is None else str(value).strip()
+
+
 def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
     """Parse and log MCP method and params for analytics."""
     if not body:
@@ -229,15 +235,19 @@ def parse_and_log_mcp_analytics(body: str, token: str, platform: str) -> None:
 
         parsed_body = json.loads(body)
         if "method" in parsed_body:
-            mcp_method = parsed_body.get("method")
+            mcp_method = normalize_analytics_field(parsed_body.get("method"))
             mcp_params = parsed_body.get("params", {})
 
-            tool_name = mcp_params.get("name", "unknown")
+            tool_name = normalize_analytics_field(mcp_params.get("name", "unknown"))
             tool_args = mcp_params.get("arguments", {})
             # Never log the raw credential. Emit a SHA-256 hex prefix so calls can
             # still be grouped per key for analytics without persisting the secret
-            # (Software Directory Policy 1.C/1.D).
-            api_key_hash = hashlib.sha256((token or "").encode()).hexdigest()[:16]
+            # (Software Directory Policy 1.C/1.D). Strip before hashing so padded
+            # and clean keys group together (todo 2892).
+            api_key_hash = hashlib.sha256(
+                normalize_analytics_field(token).encode()
+            ).hexdigest()[:16]
+            platform = normalize_analytics_field(platform)
             logger.info(
                 f"MCP_ANALYTICS: method={mcp_method}, api_key_hash={api_key_hash}, platform={platform}, tool_name={tool_name}, arguments={json.dumps(tool_args)}"
             )

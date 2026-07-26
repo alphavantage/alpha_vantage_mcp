@@ -82,12 +82,14 @@ def parse_log_event(log_event):
 
     timestamp_str, method, api_key_hash, platform, tool_name, arguments = match.groups()
 
+    # Strip identifier fields at write time so padded log captures still land
+    # clean in the store (todo 2892). created_at / arguments are left alone.
     return {
         'created_at': timestamp_str,
-        'method': method,
-        'api_key': api_key_hash,
-        'platform': platform,
-        'tool_name': tool_name,
+        'method': method.strip(),
+        'api_key': api_key_hash.strip(),
+        'platform': platform.strip(),
+        'tool_name': tool_name.strip(),
         'arguments': arguments,
     }
 

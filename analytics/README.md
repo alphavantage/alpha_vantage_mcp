@@ -70,8 +70,11 @@ Both transports share everything below:
   oldest event rather than delaying MCP requests.
 - Each object uses `jsonl/YYYY/MM/DD/HH/...jsonl` and the existing Glue schema:
   `created_at`, `method`, `api_key`, `platform`, `tool_name`, and `arguments`.
-  The `api_key` field is the raw credential by the owner-approved private-data
-  design. Do not log, copy into error reports, or expose these objects publicly.
+  As of todo 2892, `api_key`, `method`, `platform`, and `tool_name` are
+  `.strip()`-normalized at write time; historical rows are not backfilled, so
+  downstream readers must keep their own trim. The `api_key` field is the raw
+  credential by the owner-approved private-data design. Do not log, copy into
+  error reports, or expose these objects publicly.
 - The emitter itself is a pure append-only writer: it never produces the
   hourly `compacted.jsonl` file. That invariant is maintained by the separate
   `mcp-logs-compactor` Lambda (`src/compactor.py`), which runs hourly, merges

@@ -88,6 +88,37 @@ def test_emitter_writes_schema_compatible_jsonl():
     assert f"MCP_ANALYTICS: flush=success, events=1, key={call['Key']}" in joined
 
 
+def test_emit_mcp_request_strips_identifier_fields():
+    """Padded api_key / method / platform / tool_name land clean (todo 2892)."""
+    s3_client = RecordingS3Client()
+    emitter = _direct_emitter(s3_client, start_thread=False)
+
+    emitter.emit_mcp_request(
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": " tools/call ",
+                "params": {
+                    "name": " GLOBAL_QUOTE ",
+                    "arguments": {"symbol": "IBM"},
+                },
+            }
+        ),
+        "\xa0unit-token\xa0",
+        " cursor ",
+    )
+    emitter.flush()
+
+    records = [json.loads(line) for line in s3_client.calls[0]["Body"].decode().splitlines()]
+    assert len(records) == 1
+    record = records[0]
+    assert record["api_key"] == "unit-token"
+    assert record["method"] == "tools/call"
+    assert record["platform"] == "cursor"
+    assert record["tool_name"] == "GLOBAL_QUOTE"
+    assert record["arguments"] == '{"symbol": "IBM"}'
+
+
 def test_emitter_drops_oldest_event_when_queue_is_full():
     s3_client = RecordingS3Client()
     emitter = _direct_emitter(s3_client, max_queue_size=2, start_thread=False)
