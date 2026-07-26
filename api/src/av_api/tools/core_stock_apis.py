@@ -228,6 +228,29 @@ def realtime_bulk_quotes(
     return _make_api_request("REALTIME_BULK_QUOTES", params)
 
 @tool
+def realtime_bulk_bid_ask_prices(
+    symbol: str,
+    datatype: str = "json"
+) -> dict | str:
+    """
+    Returns realtime bid and ask prices for US-traded symbols in bulk, covering regular and extended trading hours.
+
+    Args:
+        symbol: Up to 100 symbols separated by comma. Alpha Vantage honors only the first 100 symbols provided. Example: MSFT,AAPL,IBM
+        datatype: By default, datatype=json. Strings json and csv are accepted with the following specifications:
+                 json returns the data in JSON format; csv returns the data as a CSV (comma separated value) file.
+
+    Returns:
+        Dict or string containing realtime bulk bid and ask prices based on datatype parameter.
+    """
+    params = {
+        "symbol": symbol,
+        "datatype": datatype,
+    }
+
+    return _make_api_request("REALTIME_BULK_BID_ASK_PRICES", params)
+
+@tool
 def symbol_search(
     keywords: str,
     datatype: str = "csv"

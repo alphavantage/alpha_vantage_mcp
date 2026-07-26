@@ -735,7 +735,7 @@ Expected Behavior:
 
 | Category | Tools |
 |----------|-------|
-| core_stock_apis | `TIME_SERIES_INTRADAY`, `TIME_SERIES_DAILY`, `TIME_SERIES_DAILY_ADJUSTED`, `TIME_SERIES_WEEKLY`, `TIME_SERIES_WEEKLY_ADJUSTED`, `TIME_SERIES_MONTHLY`, `TIME_SERIES_MONTHLY_ADJUSTED`, `GLOBAL_QUOTE`, `REALTIME_BULK_QUOTES`, `SYMBOL_SEARCH`, `MARKET_STATUS` |
+| core_stock_apis | `TIME_SERIES_INTRADAY`, `TIME_SERIES_DAILY`, `TIME_SERIES_DAILY_ADJUSTED`, `TIME_SERIES_WEEKLY`, `TIME_SERIES_WEEKLY_ADJUSTED`, `TIME_SERIES_MONTHLY`, `TIME_SERIES_MONTHLY_ADJUSTED`, `GLOBAL_QUOTE`, `REALTIME_BULK_QUOTES`, `REALTIME_BULK_BID_ASK_PRICES`, `SYMBOL_SEARCH`, `MARKET_STATUS` |
 | options_data_apis | `REALTIME_OPTIONS`, `REALTIME_OPTIONS_FMV`, `HISTORICAL_OPTIONS` |
 | alpha_intelligence | `NEWS_SENTIMENT`, `EARNINGS_CALL_TRANSCRIPT`, `TOP_GAINERS_LOSERS`, `INSIDER_TRANSACTIONS`, `INSTITUTIONAL_HOLDINGS`, `ANALYTICS_FIXED_WINDOW`, `ANALYTICS_SLIDING_WINDOW` |
 | fundamental_data | `COMPANY_OVERVIEW`, `INCOME_STATEMENT`, `BALANCE_SHEET`, `CASH_FLOW`, `EARNINGS`, `LISTING_STATUS`, `EARNINGS_CALENDAR`, `IPO_CALENDAR` |
@@ -776,6 +776,7 @@ Expected Behavior:
 | core_stock_apis | `TIME_SERIES_MONTHLY_ADJUSTED` | Monthly adjusted time series with dividends |
 | core_stock_apis | `GLOBAL_QUOTE` | Latest price and volume for a ticker |
 | core_stock_apis | `REALTIME_BULK_QUOTES` | Realtime quotes for up to 100 symbols |
+| core_stock_apis | `REALTIME_BULK_BID_ASK_PRICES` | Realtime bid and ask prices for up to 100 US-traded symbols, including extended hours |
 | core_stock_apis | `SYMBOL_SEARCH` | Search for symbols by keywords |
 | core_stock_apis | `MARKET_STATUS` | Current market status worldwide |
 
