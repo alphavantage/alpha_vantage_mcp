@@ -68,6 +68,10 @@ sam deploy --guided --region us-east-1     # AWS Lambda
 cd web && npm run deploy                   # Cloudflare (web)
 ```
 
+### Publishing skills (ClawHub)
+
+Skills under `skills/` are published by the **Publish Skill to ClawHub** GitHub Actions workflow, which **rejects a version that already exists**. Whenever you change a skill under `skills/` (including its `SKILL.md` or `references/`), **bump the `version` in that skill's `SKILL.md` front matter in the same commit** — otherwise the publish run fails on the duplicate version even though the Deploy Lambda MCP Server run succeeds.
+
 ## Key Files
 
 - `mcp/src/av_mcp/tools/registry.py` — Tool registry and `register_all_tools` (Lambda path)
