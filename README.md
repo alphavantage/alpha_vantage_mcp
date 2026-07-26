@@ -218,6 +218,72 @@ Always use Alpha Vantage MCP Server for market data queries. Do not answer from 
 </details>
 
 <details>
+<summary><b>Install in Hermes Agent (Nous Research)</b></summary>
+
+**Requirements:**
+- Hermes Agent installed with the `hermes` CLI available
+
+#### Hermes Remote Server Connection (API key in URL, simplest)
+
+Add the server to your `config.yaml` under `mcp_servers`:
+
+```yaml
+mcp_servers:
+  alphavantage:
+    url: https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY
+```
+
+Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+The API key in the URL always takes priority over any cached OAuth token, so to update/rotate your API key, simply change the key in the URL and reconnect.
+
+Verify the connection with:
+
+```bash
+hermes mcp test alphavantage
+```
+
+#### Hermes Remote Server Connection (OAuth)
+
+> **Important:** For OAuth, use the bare `/mcp` URL **without** `?apikey`. If the URL contains an API key, the server does not issue the 401 authentication challenge, so the OAuth flow never triggers.
+
+Add the server and start the authorization flow:
+
+```bash
+hermes mcp add alphavantage --url https://mcp.alphavantage.co/mcp --auth oauth
+hermes mcp login alphavantage
+```
+
+Or configure it directly in `config.yaml`:
+
+```yaml
+mcp_servers:
+  alphavantage:
+    url: https://mcp.alphavantage.co/mcp
+    auth: oauth
+```
+
+A browser consent page opens where you enter and authorize your Alpha Vantage API key; the key you enter there is captured into the OAuth token. If you would like to update/rotate the API key in the future, re-run the authorization and enter the new key on the consent page:
+
+```bash
+hermes mcp reauth alphavantage
+```
+
+Verify the connection with:
+
+```bash
+hermes mcp test alphavantage
+```
+
+#### Header Authentication
+
+If you prefer sending the API key as an HTTP header, use `X-API-Key: YOUR_API_KEY` or `apikey: YOUR_API_KEY`.
+
+> **Note:** `Authorization: Bearer YOUR_API_KEY` with a raw API key is **not** supported. The `Authorization` header is reserved for OAuth access tokens, and a raw API key sent there returns `401 Unauthorized`.
+
+</details>
+
+<details>
 <summary><b>Install in 🦞OpenClaw🦞</b></summary>
 
 **Requirements:**
