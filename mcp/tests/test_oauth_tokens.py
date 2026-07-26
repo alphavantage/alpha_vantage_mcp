@@ -16,7 +16,7 @@ import jwt  # noqa: E402
 import pytest  # noqa: E402
 
 from av_mcp import oauth, tokens  # noqa: E402
-from av_mcp.utils import parse_token_from_request  # noqa: E402
+from av_mcp.utils import resolve_credential  # noqa: E402
 
 
 # --- T1: token module round-trip + apikey not base64-readable + expiry ---------------------
@@ -119,61 +119,90 @@ def test_token_config_error_is_token_error():
     assert issubclass(tokens.TokenConfigError, tokens.TokenError)
 
 
-# --- Credential parsing: Bearer + query + body all accepted (additive, non-breaking) --------
+# --- Credential resolution: unified resolver, raw key wins over Bearer (todo 2889) ----------
 
 
-def test_parse_token_bearer_still_works():
+def test_resolve_credential_jwt_shaped_bearer_is_oauth_candidate():
     event = {"headers": {"Authorization": "Bearer abc.def.ghi"}}
-    assert parse_token_from_request(event) == "abc.def.ghi"
+    assert resolve_credential(event) == ("", "abc.def.ghi")
 
 
-def test_parse_token_query_apikey_still_works():
+def test_resolve_credential_query_apikey():
     event = {"headers": {}, "queryStringParameters": {"apikey": "QUERYKEY"}}
-    assert parse_token_from_request(event) == "QUERYKEY"
+    assert resolve_credential(event) == ("QUERYKEY", "")
 
 
-def test_parse_token_body_apikey_still_works():
+def test_resolve_credential_body_apikey():
     event = {"headers": {}, "body": json.dumps({"apikey": "BODYKEY"})}
-    assert parse_token_from_request(event) == "BODYKEY"
+    assert resolve_credential(event) == ("BODYKEY", "")
 
 
-def test_parse_token_precedence_body_over_query_over_header():
+def test_resolve_credential_precedence_body_over_query_over_bearer():
     event = {
-        "headers": {"Authorization": "Bearer HEADERKEY"},
+        "headers": {"Authorization": "Bearer aaa.bbb.ccc"},
         "queryStringParameters": {"apikey": "QUERYKEY"},
         "body": json.dumps({"apikey": "BODYKEY"}),
     }
-    assert parse_token_from_request(event) == "BODYKEY"
+    assert resolve_credential(event) == ("BODYKEY", "")
     event.pop("body")
-    assert parse_token_from_request(event) == "QUERYKEY"
+    assert resolve_credential(event) == ("QUERYKEY", "")
     event["queryStringParameters"] = {}
-    assert parse_token_from_request(event) == "HEADERKEY"
+    assert resolve_credential(event) == ("", "aaa.bbb.ccc")
 
 
-def test_parse_token_apikey_header_works():
+def test_resolve_credential_apikey_header_works():
     # Key-based clients send the raw AV key as an `apikey` header (case-insensitive).
-    assert parse_token_from_request({"headers": {"apikey": "HDRKEY"}}) == "HDRKEY"
-    assert parse_token_from_request({"headers": {"Apikey": "HDRKEY"}}) == "HDRKEY"
+    assert resolve_credential({"headers": {"apikey": "HDRKEY"}}) == ("HDRKEY", "")
+    assert resolve_credential({"headers": {"Apikey": "HDRKEY"}}) == ("HDRKEY", "")
 
 
-def test_parse_token_x_api_key_header_works():
-    assert parse_token_from_request({"headers": {"X-API-Key": "XKEY"}}) == "XKEY"
-    assert parse_token_from_request({"headers": {"x-api-key": "XKEY"}}) == "XKEY"
+def test_resolve_credential_x_api_key_header_works():
+    assert resolve_credential({"headers": {"X-API-Key": "XKEY"}}) == ("XKEY", "")
+    assert resolve_credential({"headers": {"x-api-key": "XKEY"}}) == ("XKEY", "")
 
 
-def test_parse_token_query_beats_apikey_header():
+def test_resolve_credential_query_beats_apikey_header():
     event = {
         "headers": {"apikey": "HDRKEY"},
         "queryStringParameters": {"apikey": "QUERYKEY"},
     }
-    assert parse_token_from_request(event) == "QUERYKEY"
+    assert resolve_credential(event) == ("QUERYKEY", "")
 
 
-def test_parse_token_apikey_header_beats_bearer():
-    # A raw apikey header is preferred over the Bearer fallback within this parser; the
-    # Bearer/OAuth path in _handle_request still runs first for genuine OAuth callers.
-    event = {"headers": {"apikey": "HDRKEY", "Authorization": "Bearer BEARERTOK"}}
-    assert parse_token_from_request(event) == "HDRKEY"
+def test_resolve_credential_apikey_header_beats_bearer():
+    event = {"headers": {"apikey": "HDRKEY", "Authorization": "Bearer aaa.bbb.ccc"}}
+    assert resolve_credential(event) == ("HDRKEY", "")
+
+
+def test_resolve_credential_raw_key_in_authorization_with_bearer_prefix():
+    # Header-auth clients send the raw AV key (no dots) as `Authorization: Bearer <key>`.
+    event = {"headers": {"Authorization": "Bearer 1VCKZ7JS90AN00FP"}}
+    assert resolve_credential(event) == ("1VCKZ7JS90AN00FP", "")
+
+
+def test_resolve_credential_raw_key_in_authorization_without_prefix():
+    event = {"headers": {"Authorization": "1VCKZ7JS90AN00FP"}}
+    assert resolve_credential(event) == ("1VCKZ7JS90AN00FP", "")
+
+
+def test_resolve_credential_dot_count_discrimination():
+    # Exactly two dots = JWT-shaped (OAuth candidate); any other dot count is a raw key.
+    assert resolve_credential({"headers": {"Authorization": "Bearer a.b"}}) == (
+        "a.b",
+        "",
+    )
+    assert resolve_credential({"headers": {"Authorization": "Bearer a.b.c.d"}}) == (
+        "a.b.c.d",
+        "",
+    )
+    assert resolve_credential({"headers": {"Authorization": "Bearer a.b.c"}}) == (
+        "",
+        "a.b.c",
+    )
+
+
+def test_resolve_credential_no_credential():
+    assert resolve_credential({"headers": {}}) == ("", "")
 
 
 # --- T10: PKCE S256 enforcement + metadata --------------------------------------------------

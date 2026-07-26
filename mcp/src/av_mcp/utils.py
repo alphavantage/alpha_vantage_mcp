@@ -28,14 +28,21 @@ def cors_headers() -> dict[str, str]:
     }
 
 
-def parse_token_from_request(event: dict) -> str:
-    """Parse the credential from request body, query params, or request headers.
+def resolve_credential(event: dict) -> tuple[str, str]:
+    """Resolve the caller's credential with a single documented priority order (todo 2889).
 
-    Accepts several sources (additive, non-breaking): direct-apikey callers may pass the raw
-    apikey via the request body, the ``?apikey=`` query, or an ``apikey`` / ``X-API-Key``
-    request header (a raw AV key, NOT an OAuth bearer token); the ``Authorization: Bearer``
-    path carries the encrypted OAuth access token. Priority: body > query > apikey header >
-    Bearer.
+    Returns ``(raw_key, bearer)`` where at most one is non-empty:
+
+    - ``raw_key``: an explicit raw AV apikey, from (in priority order) the request body >
+      ``?apikey=`` query > ``apikey`` / ``X-API-Key`` header > a non-JWT-shaped
+      ``Authorization`` value (with or without the ``Bearer `` prefix). An explicit raw key
+      is the most recent credential the caller configured, so it wins over any cached OAuth
+      Bearer token (which embeds the apikey captured at consent time and would otherwise pin
+      a stale key across reconnects).
+    - ``bearer``: a JWT-shaped ``Authorization`` value (exactly two dots — AV apikeys are
+      alphanumeric and never contain dots), the OAuth access-token candidate the caller must
+      validate via ``decode_access_token``. Invalid/expired JWTs stay a 401 there (RFC 6750).
+    - ``("", "")``: no credential present anywhere in the request.
     """
     # Check request body first (highest priority)
     if event.get("body"):
@@ -46,30 +53,35 @@ def parse_token_from_request(event: dict) -> str:
                 else event["body"]
             )
             if isinstance(body, dict) and "apikey" in body and body["apikey"]:
-                return body["apikey"]
+                return body["apikey"], ""
         except (json.JSONDecodeError, TypeError):
             pass
 
     # Check query parameters second
     query_params = event.get("queryStringParameters") or {}
     if "apikey" in query_params and query_params["apikey"]:
-        return query_params["apikey"]
+        return query_params["apikey"], ""
 
     # Case-insensitive header lookup (API Gateway HTTP API lowercases header names; REST
-    # preserves the client's casing), reused for both the apikey-header and Bearer sources.
+    # preserves the client's casing), reused for both the apikey-header and Authorization sources.
     headers = event.get("headers", {})
     lower_headers = {k.lower(): v for k, v in headers.items()}
 
     # Check a raw apikey passed as a custom header (Key-based clients): apikey / X-API-Key.
     for name in ("apikey", "x-api-key"):
         if lower_headers.get(name):
-            return lower_headers[name]
+            return lower_headers[name], ""
 
-    # Fallback to Authorization header (OAuth bearer token)
-    auth_header = lower_headers.get("authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        return auth_header[7:]  # Remove 'Bearer ' prefix
-    return ""
+    # Authorization header: JWT-shaped values are OAuth access-token candidates; anything
+    # else is treated as a raw apikey (header-auth clients send `Authorization: Bearer <key>`
+    # or `Authorization: <key>`).
+    auth_header = lower_headers.get("authorization") or ""
+    candidate = auth_header[7:] if auth_header.startswith("Bearer ") else auth_header
+    if not candidate:
+        return "", ""
+    if candidate.count(".") == 2:
+        return "", candidate
+    return candidate, ""
 
 
 def extract_client_platform(event: dict) -> str:

@@ -13,7 +13,7 @@ from av_mcp.tools.meta_tools import (
     build_structured_content as build_meta_tool_structured_content,
 )
 from av_mcp.utils import (
-    parse_token_from_request,
+    resolve_credential,
     create_oauth_error_response,
     extract_client_platform,
     parse_and_log_mcp_analytics,
@@ -233,7 +233,6 @@ def _handle_request(event, context):
     """Resolve the caller's credential and dispatch (OAuth endpoints, MCP, errors)."""
     method = event.get("httpMethod", "UNKNOWN")
     path = event.get("path", "/")
-    headers = event.get("headers", {})
     body = event.get("body", "")
 
     # Public static pages (before token validation): the landing page is public, so serve
@@ -274,16 +273,17 @@ def _handle_request(event, context):
         except TokenConfigError:
             return oauth_misconfig_response()
 
-    # Resolve the caller's credential. Bearer takes precedence: an Authorization: Bearer token
-    # is an encrypted OAuth access token, validated by jwt.decode (signature + exp) + Fernet
-    # decrypt of the apikey claim (no store lookup). If no Bearer is present, fall back to the
-    # raw apikey supplied via ?apikey= query or request body (direct-apikey callers, non-breaking).
-    auth_header = headers.get("Authorization") or headers.get("authorization")
-    bearer = (
-        auth_header[7:] if auth_header and auth_header.startswith("Bearer ") else ""
-    )
+    # Resolve the caller's credential (todo 2889). An explicit raw apikey (body > query >
+    # apikey/X-API-Key header > non-JWT-shaped Authorization value) wins over an OAuth Bearer
+    # token: the raw key is the most recent credential the caller configured, while a cached
+    # OAuth token embeds the apikey captured at consent time and would otherwise pin a stale
+    # key across reconnects. A JWT-shaped Authorization value is still validated as an OAuth
+    # access token by jwt.decode (signature + exp) + Fernet decrypt of the apikey claim.
+    raw_key, bearer = resolve_credential(event)
 
-    if bearer:
+    if raw_key:
+        api_key = raw_key
+    elif bearer:
         # Reject malformed/expired/tampered access tokens with 401 (T4). Unset keys -> 500.
         try:
             api_key = decode_access_token(bearer)
@@ -299,17 +299,14 @@ def _handle_request(event, context):
                 401,
             )
     else:
-        # Raw apikey via query/body (direct-apikey callers).
-        api_key = parse_token_from_request(event)
-        if not api_key:
-            return create_oauth_error_response(
-                {
-                    "error": "invalid_request",
-                    "error_description": "Missing access token",
-                    "error_uri": "https://tools.ietf.org/html/rfc6750#section-3.1",
-                },
-                401,
-            )
+        return create_oauth_error_response(
+            {
+                "error": "invalid_request",
+                "error_description": "Missing access token",
+                "error_uri": "https://tools.ietf.org/html/rfc6750#section-3.1",
+            },
+            401,
+        )
 
     # Set the resolved apikey in context for tools to access
     set_api_key(api_key)
