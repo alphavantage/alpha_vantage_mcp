@@ -24,6 +24,26 @@ def company_overview(
 
 
 @tool
+def company_logo(
+    symbol: str
+) -> dict[str, str] | str:
+    """Returns a company's logo URLs in PNG and SVG formats.
+
+    Args:
+        symbol: The symbol of the ticker of your choice. For example: symbol=IBM.
+
+    Returns:
+        A JSON object with the symbol and its logo_url_png and logo_url_svg fields, or error message.
+    """
+
+    params = {
+        "symbol": symbol,
+    }
+
+    return _make_api_request("COMPANY_LOGO", params)
+
+
+@tool
 def etf_profile(
     symbol: str
 ) -> dict[str, str] | str:
