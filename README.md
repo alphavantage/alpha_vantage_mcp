@@ -396,33 +396,42 @@ Then connect with:
 
 See [OpenAI Codex](https://github.com/openai/codex) for more information.
 
-📺 Watch the **setup tutorial**. (Click image below.) This video additionally provides guidance on handling setup errors and building complete end-to-end applications which are empowered to fetch market data to power dynamic, data-driven visualizations.
+#### Codex Remote Server Connection (Recommended, OAuth)
+
+Run the following command:
+
+```bash
+codex mcp add alphavantage --url https://mcp.alphavantage.co/mcp
+```
+
+Codex will open your browser. Enter your Alpha Vantage API key and authorize the connection.
+
+Run `codex` from your project directory, then verify the connection with:
+
+```text
+/mcp
+```
+
+📺 Watch the **tutorial**. (Click image below.)
+
+> ⚠️ **Legacy setup notice:** The initial connection steps demonstrate the legacy local method. For new installations, we strongly recommend following the OAuth instructions above.
+
+Starting at **[01:41](https://www.youtube.com/watch?v=8exfs5wpTU0&t=101s)**, the video covers troubleshooting and building end-to-end applications powered by Alpha Vantage market data and dynamic visualizations.
 
 [![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
 
 - [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
 - For additional support links, please check the video description on YouTube.
 
-Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
+#### Codex Local Server Connection
+
+First, install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Install **Codex CLI v0.34 or later** to avoid compatibility issues.
-
-```bash
-# Install (if not already installed)
-npm install -g @openai/codex
-
-# Or update to the latest version
-npm update -g @openai/codex
-
-# Verify installation and version
-codex --version
-```
-
-Add the following configuration to your Codex MCP server settings by editing `~/.codex/config.toml`:
+Add the following configuration to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.alphavantage]
@@ -432,10 +441,9 @@ args = ["marketdata-mcp-server", "YOUR_API_KEY"]
 
 Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
 
-Run `codex` in your terminal from your project directory. First-time users will be guided through additional prompts.
+Run `codex` from your project directory, then verify the connection with:
 
-Then connect with:
-```
+```text
 /mcp
 ```
 
