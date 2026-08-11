@@ -17,8 +17,8 @@ import jsonschema
 
 from av_mcp.cowork_connector.export_tools import TOOL_FIELDS
 from av_mcp.cowork_connector.package import (
+    DEFAULT_MCP_SERVER_URL,
     MANIFEST_SCHEMA,
-    MCP_SERVER_URL,
     PACKAGE_FILES,
     PLACEHOLDER_APP_ID,
 )
@@ -94,10 +94,7 @@ def validate_package(
     _require(len(connectors) == 1, "manifest must contain exactly one agent connector")
     connector = connectors[0]
     remote_server = connector.get("toolSource", {}).get("remoteMcpServer", {})
-    _require(
-        remote_server.get("mcpServerUrl") == MCP_SERVER_URL,
-        "MCP URL must be the production HTTPS URL",
-    )
+    mcp_server_url = remote_server.get("mcpServerUrl")
     _require(
         remote_server.get("mcpToolDescription", {}).get("file")
         == "tools/alpha-vantage-tools.json",
@@ -114,6 +111,12 @@ def validate_package(
     )
 
     if not development:
+        # Submission packages must embed the official .co endpoint even if DOMAIN_NAME
+        # or --mcp-server-url pointed the build at a test host.
+        _require(
+            mcp_server_url == DEFAULT_MCP_SERVER_URL,
+            f"production package must use the official MCP URL {DEFAULT_MCP_SERVER_URL}",
+        )
         _require(
             manifest["id"] != PLACEHOLDER_APP_ID,
             "placeholder app ID is only allowed in development",

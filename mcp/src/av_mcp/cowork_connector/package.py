@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import tempfile
 import zipfile
@@ -15,7 +16,8 @@ from av_mcp.cowork_connector.export_tools import write_tool_descriptions
 
 
 MANIFEST_SCHEMA = "https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json"
-MCP_SERVER_URL = "https://mcp.alphavantage.co/mcp"
+# Long-term official production endpoint; remains the default for submission packages.
+DEFAULT_MCP_SERVER_URL = "https://mcp.alphavantage.co/mcp"
 PACKAGE_FILES = (
     "manifest.json",
     "color.png",
@@ -25,6 +27,26 @@ PACKAGE_FILES = (
 PLACEHOLDER_APP_ID = "00000000-0000-4000-8000-000000000000"
 
 
+def resolve_mcp_server_url(cli_url: str | None = None) -> str:
+    """Resolve the packaged MCP URL.
+
+    Precedence: ``--mcp-server-url`` > ``DOMAIN_NAME`` env
+    (``https://<DOMAIN_NAME>/mcp``, same convention as oauth ``resolve_base_url``) >
+    ``DEFAULT_MCP_SERVER_URL`` (``https://mcp.alphavantage.co/mcp``).
+    """
+    if cli_url:
+        if "://" not in cli_url:
+            raise SystemExit(
+                f"--mcp-server-url must include a scheme (got {cli_url!r}); "
+                f"example: {DEFAULT_MCP_SERVER_URL}"
+            )
+        return cli_url
+    domain_name = os.environ.get("DOMAIN_NAME")
+    if domain_name:
+        return f"https://{domain_name}/mcp"
+    return DEFAULT_MCP_SERVER_URL
+
+
 @dataclass(frozen=True)
 class PackageConfig:
     app_id: str
@@ -32,6 +54,7 @@ class PackageConfig:
     terms_url: str
     color_icon: Path
     outline_icon: Path
+    mcp_server_url: str = DEFAULT_MCP_SERVER_URL
     development: bool = False
 
 
@@ -69,7 +92,7 @@ def _manifest(config: PackageConfig) -> dict[str, Any]:
                 "description": "Provides Alpha Vantage financial market data tools.",
                 "toolSource": {
                     "remoteMcpServer": {
-                        "mcpServerUrl": MCP_SERVER_URL,
+                        "mcpServerUrl": config.mcp_server_url,
                         "mcpToolDescription": {
                             "file": "tools/alpha-vantage-tools.json"
                         },
@@ -122,6 +145,7 @@ def _config_from_args(args: argparse.Namespace) -> PackageConfig:
         terms_url=args.terms_url,
         color_icon=Path(args.color_icon),
         outline_icon=Path(args.outline_icon),
+        mcp_server_url=resolve_mcp_server_url(args.mcp_server_url),
         development=args.development,
     )
 
@@ -134,6 +158,14 @@ def main() -> None:
     parser.add_argument("--terms-url", default="https://www.alphavantage.co/terms/")
     parser.add_argument("--color-icon", type=Path, required=True)
     parser.add_argument("--outline-icon", type=Path, required=True)
+    parser.add_argument(
+        "--mcp-server-url",
+        help=(
+            "MCP server URL to embed in the manifest. Overrides DOMAIN_NAME and the "
+            f"default ({DEFAULT_MCP_SERVER_URL}). For testing/transition only; "
+            "submission packages should keep the official .co default."
+        ),
+    )
     parser.add_argument("--development", action="store_true")
     args = parser.parse_args()
     build_package(args.output, _config_from_args(args))
