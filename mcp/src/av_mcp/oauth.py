@@ -45,6 +45,28 @@ ALLOWED_REDIRECT_DOMAINS = {
 }
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
+# Microsoft 365 Copilot (Cowork) always redirects to this exact callback. It is granted only
+# to the single server-configured confidential client below: Microsoft's static OAuth contract
+# requires a client_id + client_secret pair, and a public DCR client must not be able to point
+# authorization codes at Microsoft's shared callback.
+MICROSOFT_REDIRECT_URI = "https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect"
+
+
+def confidential_client_id() -> str:
+    """The configured confidential client_id (Microsoft), or "" when not configured."""
+    return os.environ.get("MICROSOFT_OAUTH_CLIENT_ID", "").strip()
+
+
+def confidential_client_secret() -> str:
+    """The configured confidential client's secret, or "" when not configured."""
+    return os.environ.get("MICROSOFT_OAUTH_CLIENT_SECRET", "").strip()
+
+
+def is_confidential_client(client_id: Optional[str]) -> bool:
+    """True when ``client_id`` is the one server-configured confidential client."""
+    configured = confidential_client_id()
+    return bool(configured) and client_id == configured
+
 
 def generate_authorization_code() -> str:
     """Generate a secure authorization code."""
@@ -69,10 +91,17 @@ def resolve_base_url(event: dict) -> Optional[str]:
     return f"https://{host}"
 
 
-def is_valid_redirect_uri(redirect_uri: str) -> bool:
-    """Validate a redirect_uri with port-agnostic loopback + an https host allowlist."""
+def is_valid_redirect_uri(redirect_uri: str, client_id: Optional[str] = None) -> bool:
+    """Validate a redirect_uri with port-agnostic loopback + an https host allowlist.
+
+    The Microsoft callback is exact-matched and reserved for the configured confidential
+    client; callers that cannot authenticate a client (dynamic registration) pass no
+    ``client_id`` and therefore never get it.
+    """
     if not redirect_uri:
         return False
+    if redirect_uri == MICROSOFT_REDIRECT_URI:
+        return is_confidential_client(client_id)
     try:
         parsed = urllib.parse.urlparse(redirect_uri)
     except ValueError:
@@ -108,6 +137,13 @@ def handle_metadata_discovery(event: dict) -> dict:
             "body": json.dumps({"error": "missing_host_header"}),
         }
 
+    # Public (DCR) clients authenticate with no secret. The configured confidential client may
+    # use either secret method: the Microsoft auth config picks one at provisioning time and
+    # the choice is not observable from here.
+    token_endpoint_auth_methods = ["none"]
+    if confidential_client_id():
+        token_endpoint_auth_methods += ["client_secret_basic", "client_secret_post"]
+
     metadata = {
         "issuer": base_url,
         "authorization_endpoint": f"{base_url}/authorize",
@@ -118,7 +154,7 @@ def handle_metadata_discovery(event: dict) -> dict:
         "grant_types_supported": ["authorization_code", "refresh_token"],
         # PKCE S256 is mandatory; "plain" is intentionally not advertised (T10).
         "code_challenge_methods_supported": ["S256"],
-        "token_endpoint_auth_methods_supported": ["none"],
+        "token_endpoint_auth_methods_supported": token_endpoint_auth_methods,
         "subject_types_supported": ["public"],
     }
 
@@ -192,7 +228,7 @@ def handle_authorization_request(event: dict) -> dict:
         }
 
     # Validate redirect_uri before we trust it enough to redirect errors to it.
-    if not is_valid_redirect_uri(redirect_uri):
+    if not is_valid_redirect_uri(redirect_uri, client_id):
         return {
             "statusCode": 400,
             "body": json.dumps(
@@ -381,6 +417,72 @@ def show_authorization_form_with_error(query_params: dict, error_message: str) -
     }
 
 
+def _basic_auth_credentials(event: dict) -> Optional[tuple[str, str]]:
+    """Decode client_secret_basic credentials (RFC 6749 2.3.1), or None if no Basic header.
+
+    A malformed Basic header returns empty credentials rather than falling back to the body:
+    a client that attempted authentication must fail, not silently degrade to a public client.
+    """
+    headers = event.get("headers") or {}
+    header = headers.get("Authorization") or headers.get("authorization") or ""
+    if not header.lower().startswith("basic "):
+        return None
+    try:
+        decoded = base64.b64decode(header.split(" ", 1)[1].strip()).decode("utf-8")
+    except ValueError:  # binascii.Error and UnicodeDecodeError are both ValueError.
+        return "", ""
+    client_id, separator, client_secret = decoded.partition(":")
+    if not separator:
+        return "", ""
+    return urllib.parse.unquote(client_id), urllib.parse.unquote(client_secret)
+
+
+def _invalid_client_response() -> dict:
+    """RFC 6749 5.2 invalid_client response for failed client authentication."""
+    return {
+        "statusCode": 401,
+        "headers": {"WWW-Authenticate": 'Basic realm="mcp"'},
+        "body": json.dumps(
+            {
+                "error": "invalid_client",
+                "error_description": "Client authentication failed",
+            }
+        ),
+    }
+
+
+def authenticate_token_client(
+    event: dict, params: dict
+) -> tuple[Optional[str], bool, Optional[dict]]:
+    """Resolve the token request's client and authenticate it when it is confidential.
+
+    Returns ``(client_id, confidential, error_response)``, where ``confidential`` means the
+    client proved the configured secret. Public clients stay unauthenticated (``none``) —
+    there is no client store to check them against. The configured confidential client must
+    present its secret, via client_secret_basic or client_secret_post.
+    """
+    basic = _basic_auth_credentials(event)
+    if basic is not None:
+        client_id, client_secret = basic
+        if not client_id:
+            # A present but unusable Basic header is a failed authentication attempt; it must
+            # not fall back to the body's client_id.
+            return None, False, _invalid_client_response()
+    else:
+        client_id = params.get("client_id") or ""
+        client_secret = params.get("client_secret") or ""
+
+    if not is_confidential_client(client_id):
+        return client_id or None, False, None
+
+    configured_secret = confidential_client_secret()
+    if not configured_secret or not secrets.compare_digest(
+        client_secret.encode(), configured_secret.encode()
+    ):
+        return client_id, False, _invalid_client_response()
+    return client_id, True, None
+
+
 def handle_token_request(event: dict) -> dict:
     """Handle OAuth 2.1 token exchange requests."""
     body = event.get("body", "")
@@ -403,12 +505,16 @@ def handle_token_request(event: dict) -> dict:
     else:
         params = body or {}
 
+    client_id, confidential, auth_error = authenticate_token_client(event, params)
+    if auth_error:
+        return auth_error
+
     grant_type = params.get("grant_type")
 
     if grant_type == "authorization_code":
-        return handle_authorization_code_grant(params)
+        return handle_authorization_code_grant(params, client_id, confidential)
     elif grant_type == "refresh_token":
-        return handle_refresh_token_grant(params)
+        return handle_refresh_token_grant(params, client_id, confidential)
     else:
         return {
             "statusCode": 400,
@@ -416,26 +522,21 @@ def handle_token_request(event: dict) -> dict:
         }
 
 
-def _token_response(enc_apikey: str, client_id: Optional[str]) -> dict:
-    """Mint an encrypted access + refresh token pair carrying the Fernet-encrypted apikey."""
-    access_token = encode_token(
-        {
-            "typ": "access",
-            "client_id": client_id,
-            "scope": SCOPE,
-            "enc_apikey": enc_apikey,
-        },
-        ACCESS_TOKEN_TTL,
-    )
-    refresh_token = encode_token(
-        {
-            "typ": "refresh",
-            "client_id": client_id,
-            "scope": SCOPE,
-            "enc_apikey": enc_apikey,
-        },
-        REFRESH_TOKEN_TTL,
-    )
+def _token_response(
+    enc_apikey: str, client_id: Optional[str], confidential: bool = False
+) -> dict:
+    """Mint an encrypted access + refresh token pair carrying the Fernet-encrypted apikey.
+
+    ``confidential`` records inside the (signed) token that the client authenticated with a
+    secret, so the requirement survives a later client-ID rotation or config removal instead
+    of being re-derived from the current environment at redemption time.
+    """
+    claims = {"client_id": client_id, "scope": SCOPE, "enc_apikey": enc_apikey}
+    if confidential:
+        claims["confidential"] = True
+
+    access_token = encode_token({"typ": "access", **claims}, ACCESS_TOKEN_TTL)
+    refresh_token = encode_token({"typ": "refresh", **claims}, REFRESH_TOKEN_TTL)
 
     token_response = {
         "access_token": access_token,
@@ -456,10 +557,17 @@ def _token_response(enc_apikey: str, client_id: Optional[str]) -> dict:
     }
 
 
-def handle_authorization_code_grant(params: dict) -> dict:
-    """Handle the authorization_code grant: mint an encrypted access/refresh token pair."""
+def handle_authorization_code_grant(
+    params: dict, client_id: Optional[str] = None, confidential: bool = False
+) -> dict:
+    """Handle the authorization_code grant: mint an encrypted access/refresh token pair.
+
+    ``client_id`` and ``confidential`` come from ``authenticate_token_client`` (the client_id
+    may be carried by the Basic header rather than the body); ``client_id`` falls back to the
+    body parameter.
+    """
     code = params.get("code")
-    client_id = params.get("client_id")
+    client_id = client_id or params.get("client_id")
     redirect_uri = params.get("redirect_uri")
     code_verifier = params.get("code_verifier")
 
@@ -568,10 +676,12 @@ def handle_authorization_code_grant(params: dict) -> dict:
             ),
         }
 
-    return _token_response(enc_apikey, client_id)
+    return _token_response(enc_apikey, client_id, confidential)
 
 
-def handle_refresh_token_grant(params: dict) -> dict:
+def handle_refresh_token_grant(
+    params: dict, client_id: Optional[str] = None, confidential: bool = False
+) -> dict:
     """Handle the refresh_token grant: decrypt the refresh token, mint a fresh access token.
 
     Fully stateless. Stateless caveat: the old refresh token is NOT invalidated (no store to
@@ -614,6 +724,18 @@ def handle_refresh_token_grant(params: dict) -> dict:
             ),
         }
 
+    # A refresh token issued to a confidential client stays bound to it: the presenter must
+    # have authenticated as that same client above, so a leaked token alone cannot be
+    # redeemed. The requirement rides in the token's own ``confidential`` claim, so rotating
+    # or clearing MICROSOFT_OAUTH_CLIENT_ID cannot downgrade an already-issued token to a
+    # public one (rotation instead makes the old token unredeemable, which is the safe
+    # outcome). ``is_confidential_client`` additionally covers a token that was issued to a
+    # client_id before that id was configured as confidential.
+    token_client_id = token_data.get("client_id")
+    if token_data.get("confidential") or is_confidential_client(token_client_id):
+        if not confidential or client_id != token_client_id:
+            return _invalid_client_response()
+
     enc_apikey = token_data.get("enc_apikey")
     if not enc_apikey:
         return {
@@ -623,7 +745,8 @@ def handle_refresh_token_grant(params: dict) -> dict:
             ),
         }
 
-    return _token_response(enc_apikey, token_data.get("client_id"))
+    # Carry the marker into the rotated pair so the binding cannot be shed by refreshing.
+    return _token_response(enc_apikey, token_client_id, confidential)
 
 
 def handle_registration_request(event: dict) -> dict:
