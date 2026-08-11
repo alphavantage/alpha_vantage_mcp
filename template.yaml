@@ -39,15 +39,6 @@ Parameters:
     NoEcho: true
     Default: ''
     Description: Fernet key for field-encrypting the Alpha Vantage apikey claim (sourced from config/SSM)
-  MicrosoftOauthClientId:
-    Type: String
-    Default: ''
-    Description: client_id of the configured Microsoft 365 Copilot confidential OAuth client (sourced from config/SSM); empty disables the confidential-client path
-  MicrosoftOauthClientSecret:
-    Type: String
-    NoEcho: true
-    Default: ''
-    Description: client_secret of the configured Microsoft 365 Copilot confidential OAuth client (sourced from config/SSM); never committed or shipped in the app package
   S3IngestSecret:
     Type: String
     NoEcho: true
@@ -231,8 +222,6 @@ Resources:
           CDN_DOMAIN: !Ref CdnDomain
           JWT_SECRET_KEY: !Ref JwtSecretKey
           AV_APIKEY_ENC_KEY: !Ref AvApikeyEncKey
-          MICROSOFT_OAUTH_CLIENT_ID: !Ref MicrosoftOauthClientId
-          MICROSOFT_OAUTH_CLIENT_SECRET: !Ref MicrosoftOauthClientSecret
 
   # Dedicated bucket-put proxy for Manufact containers, which hold no AWS credentials
   # of their own (todo 2842, round 6). Self-contained (stdlib + runtime boto3), so it
