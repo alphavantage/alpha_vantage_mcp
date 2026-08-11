@@ -766,7 +766,7 @@ def handle_registration_request(event: dict) -> dict:
         }
 
     redirect_uris = registration_request.get("redirect_uris", [])
-    is_cowork_registration = redirect_uris == [COWORK_REDIRECT_URI]
+    is_cowork_registration = COWORK_REDIRECT_URI in redirect_uris
     if is_cowork_registration:
         client_id = f"{CONFIDENTIAL_CLIENT_ID_PREFIX}{secrets.token_urlsafe(16)}"
     else:

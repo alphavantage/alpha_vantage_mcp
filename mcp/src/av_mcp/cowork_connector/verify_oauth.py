@@ -42,10 +42,9 @@ from av_mcp.oauth import (
 MCP_ROOT = Path(__file__).resolve().parents[3]
 LOCAL_SERVER = MCP_ROOT / "local_http_server.py"
 
-# Redirects used for public registration and legacy token-path regression checks.
+# Redirect used for public registration and its end-to-end token-path regression check.
 GENERIC_REDIRECT_URI = "https://claude.ai/api/mcp/auth_callback"
-PUBLIC_REDIRECT_URI = "http://127.0.0.1:8765/callback"
-# Synthetic legacy public client_id for the public token path.
+# Synthetic legacy public client_id for the Cowork callback reservation check.
 LEGACY_PUBLIC_CLIENT_ID = "mcp-client-verification"
 
 # Environment the managed local server must not inherit: real OAuth keys or anything that
@@ -110,6 +109,7 @@ class Verifier:
         self.local = local
         self.results: list[Result] = []
         self.registered: Optional[RegisteredClient] = None
+        self.public_client_id: Optional[str] = None
 
     # --- result recording -------------------------------------------------
 
@@ -291,7 +291,7 @@ class Verifier:
             json={"redirect_uris": [GENERIC_REDIRECT_URI]},
         )
         generic_payload = _json(generic)
-        self.expect(
+        generic_ok = self.expect(
             "register-generic-remains-public-secretless",
             generic,
             201,
@@ -314,14 +314,49 @@ class Verifier:
                 ),
             ],
         )
+        if generic_ok:
+            self.public_client_id = generic_payload["client_id"]
 
         mixed = self.client.post(
             f"{self.base_url}/register",
             json={"redirect_uris": [COWORK_REDIRECT_URI, GENERIC_REDIRECT_URI]},
         )
+        mixed_payload = _json(mixed)
         self.expect(
-            "register-mixed-cowork-callback-rejected",
+            "register-mixed-cowork-callback-confidential",
             mixed,
+            201,
+            require=[
+                (
+                    "mixed registration must issue a confidential client_id prefix",
+                    str(mixed_payload.get("client_id", "")).startswith(
+                        CONFIDENTIAL_CLIENT_ID_PREFIX
+                    ),
+                ),
+                (
+                    "mixed registration must issue a client_secret",
+                    bool(mixed_payload.get("client_secret")),
+                ),
+                (
+                    "mixed registration must preserve all validated redirect_uris",
+                    mixed_payload.get("redirect_uris")
+                    == [COWORK_REDIRECT_URI, GENERIC_REDIRECT_URI],
+                ),
+            ],
+        )
+
+        disallowed = self.client.post(
+            f"{self.base_url}/register",
+            json={
+                "redirect_uris": [
+                    COWORK_REDIRECT_URI,
+                    "https://example.com/oauth/callback",
+                ]
+            },
+        )
+        self.expect(
+            "register-cowork-callback-cannot-smuggle-disallowed-redirect",
+            disallowed,
             400,
             error="invalid_redirect_uri",
         )
@@ -583,19 +618,22 @@ class Verifier:
             )
 
     def check_public_client(self) -> None:
-        """Legacy public clients (non-confidential ID class) keep working with no client auth."""
+        """A freshly registered public client works end to end with no client auth."""
+        if not self.public_client_id:
+            self.skip("public-client-*", "no public client was registered")
+            return
         code, verifier = self.mint_code(
             "authorize-mints-code-for-public-client",
-            LEGACY_PUBLIC_CLIENT_ID,
-            PUBLIC_REDIRECT_URI,
+            self.public_client_id,
+            GENERIC_REDIRECT_URI,
         )
         if not code:
             return
         exchange = self.code_exchange(
             code,
             verifier,
-            PUBLIC_REDIRECT_URI,
-            extra={"client_id": LEGACY_PUBLIC_CLIENT_ID},
+            GENERIC_REDIRECT_URI,
+            extra={"client_id": self.public_client_id},
         )
         refresh_token = _json(exchange).get("refresh_token")
         self.expect(
