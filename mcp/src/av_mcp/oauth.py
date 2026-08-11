@@ -6,12 +6,13 @@ see ``av_mcp.tokens``). No server-side token store. The raw Alpha Vantage apikey
 returned to the client and is only decrypted on the request path.
 """
 
+import base64
+import hashlib
+import hmac
 import json
 import os
-import time
 import secrets
-import hashlib
-import base64
+import time
 import urllib.parse
 from typing import Optional
 
@@ -21,6 +22,7 @@ from av_mcp.tokens import (
     ACCESS_TOKEN_TTL,
     AUTH_CODE_TTL,
     REFRESH_TOKEN_TTL,
+    _jwt_secret,
     decode_token,
     encode_token,
     encrypt_apikey,
@@ -45,27 +47,27 @@ ALLOWED_REDIRECT_DOMAINS = {
 }
 LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
-# Microsoft 365 Copilot (Cowork) always redirects to this exact callback. It is granted only
-# to the single server-configured confidential client below: Microsoft's static OAuth contract
-# requires a client_id + client_secret pair, and a public DCR client must not be able to point
-# authorization codes at Microsoft's shared callback.
-MICROSOFT_REDIRECT_URI = "https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect"
-
-
-def confidential_client_id() -> str:
-    """The configured confidential client_id (Microsoft), or "" when not configured."""
-    return os.environ.get("MICROSOFT_OAUTH_CLIENT_ID", "").strip()
-
-
-def confidential_client_secret() -> str:
-    """The configured confidential client's secret, or "" when not configured."""
-    return os.environ.get("MICROSOFT_OAUTH_CLIENT_SECRET", "").strip()
+# Microsoft 365 Copilot (Cowork) always redirects to this exact callback. It is reserved for
+# confidential clients issued by this server so public clients cannot send authorization codes
+# to Microsoft's shared callback.
+COWORK_REDIRECT_URI = "https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect"
+CONFIDENTIAL_CLIENT_ID_PREFIX = "mcp-confidential-"
+CLIENT_SECRET_LABEL = b"alpha-vantage-mcp:dcr-client-secret:v1:"
 
 
 def is_confidential_client(client_id: Optional[str]) -> bool:
-    """True when ``client_id`` is the one server-configured confidential client."""
-    configured = confidential_client_id()
-    return bool(configured) and client_id == configured
+    """Return whether ``client_id`` belongs to the stateless confidential-DCR class."""
+    return bool(client_id) and client_id.startswith(CONFIDENTIAL_CLIENT_ID_PREFIX)
+
+
+def derive_client_secret(client_id: str) -> str:
+    """Derive a stable confidential-client secret from the server signing secret."""
+    digest = hmac.new(
+        _jwt_secret().encode(),
+        CLIENT_SECRET_LABEL + client_id.encode(),
+        hashlib.sha256,
+    ).digest()
+    return base64.urlsafe_b64encode(digest).decode().rstrip("=")
 
 
 def generate_authorization_code() -> str:
@@ -94,13 +96,11 @@ def resolve_base_url(event: dict) -> Optional[str]:
 def is_valid_redirect_uri(redirect_uri: str, client_id: Optional[str] = None) -> bool:
     """Validate a redirect_uri with port-agnostic loopback + an https host allowlist.
 
-    The Microsoft callback is exact-matched and reserved for the configured confidential
-    client; callers that cannot authenticate a client (dynamic registration) pass no
-    ``client_id`` and therefore never get it.
+    The Cowork callback is exact-matched and reserved for the confidential-DCR client class.
     """
     if not redirect_uri:
         return False
-    if redirect_uri == MICROSOFT_REDIRECT_URI:
+    if redirect_uri == COWORK_REDIRECT_URI:
         return is_confidential_client(client_id)
     try:
         parsed = urllib.parse.urlparse(redirect_uri)
@@ -118,7 +118,10 @@ def is_valid_redirect_uri(redirect_uri: str, client_id: Optional[str] = None) ->
         return True
     # Apex or subdomain of an allowed base domain (e.g. *.manufact.com). The
     # "." prefix on the suffix check prevents look-alikes like "evilmanufact.com".
-    return any(host == domain or host.endswith(f".{domain}") for domain in ALLOWED_REDIRECT_DOMAINS)
+    return any(
+        host == domain or host.endswith(f".{domain}")
+        for domain in ALLOWED_REDIRECT_DOMAINS
+    )
 
 
 def verify_pkce_challenge(code_verifier: str, code_challenge: str) -> bool:
@@ -137,13 +140,6 @@ def handle_metadata_discovery(event: dict) -> dict:
             "body": json.dumps({"error": "missing_host_header"}),
         }
 
-    # Public (DCR) clients authenticate with no secret. The configured confidential client may
-    # use either secret method: the Microsoft auth config picks one at provisioning time and
-    # the choice is not observable from here.
-    token_endpoint_auth_methods = ["none"]
-    if confidential_client_id():
-        token_endpoint_auth_methods += ["client_secret_basic", "client_secret_post"]
-
     metadata = {
         "issuer": base_url,
         "authorization_endpoint": f"{base_url}/authorize",
@@ -154,7 +150,11 @@ def handle_metadata_discovery(event: dict) -> dict:
         "grant_types_supported": ["authorization_code", "refresh_token"],
         # PKCE S256 is mandatory; "plain" is intentionally not advertised (T10).
         "code_challenge_methods_supported": ["S256"],
-        "token_endpoint_auth_methods_supported": token_endpoint_auth_methods,
+        "token_endpoint_auth_methods_supported": [
+            "none",
+            "client_secret_basic",
+            "client_secret_post",
+        ],
         "subject_types_supported": ["public"],
     }
 
@@ -457,9 +457,9 @@ def authenticate_token_client(
     """Resolve the token request's client and authenticate it when it is confidential.
 
     Returns ``(client_id, confidential, error_response)``, where ``confidential`` means the
-    client proved the configured secret. Public clients stay unauthenticated (``none``) —
-    there is no client store to check them against. The configured confidential client must
-    present its secret, via client_secret_basic or client_secret_post.
+    client proved its derived secret. Legacy public clients stay unauthenticated (``none``)
+    because there is no client store against which to validate them. Confidential-DCR clients
+    must authenticate via client_secret_basic or client_secret_post.
     """
     basic = _basic_auth_credentials(event)
     if basic is not None:
@@ -475,10 +475,8 @@ def authenticate_token_client(
     if not is_confidential_client(client_id):
         return client_id or None, False, None
 
-    configured_secret = confidential_client_secret()
-    if not configured_secret or not secrets.compare_digest(
-        client_secret.encode(), configured_secret.encode()
-    ):
+    expected_secret = derive_client_secret(client_id)
+    if not secrets.compare_digest(client_secret.encode(), expected_secret.encode()):
         return client_id, False, _invalid_client_response()
     return client_id, True, None
 
@@ -726,11 +724,8 @@ def handle_refresh_token_grant(
 
     # A refresh token issued to a confidential client stays bound to it: the presenter must
     # have authenticated as that same client above, so a leaked token alone cannot be
-    # redeemed. The requirement rides in the token's own ``confidential`` claim, so rotating
-    # or clearing MICROSOFT_OAUTH_CLIENT_ID cannot downgrade an already-issued token to a
-    # public one (rotation instead makes the old token unredeemable, which is the safe
-    # outcome). ``is_confidential_client`` additionally covers a token that was issued to a
-    # client_id before that id was configured as confidential.
+    # redeemed. The requirement rides in the token's signed ``confidential`` claim. The client
+    # ID class check also prevents a token missing that marker from downgrading to a public flow.
     token_client_id = token_data.get("client_id")
     if token_data.get("confidential") or is_confidential_client(token_client_id):
         if not confidential or client_id != token_client_id:
@@ -770,11 +765,11 @@ def handle_registration_request(event: dict) -> dict:
             ),
         }
 
-    client_id = f"mcp-client-{secrets.token_urlsafe(16)}"
+    client_id = f"{CONFIDENTIAL_CLIENT_ID_PREFIX}{secrets.token_urlsafe(16)}"
 
     redirect_uris = registration_request.get("redirect_uris", [])
     for uri in redirect_uris:
-        if not is_valid_redirect_uri(uri):
+        if not is_valid_redirect_uri(uri, client_id):
             return {
                 "statusCode": 400,
                 "body": json.dumps(
@@ -788,10 +783,12 @@ def handle_registration_request(event: dict) -> dict:
     registration_response = {
         "client_id": client_id,
         "client_id_issued_at": int(time.time()),  # Real Unix timestamp (T12 fix).
+        "client_secret": derive_client_secret(client_id),
+        "client_secret_expires_at": 0,
         "redirect_uris": redirect_uris or ["http://localhost:8080/callback"],
         "grant_types": ["authorization_code", "refresh_token"],
         "response_types": ["code"],
-        "token_endpoint_auth_method": "none",  # Public client.
+        "token_endpoint_auth_method": "client_secret_basic",
     }
 
     return {

@@ -21,7 +21,6 @@ from av_mcp.cowork_connector.package import (
     MCP_SERVER_URL,
     PACKAGE_FILES,
     PLACEHOLDER_APP_ID,
-    PLACEHOLDER_AUTH_CONFIG_ID,
 )
 
 
@@ -95,7 +94,6 @@ def validate_package(
     _require(len(connectors) == 1, "manifest must contain exactly one agent connector")
     connector = connectors[0]
     remote_server = connector.get("toolSource", {}).get("remoteMcpServer", {})
-    authorization = remote_server.get("authorization", {})
     _require(
         remote_server.get("mcpServerUrl") == MCP_SERVER_URL,
         "MCP URL must be the production HTTPS URL",
@@ -105,13 +103,10 @@ def validate_package(
         == "tools/alpha-vantage-tools.json",
         "manifest must reference the packaged tool description",
     )
+    # Cowork-managed DCR: authorization must be absent so Microsoft provisions the client.
     _require(
-        authorization.get("type") == "OAuthPluginVault",
-        "OAuthPluginVault authorization is required",
-    )
-    _require(
-        bool(authorization.get("referenceId")),
-        "OAuth authorization referenceId is required",
+        "authorization" not in remote_server,
+        "manifest must omit remoteMcpServer.authorization for Cowork-managed DCR",
     )
     _require(
         manifest["icons"] == {"color": "color.png", "outline": "outline.png"},
@@ -122,10 +117,6 @@ def validate_package(
         _require(
             manifest["id"] != PLACEHOLDER_APP_ID,
             "placeholder app ID is only allowed in development",
-        )
-        _require(
-            authorization["referenceId"] != PLACEHOLDER_AUTH_CONFIG_ID,
-            "placeholder auth config ID is only allowed in development",
         )
         for name, icon in (("color.png", color_icon), ("outline.png", outline_icon)):
             _require(

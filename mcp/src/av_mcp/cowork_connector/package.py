@@ -23,13 +23,11 @@ PACKAGE_FILES = (
     "tools/alpha-vantage-tools.json",
 )
 PLACEHOLDER_APP_ID = "00000000-0000-4000-8000-000000000000"
-PLACEHOLDER_AUTH_CONFIG_ID = "DEVELOPMENT-AUTH-CONFIG-ID"
 
 
 @dataclass(frozen=True)
 class PackageConfig:
     app_id: str
-    auth_config_id: str
     version: str
     terms_url: str
     color_icon: Path
@@ -38,6 +36,8 @@ class PackageConfig:
 
 
 def _manifest(config: PackageConfig) -> dict[str, Any]:
+    # Cowork-managed DCR: omit authorization entirely so Microsoft registers its own client
+    # against the server's advertised registration_endpoint.
     return {
         "$schema": MANIFEST_SCHEMA,
         "manifestVersion": "1.28",
@@ -72,10 +72,6 @@ def _manifest(config: PackageConfig) -> dict[str, Any]:
                         "mcpServerUrl": MCP_SERVER_URL,
                         "mcpToolDescription": {
                             "file": "tools/alpha-vantage-tools.json"
-                        },
-                        "authorization": {
-                            "type": "OAuthPluginVault",
-                            "referenceId": config.auth_config_id,
                         },
                     }
                 },
@@ -115,18 +111,13 @@ def build_package(output: Path, config: PackageConfig) -> None:
 def _config_from_args(args: argparse.Namespace) -> PackageConfig:
     if args.development:
         app_id = args.app_id or PLACEHOLDER_APP_ID
-        auth_config_id = args.auth_config_id or PLACEHOLDER_AUTH_CONFIG_ID
     else:
-        if not args.app_id or not args.auth_config_id:
-            raise SystemExit(
-                "--app-id and --auth-config-id are required outside --development"
-            )
+        if not args.app_id:
+            raise SystemExit("--app-id is required outside --development")
         app_id = args.app_id
-        auth_config_id = args.auth_config_id
 
     return PackageConfig(
         app_id=app_id,
-        auth_config_id=auth_config_id,
         version=args.version,
         terms_url=args.terms_url,
         color_icon=Path(args.color_icon),
@@ -139,7 +130,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build a Cowork connector app package")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--app-id")
-    parser.add_argument("--auth-config-id")
     parser.add_argument("--version", default="1.0.0")
     parser.add_argument("--terms-url", default="https://www.alphavantage.co/terms/")
     parser.add_argument("--color-icon", type=Path, required=True)

@@ -1,20 +1,15 @@
-"""Verify the Cowork confidential OAuth client end to end over real HTTP.
+"""Verify the Cowork confidential DCR OAuth lifecycle end to end over real HTTP.
 
-Layer-1 self-test for the Microsoft 365 static OAuth contract: it drives ``/authorize``,
-``/token``, and ``/register`` with an actual HTTP client instead of calling the handlers
-in-process, so routing, headers, and redirects are exercised the way Microsoft's token
-store will exercise them.
+Drives ``/register``, ``/authorize``, and ``/token`` with an actual HTTP client so routing,
+headers, and redirects match how Microsoft's Cowork token store will exercise them.
 
 With no ``--base-url`` the script starts ``mcp/local_http_server.py`` on a free port with
-throwaway credentials, runs every check, and tears the server down. Given a ``--base-url``
-it runs the same checks against that deployment (production, once the Microsoft client is
-configured), which is the run that also proves CloudFront forwards ``Authorization`` to
-``/token``. The client-rotation checks need control of the server's own configuration and
-are reported as skipped in that mode.
+throwaway signing keys, registers a confidential DCR client, runs every check, and tears the
+server down. Given a ``--base-url`` it runs the same checks against that deployment.
 
     uv run --project mcp python -m av_mcp.cowork_connector.verify_oauth
     uv run --project mcp python -m av_mcp.cowork_connector.verify_oauth \
-        --base-url https://mcp.alphavantage.co --client-id <id> --client-secret <secret>
+        --base-url https://mcp.alphavantage.co
 """
 
 from __future__ import annotations
@@ -38,21 +33,26 @@ from typing import Iterator, Optional, Sequence
 import httpx
 from cryptography.fernet import Fernet
 
-from av_mcp.oauth import MICROSOFT_REDIRECT_URI
+from av_mcp.oauth import (
+    CONFIDENTIAL_CLIENT_ID_PREFIX,
+    COWORK_REDIRECT_URI,
+    derive_client_secret,
+)
 
 MCP_ROOT = Path(__file__).resolve().parents[3]
 LOCAL_SERVER = MCP_ROOT / "local_http_server.py"
 
-# Loopback redirect used for the public-client (DCR) regression checks.
+# Loopback redirect used for the legacy public-client regression checks.
 PUBLIC_REDIRECT_URI = "http://127.0.0.1:8765/callback"
+# Synthetic legacy public client_id (pre-DCR format). New registrations always issue
+# confidential IDs; this exercises the still-supported public path.
+LEGACY_PUBLIC_CLIENT_ID = "mcp-client-verification"
 
-# Environment the managed local server must not inherit: real OAuth keys, real Microsoft
-# client credentials, and anything that would make it talk to AWS.
+# Environment the managed local server must not inherit: real OAuth keys or anything that
+# would make it talk to AWS.
 SCRUBBED_ENV = (
     "JWT_SECRET_KEY",
     "AV_APIKEY_ENC_KEY",
-    "MICROSOFT_OAUTH_CLIENT_ID",
-    "MICROSOFT_OAUTH_CLIENT_SECRET",
     "DOMAIN_NAME",
     "S3_INGEST_URL",
     "S3_INGEST_SECRET",
@@ -65,6 +65,12 @@ class Result:
     name: str
     status: str
     detail: str
+
+
+@dataclass
+class RegisteredClient:
+    client_id: str
+    client_secret: str
 
 
 def pkce_pair() -> tuple[str, str]:
@@ -88,22 +94,22 @@ def _json(response: httpx.Response) -> dict:
 
 
 class Verifier:
-    """Runs the confidential-client checks against one base URL."""
+    """Runs the confidential-DCR checks against one base URL."""
 
     def __init__(
         self,
         client: httpx.Client,
         base_url: str,
-        client_id: str,
-        client_secret: str,
         api_key: str,
+        *,
+        local: bool = False,
     ) -> None:
         self.client = client
         self.base_url = base_url.rstrip("/")
-        self.client_id = client_id
-        self.client_secret = client_secret
         self.api_key = api_key
+        self.local = local
         self.results: list[Result] = []
+        self.registered: Optional[RegisteredClient] = None
 
     # --- result recording -------------------------------------------------
 
@@ -208,7 +214,9 @@ class Verifier:
         response = self.client.get(
             f"{self.base_url}/.well-known/oauth-authorization-server"
         )
-        methods = _json(response).get("token_endpoint_auth_methods_supported", [])
+        payload = _json(response)
+        methods = payload.get("token_endpoint_auth_methods_supported", [])
+        registration = payload.get("registration_endpoint", "")
         self.expect(
             "metadata-advertises-client-secret-methods",
             response,
@@ -219,85 +227,148 @@ class Verifier:
                     {"client_secret_basic", "client_secret_post"} <= set(methods),
                 ),
                 ("public clients must keep the 'none' method", "none" in methods),
+                (
+                    "metadata must advertise a registration_endpoint",
+                    bool(registration) and registration.endswith("/register"),
+                ),
             ],
         )
 
-    def check_registration(self) -> Optional[str]:
-        """DCR must still refuse the Teams callback and stay public-client only."""
-        teams = self.client.post(
+    def check_registration(self) -> Optional[RegisteredClient]:
+        """DCR must issue a confidential client (with secret) and accept the Cowork callback."""
+        cowork = self.client.post(
             f"{self.base_url}/register",
-            json={"redirect_uris": [MICROSOFT_REDIRECT_URI]},
+            json={"redirect_uris": [COWORK_REDIRECT_URI]},
         )
-        self.expect(
-            "register-rejects-teams-redirect", teams, 400, error="invalid_redirect_uri"
+        payload = _json(cowork)
+        client_id = payload.get("client_id") or ""
+        client_secret = payload.get("client_secret") or ""
+        requires: list[tuple[str, bool]] = [
+            (
+                "registration must return a confidential client_id prefix",
+                bool(client_id) and client_id.startswith(CONFIDENTIAL_CLIENT_ID_PREFIX),
+            ),
+            ("registration must return a client_secret", bool(client_secret)),
+            (
+                "client_secret_expires_at must be 0 (no expiry)",
+                payload.get("client_secret_expires_at") == 0,
+            ),
+            (
+                "token_endpoint_auth_method must be secret-based",
+                payload.get("token_endpoint_auth_method")
+                in ("client_secret_basic", "client_secret_post"),
+            ),
+            (
+                "registered redirect_uris must include the Cowork callback",
+                COWORK_REDIRECT_URI in (payload.get("redirect_uris") or []),
+            ),
+        ]
+        # HMAC derivation check only in local mode, where this process shares JWT_SECRET_KEY
+        # with the managed server. Remote mode must not use the operator's env secret as a
+        # proxy — that would spuriously FAIL against a deployment with a different key.
+        if self.local and client_id and client_secret:
+            try:
+                expected_secret = derive_client_secret(client_id)
+                requires.append(
+                    (
+                        "issued client_secret must match HMAC derivation",
+                        secrets.compare_digest(client_secret, expected_secret),
+                    )
+                )
+            except Exception as error:  # noqa: BLE001 - surface as a failed require
+                requires.append((f"derive_client_secret failed: {error}", False))
+
+        ok = self.expect(
+            "register-issues-confidential-dcr-client",
+            cowork,
+            201,
+            require=requires,
         )
 
-        public = self.client.post(
-            f"{self.base_url}/register", json={"redirect_uris": [PUBLIC_REDIRECT_URI]}
+        # A second registration with a loopback URI must also be confidential (no public DCR).
+        loopback = self.client.post(
+            f"{self.base_url}/register",
+            json={"redirect_uris": [PUBLIC_REDIRECT_URI]},
         )
-        payload = _json(public)
+        loop_payload = _json(loopback)
         self.expect(
-            "register-issues-public-client-only",
-            public,
+            "register-loopback-also-confidential",
+            loopback,
             201,
             require=[
                 (
-                    "registration must return a client_id",
-                    bool(payload.get("client_id")),
+                    "loopback registration must issue a confidential client_id",
+                    str(loop_payload.get("client_id", "")).startswith(
+                        CONFIDENTIAL_CLIENT_ID_PREFIX
+                    ),
                 ),
                 (
-                    "registration must not issue a client_secret",
-                    "client_secret" not in payload,
-                ),
-                (
-                    "registered client must be token_endpoint_auth_method=none",
-                    payload.get("token_endpoint_auth_method") == "none",
+                    "loopback registration must issue a client_secret",
+                    bool(loop_payload.get("client_secret")),
                 ),
             ],
         )
-        return payload.get("client_id")
 
-    def check_authorize_reservation(self, public_client_id: Optional[str]) -> None:
-        """The Teams callback is available to the configured client and nobody else."""
+        if not ok:
+            return None
+        self.registered = RegisteredClient(
+            client_id=client_id, client_secret=client_secret
+        )
+        return self.registered
+
+    def check_authorize_reservation(
+        self, registered: Optional[RegisteredClient]
+    ) -> None:
+        """The Cowork callback is available only to confidential-DCR client IDs."""
         _, challenge = pkce_pair()
-        configured = self.client.get(
-            f"{self.base_url}/authorize",
-            params=self.authorize_params(
-                self.client_id, MICROSOFT_REDIRECT_URI, challenge
-            ),
-        )
-        self.expect(
-            "authorize-teams-redirect-configured-client",
-            configured,
-            200,
-            require=[
-                (
-                    "configured client must reach the consent form",
-                    "api_key" in configured.text,
-                )
-            ],
-        )
+        if registered:
+            configured = self.client.get(
+                f"{self.base_url}/authorize",
+                params=self.authorize_params(
+                    registered.client_id, COWORK_REDIRECT_URI, challenge
+                ),
+            )
+            self.expect(
+                "authorize-cowork-redirect-confidential-client",
+                configured,
+                200,
+                require=[
+                    (
+                        "confidential client must reach the consent form",
+                        "api_key" in configured.text,
+                    )
+                ],
+            )
+        else:
+            self.skip(
+                "authorize-cowork-redirect-confidential-client",
+                "no confidential client was registered",
+            )
 
         other = self.client.get(
             f"{self.base_url}/authorize",
             params=self.authorize_params(
-                public_client_id or "mcp-client-unregistered",
-                MICROSOFT_REDIRECT_URI,
+                LEGACY_PUBLIC_CLIENT_ID,
+                COWORK_REDIRECT_URI,
                 challenge,
             ),
         )
         self.expect(
-            "authorize-teams-redirect-public-client-rejected",
+            "authorize-cowork-redirect-public-client-rejected",
             other,
             400,
             error="invalid_request",
         )
 
-    def check_code_exchange(self) -> None:
+    def check_code_exchange(self, registered: Optional[RegisteredClient]) -> None:
+        if not registered:
+            self.skip("token-*", "no confidential client was registered")
+            return
+
         code, verifier = self.mint_code(
-            "authorize-mints-code-for-teams-redirect",
-            self.client_id,
-            MICROSOFT_REDIRECT_URI,
+            "authorize-mints-code-for-cowork-redirect",
+            registered.client_id,
+            COWORK_REDIRECT_URI,
         )
         if not code:
             self.skip("token-*", "no authorization code was minted")
@@ -306,8 +377,11 @@ class Verifier:
         post = self.code_exchange(
             code,
             verifier,
-            MICROSOFT_REDIRECT_URI,
-            extra={"client_id": self.client_id, "client_secret": self.client_secret},
+            COWORK_REDIRECT_URI,
+            extra={
+                "client_id": registered.client_id,
+                "client_secret": registered.client_secret,
+            },
         )
         payload = _json(post)
         self.expect(
@@ -328,16 +402,16 @@ class Verifier:
 
         code, verifier = self.mint_code(
             "authorize-mints-code-for-basic-exchange",
-            self.client_id,
-            MICROSOFT_REDIRECT_URI,
+            registered.client_id,
+            COWORK_REDIRECT_URI,
         )
         if code:
             basic = self.code_exchange(
                 code,
                 verifier,
-                MICROSOFT_REDIRECT_URI,
-                extra={"client_id": self.client_id},
-                basic=(self.client_id, self.client_secret),
+                COWORK_REDIRECT_URI,
+                extra={"client_id": registered.client_id},
+                basic=(registered.client_id, registered.client_secret),
             )
             self.expect(
                 "token-code-client-secret-basic",
@@ -353,15 +427,18 @@ class Verifier:
 
         code, verifier = self.mint_code(
             "authorize-mints-code-for-bad-secret",
-            self.client_id,
-            MICROSOFT_REDIRECT_URI,
+            registered.client_id,
+            COWORK_REDIRECT_URI,
         )
         if code:
             wrong_post = self.code_exchange(
                 code,
                 verifier,
-                MICROSOFT_REDIRECT_URI,
-                extra={"client_id": self.client_id, "client_secret": "wrong-secret"},
+                COWORK_REDIRECT_URI,
+                extra={
+                    "client_id": registered.client_id,
+                    "client_secret": "wrong-secret",
+                },
             )
             self.expect(
                 "token-code-wrong-secret-post-rejected",
@@ -373,8 +450,8 @@ class Verifier:
             wrong_basic = self.code_exchange(
                 code,
                 verifier,
-                MICROSOFT_REDIRECT_URI,
-                basic=(self.client_id, "wrong-secret"),
+                COWORK_REDIRECT_URI,
+                basic=(registered.client_id, "wrong-secret"),
             )
             self.expect(
                 "token-code-wrong-secret-basic-rejected",
@@ -386,8 +463,8 @@ class Verifier:
             missing = self.code_exchange(
                 code,
                 verifier,
-                MICROSOFT_REDIRECT_URI,
-                extra={"client_id": self.client_id},
+                COWORK_REDIRECT_URI,
+                extra={"client_id": registered.client_id},
             )
             self.expect(
                 "token-code-missing-secret-rejected",
@@ -396,28 +473,37 @@ class Verifier:
                 error="invalid_client",
             )
 
-    def confidential_refresh_token(self) -> Optional[str]:
-        """Mint a refresh token for the configured confidential client."""
+    def confidential_refresh_token(
+        self, registered: Optional[RegisteredClient]
+    ) -> Optional[str]:
+        """Mint a refresh token for the confidential DCR client."""
+        if not registered:
+            return None
         code, verifier = self.mint_code(
-            "authorize-mints-code-for-refresh", self.client_id, MICROSOFT_REDIRECT_URI
+            "authorize-mints-code-for-refresh",
+            registered.client_id,
+            COWORK_REDIRECT_URI,
         )
         if not code:
             return None
         response = self.code_exchange(
             code,
             verifier,
-            MICROSOFT_REDIRECT_URI,
-            extra={"client_id": self.client_id, "client_secret": self.client_secret},
+            COWORK_REDIRECT_URI,
+            extra={
+                "client_id": registered.client_id,
+                "client_secret": registered.client_secret,
+            },
         )
         return _json(response).get("refresh_token")
 
-    def check_refresh(self, refresh_token: str) -> None:
+    def check_refresh(self, registered: RegisteredClient, refresh_token: str) -> None:
         post = self.token(
             {
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
+                "client_id": registered.client_id,
+                "client_secret": registered.client_secret,
             }
         )
         rotated = _json(post).get("refresh_token")
@@ -436,7 +522,7 @@ class Verifier:
 
         basic = self.token(
             {"grant_type": "refresh_token", "refresh_token": refresh_token},
-            basic=(self.client_id, self.client_secret),
+            basic=(registered.client_id, registered.client_secret),
         )
         self.expect(
             "refresh-client-secret-basic",
@@ -464,7 +550,7 @@ class Verifier:
             {
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
-                "client_id": self.client_id,
+                "client_id": registered.client_id,
                 "client_secret": "wrong-secret",
             }
         )
@@ -479,16 +565,20 @@ class Verifier:
                 error="invalid_client",
             )
 
-    def check_public_client(self, public_client_id: Optional[str]) -> None:
-        """Public (DCR) clients keep working with no client authentication."""
-        client_id = public_client_id or "mcp-client-verification"
+    def check_public_client(self) -> None:
+        """Legacy public clients (non-confidential ID class) keep working with no client auth."""
         code, verifier = self.mint_code(
-            "authorize-mints-code-for-public-client", client_id, PUBLIC_REDIRECT_URI
+            "authorize-mints-code-for-public-client",
+            LEGACY_PUBLIC_CLIENT_ID,
+            PUBLIC_REDIRECT_URI,
         )
         if not code:
             return
         exchange = self.code_exchange(
-            code, verifier, PUBLIC_REDIRECT_URI, extra={"client_id": client_id}
+            code,
+            verifier,
+            PUBLIC_REDIRECT_URI,
+            extra={"client_id": LEGACY_PUBLIC_CLIENT_ID},
         )
         refresh_token = _json(exchange).get("refresh_token")
         self.expect(
@@ -513,33 +603,6 @@ class Verifier:
                 ],
             )
 
-    def check_rotated_config(self, name: str, refresh_token: str) -> None:
-        """An old confidential refresh token must not survive a config change as public."""
-        anonymous = self.token(
-            {"grant_type": "refresh_token", "refresh_token": refresh_token}
-        )
-        self.expect(
-            f"{name}-anonymous-rejected", anonymous, 401, error="invalid_client"
-        )
-
-    def check_rotated_credentials(
-        self, refresh_token: str, client_id: str, client_secret: str
-    ) -> None:
-        response = self.token(
-            {
-                "grant_type": "refresh_token",
-                "refresh_token": refresh_token,
-                "client_id": client_id,
-                "client_secret": client_secret,
-            }
-        )
-        self.expect(
-            "rotated-client-id-new-credentials-rejected",
-            response,
-            401,
-            error="invalid_client",
-        )
-
 
 def free_port() -> int:
     with socket.socket() as sock:
@@ -548,18 +611,12 @@ def free_port() -> int:
 
 
 @contextlib.contextmanager
-def local_server(
-    client_id: str, client_secret: str, jwt_secret: str, enc_key: str
-) -> Iterator[str]:
+def local_server(jwt_secret: str, enc_key: str) -> Iterator[str]:
     """Run ``mcp/local_http_server.py`` with throwaway OAuth configuration."""
     port = free_port()
     env = {k: v for k, v in os.environ.items() if k not in SCRUBBED_ENV}
     env["JWT_SECRET_KEY"] = jwt_secret
     env["AV_APIKEY_ENC_KEY"] = enc_key
-    if client_id:
-        env["MICROSOFT_OAUTH_CLIENT_ID"] = client_id
-        env["MICROSOFT_OAUTH_CLIENT_SECRET"] = client_secret
-
     base_url = f"http://127.0.0.1:{port}"
     with tempfile.TemporaryFile("w+") as log:
         process = subprocess.Popen(
@@ -591,19 +648,18 @@ def local_server(
                 process.wait(timeout=10)
 
 
-def run_shared_checks(verifier: Verifier) -> Optional[str]:
-    """Every check that only needs HTTP access; returns a confidential refresh token."""
+def run_checks(verifier: Verifier) -> None:
+    """Run the full confidential-DCR lifecycle plus legacy public-client regression."""
     verifier.check_metadata()
-    public_client_id = verifier.check_registration()
-    verifier.check_authorize_reservation(public_client_id)
-    verifier.check_code_exchange()
-    refresh_token = verifier.confidential_refresh_token()
-    if refresh_token:
-        verifier.check_refresh(refresh_token)
+    registered = verifier.check_registration()
+    verifier.check_authorize_reservation(registered)
+    verifier.check_code_exchange(registered)
+    refresh_token = verifier.confidential_refresh_token(registered)
+    if registered and refresh_token:
+        verifier.check_refresh(registered, refresh_token)
     else:
         verifier.skip("refresh-*", "no confidential refresh token was minted")
-    verifier.check_public_client(public_client_id)
-    return refresh_token
+    verifier.check_public_client()
 
 
 def report(results: list[Result]) -> int:
@@ -620,80 +676,36 @@ def report(results: list[Result]) -> int:
     return 1 if counts["FAIL"] else 0
 
 
-def verify_remote(
-    base_url: str, client_id: str, client_secret: str, api_key: str
-) -> list[Result]:
+def verify_remote(base_url: str, api_key: str) -> list[Result]:
     with httpx.Client(timeout=30, follow_redirects=False) as client:
-        verifier = Verifier(client, base_url, client_id, client_secret, api_key)
-        run_shared_checks(verifier)
-        verifier.skip(
-            "cleared-client-config-anonymous-rejected",
-            "requires server-side configuration control (local mode only)",
-        )
-        verifier.skip(
-            "rotated-client-id-anonymous-rejected",
-            "requires server-side configuration control (local mode only)",
-        )
-        verifier.skip(
-            "rotated-client-id-new-credentials-rejected",
-            "requires server-side configuration control (local mode only)",
-        )
+        verifier = Verifier(client, base_url, api_key, local=False)
+        run_checks(verifier)
         return verifier.results
 
 
 def verify_local(api_key: str) -> list[Result]:
-    """Run every check, including the ones that need the server's configuration changed."""
-    client_id = "verify-microsoft-client"
-    client_secret = secrets.token_urlsafe(24)
-    # Shared across restarts so tokens minted before a rotation stay decodable.
+    """Register via DCR against a managed local server and run every check."""
     jwt_secret = secrets.token_urlsafe(32)
     enc_key = Fernet.generate_key().decode()
 
     with httpx.Client(timeout=30, follow_redirects=False) as client:
-        with local_server(client_id, client_secret, jwt_secret, enc_key) as base_url:
-            verifier = Verifier(client, base_url, client_id, client_secret, api_key)
-            refresh_token = run_shared_checks(verifier)
-
-        if not refresh_token:
-            verifier.skip(
-                "cleared-client-config-anonymous-rejected",
-                "no confidential refresh token",
-            )
-            verifier.skip("rotated-client-id-*", "no confidential refresh token")
+        with local_server(jwt_secret, enc_key) as base_url:
+            # derive_client_secret reads JWT_SECRET_KEY from the environment of this process
+            # (not the child server). Point it at the same throwaway secret the server uses.
+            os.environ["JWT_SECRET_KEY"] = jwt_secret
+            os.environ["AV_APIKEY_ENC_KEY"] = enc_key
+            verifier = Verifier(client, base_url, api_key, local=True)
+            run_checks(verifier)
             return verifier.results
-
-        # Configuration removed: the token must become unredeemable, not public.
-        with local_server("", "", jwt_secret, enc_key) as base_url:
-            verifier.base_url = base_url
-            verifier.check_rotated_config("cleared-client-config", refresh_token)
-
-        # Client ID rotated: neither anonymous nor the new client may redeem it.
-        rotated_id = "verify-microsoft-client-rotated"
-        rotated_secret = secrets.token_urlsafe(24)
-        with local_server(rotated_id, rotated_secret, jwt_secret, enc_key) as base_url:
-            verifier.base_url = base_url
-            verifier.check_rotated_config("rotated-client-id", refresh_token)
-            verifier.check_rotated_credentials(
-                refresh_token, rotated_id, rotated_secret
-            )
-
-        return verifier.results
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Verify the Cowork confidential OAuth client over HTTP"
+        description="Verify the Cowork confidential DCR OAuth lifecycle over HTTP"
     )
     parser.add_argument(
         "--base-url",
         help="Deployment to verify; omit to start a local server with throwaway credentials",
-    )
-    parser.add_argument(
-        "--client-id", help="Configured confidential client ID (--base-url mode)"
-    )
-    parser.add_argument(
-        "--client-secret",
-        help="Configured confidential client secret (--base-url mode)",
     )
     parser.add_argument(
         "--api-key",
@@ -703,11 +715,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.base_url:
-        if not args.client_id or not args.client_secret:
-            raise SystemExit("--base-url requires --client-id and --client-secret")
-        results = verify_remote(
-            args.base_url, args.client_id, args.client_secret, args.api_key
-        )
+        results = verify_remote(args.base_url, args.api_key)
     else:
         results = verify_local(args.api_key)
 
