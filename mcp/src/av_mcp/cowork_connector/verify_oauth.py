@@ -42,10 +42,10 @@ from av_mcp.oauth import (
 MCP_ROOT = Path(__file__).resolve().parents[3]
 LOCAL_SERVER = MCP_ROOT / "local_http_server.py"
 
-# Loopback redirect used for the legacy public-client regression checks.
+# Redirects used for public registration and legacy token-path regression checks.
+GENERIC_REDIRECT_URI = "https://claude.ai/api/mcp/auth_callback"
 PUBLIC_REDIRECT_URI = "http://127.0.0.1:8765/callback"
-# Synthetic legacy public client_id (pre-DCR format). New registrations always issue
-# confidential IDs; this exercises the still-supported public path.
+# Synthetic legacy public client_id for the public token path.
 LEGACY_PUBLIC_CLIENT_ID = "mcp-client-verification"
 
 # Environment the managed local server must not inherit: real OAuth keys or anything that
@@ -285,28 +285,45 @@ class Verifier:
             require=requires,
         )
 
-        # A second registration with a loopback URI must also be confidential (no public DCR).
-        loopback = self.client.post(
+        # Every non-Cowork registration keeps the legacy public response shape.
+        generic = self.client.post(
             f"{self.base_url}/register",
-            json={"redirect_uris": [PUBLIC_REDIRECT_URI]},
+            json={"redirect_uris": [GENERIC_REDIRECT_URI]},
         )
-        loop_payload = _json(loopback)
+        generic_payload = _json(generic)
         self.expect(
-            "register-loopback-also-confidential",
-            loopback,
+            "register-generic-remains-public-secretless",
+            generic,
             201,
             require=[
                 (
-                    "loopback registration must issue a confidential client_id",
-                    str(loop_payload.get("client_id", "")).startswith(
-                        CONFIDENTIAL_CLIENT_ID_PREFIX
-                    ),
+                    "generic registration must issue the legacy mcp-client- prefix",
+                    str(generic_payload.get("client_id", "")).startswith("mcp-client-"),
                 ),
                 (
-                    "loopback registration must issue a client_secret",
-                    bool(loop_payload.get("client_secret")),
+                    "generic registration must not issue a client_secret",
+                    "client_secret" not in generic_payload,
+                ),
+                (
+                    "generic registration must not issue client_secret_expires_at",
+                    "client_secret_expires_at" not in generic_payload,
+                ),
+                (
+                    "generic registration must remain a public client",
+                    generic_payload.get("token_endpoint_auth_method") == "none",
                 ),
             ],
+        )
+
+        mixed = self.client.post(
+            f"{self.base_url}/register",
+            json={"redirect_uris": [COWORK_REDIRECT_URI, GENERIC_REDIRECT_URI]},
+        )
+        self.expect(
+            "register-mixed-cowork-callback-rejected",
+            mixed,
+            400,
+            error="invalid_redirect_uri",
         )
 
         if not ok:

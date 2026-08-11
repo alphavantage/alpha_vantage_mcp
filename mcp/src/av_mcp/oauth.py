@@ -765,9 +765,13 @@ def handle_registration_request(event: dict) -> dict:
             ),
         }
 
-    client_id = f"{CONFIDENTIAL_CLIENT_ID_PREFIX}{secrets.token_urlsafe(16)}"
-
     redirect_uris = registration_request.get("redirect_uris", [])
+    is_cowork_registration = redirect_uris == [COWORK_REDIRECT_URI]
+    if is_cowork_registration:
+        client_id = f"{CONFIDENTIAL_CLIENT_ID_PREFIX}{secrets.token_urlsafe(16)}"
+    else:
+        client_id = f"mcp-client-{secrets.token_urlsafe(16)}"
+
     for uri in redirect_uris:
         if not is_valid_redirect_uri(uri, client_id):
             return {
@@ -783,13 +787,20 @@ def handle_registration_request(event: dict) -> dict:
     registration_response = {
         "client_id": client_id,
         "client_id_issued_at": int(time.time()),  # Real Unix timestamp (T12 fix).
-        "client_secret": derive_client_secret(client_id),
-        "client_secret_expires_at": 0,
         "redirect_uris": redirect_uris or ["http://localhost:8080/callback"],
         "grant_types": ["authorization_code", "refresh_token"],
         "response_types": ["code"],
-        "token_endpoint_auth_method": "client_secret_basic",
+        "token_endpoint_auth_method": (
+            "client_secret_basic" if is_cowork_registration else "none"
+        ),
     }
+    if is_cowork_registration:
+        registration_response.update(
+            {
+                "client_secret": derive_client_secret(client_id),
+                "client_secret_expires_at": 0,
+            }
+        )
 
     return {
         "statusCode": 201,
