@@ -41,63 +41,6 @@ uvx marketdata-mcp-server YOUR_API_KEY
 💬📊 _Chatbots_
 
 <details>
-<summary><b>⭐ (OpenAI-Verified Connector) Install in ChatGPT</b></summary>
-
-**Requirements:**
-- Any free or paid ChatGPT account
-
-#### ChatGPT Remote Server Connection (Recommended, OAuth)
-
-The Alpha Vantage MCP Server is already listed in ChatGPT's official app directory. Getting started is easy:
-
-1. In ChatGPT, click **Plugins**
-2. Type "Alpha Vantage" into the **Search plugins** bar
-3. Click the **+** (or **Install**) button on the Alpha Vantage result.
-4. Enter your Alpha Vantage API key in the pop-up authentication page
-5. Click "Authorize Access"
-
-If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #4 and #5 again.
-
-Test your connection with a sample query:
-
-```
-Give me last week's OHLCV data for IBM
-```
-
-📺 Below are a few examples of ChatGPT performing various stock analysis & charting tasks:
-
-[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
-
-&nbsp;
-
-<details>
-<summary><i>Other ChatGPT connection methods (local [deprecated])</i></summary>
-
-&nbsp;
-
-Most users should install from the app directory above. This path remains available if you need a local setup.
-
-**ChatGPT Local Server Connection (deprecated)**
-
-> ⚠️ **Legacy setup notice:** This path predates the app directory listing and may require a ChatGPT Plus account (or higher tier). For new installations, we strongly recommend the OAuth instructions above.
-
-1. Go to [ChatGPT Settings → Apps](https://chatgpt.com/#settings/Connectors)
-2. Click on **Advanced settings →** enable **Developer mode**
-3. Return to the **Apps** submenu, then click **Create app**.
-4. **MCP Server URL**: `https://mcp.alphavantage.co/mcp?apikey=YOUR_API_KEY` (replace `YOUR_API_KEY` with your actual Alpha Vantage API key).
-5. **Authentication:** No authentication
-
-> **Note:** When you return to your conversation, your UI will clearly indicate that you are in **Developer mode**. ChatGPT will retain memory of any previous remarks made within the same chat session; however, **these sessions may not be persisted**, meaning the conversation generated while Developer mode is active may not be saved or accessible once closed.
-
-📺 Watch the **legacy setup tutorial**. (Click image below.)
-
-[![Alpha Vantage MCP Setup Tutorial](https://img.youtube.com/vi/pY2nr3FWXs0/maxresdefault.jpg)](https://www.youtube.com/watch?v=pY2nr3FWXs0)
-
-</details>
-
-</details>
-
-<details>
 <summary><b>⭐ (Anthropic-Verified Connector) Install in Claude</b></summary>
 
 **Requirements:**
@@ -142,6 +85,36 @@ Open Claude Desktop developer settings and edit your `claude_desktop_config.json
 ```
 
 Replace `YOUR_API_KEY` with your actual Alpha Vantage API key.
+
+</details>
+
+<details>
+<summary><b>⭐ (OpenAI-Verified Connector) Install in ChatGPT</b></summary>
+
+**Requirements:**
+- Any free or paid ChatGPT account
+
+#### ChatGPT Remote Server Connection (Recommended, OAuth)
+
+The Alpha Vantage MCP Server is already listed in ChatGPT's official app directory. Getting started is easy:
+
+1. In ChatGPT, click **Plugins**
+2. Type "Alpha Vantage" into the **Search plugins** bar
+3. Click the **+** (or **Install**) button on the Alpha Vantage result.
+4. Enter your Alpha Vantage API key in the pop-up authentication page
+5. Click "Authorize Access"
+
+If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #4 and #5 again.
+
+Test your connection with a sample query:
+
+```
+Give me last week's OHLCV data for IBM
+```
+
+📺 Below are a few examples of ChatGPT performing various stock analysis & charting tasks:
+
+[![Alpha Vantage MCP Example Prompts](https://img.youtube.com/vi/LBuHa8Ymw-0/maxresdefault.jpg)](https://www.youtube.com/watch?v=LBuHa8Ymw-0)
 
 </details>
 
@@ -329,92 +302,6 @@ The example includes a complete setup guide and configuration templates.
 💻💵 _Coding tools_
 
 <details>
-<summary><b>⭐ (OpenAI-Verified Connector) Install in OpenAI Codex</b></summary>
-
-**Requirements:**
-- Any free or paid ChatGPT account
-
-See [OpenAI Codex](https://github.com/openai/codex) for more information.
-
-> **Note:** Codex and ChatGPT share the same account, so a plugin installed in one should be available for the other.
-
-#### Codex Remote Server Connection via ChatGPT App (Recommended, OAuth)
-
-The Alpha Vantage MCP Server is already listed in ChatGPT's official app directory. Getting started is easy:
-
-1. In Codex, click **Plugins**
-2. Type "Alpha Vantage" into the **Search plugins** bar
-3. Click the **+** (or **Install**) button on the Alpha Vantage result.
-4. Enter your Alpha Vantage API key in the pop-up authentication page
-5. Click "Authorize Access"
-
-If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #4 and #5 again.
-
-Test your connection with a sample query:
-
-```
-Give me last week's OHLCV data for IBM
-```
-
-📺 Watch the **tutorial**. (Click image below.)
-
-> ⚠️ **Legacy setup notice:** The initial connection steps demonstrate the legacy local method. For new installations, we strongly recommend following the OAuth instructions above.
-
-Starting at **[01:41](https://www.youtube.com/watch?v=8exfs5wpTU0&t=101s)**, the video covers troubleshooting and building end-to-end applications powered by Alpha Vantage market data and dynamic visualizations.
-
-[![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
-
-- [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
-- For additional support links, please check the video description on YouTube.
-
-&nbsp;
-
-<details>
-<summary><i>Other Codex connection methods (CLI OAuth, local [deprecated])</i></summary>
-
-&nbsp;
-
-Most users should install from the app directory above. These paths remain available if you prefer the command line or need a local setup.
-
-**Codex Remote Server Connection via CLI (OAuth)**
-
-1. Add the server by running:
-```bash
-codex mcp add alphavantage --url https://mcp.alphavantage.co/mcp
-```
-2. Codex will open your browser. Enter your Alpha Vantage API key in the pop-up authentication page
-3. Click "Authorize Access"
-4. Run `codex` from your project directory
-5. Verify the connection with:
-```text
-/mcp
-```
-
-If you would like to update/rotate the API key in the future, simply run `codex mcp add` again and enter the new key in the authentication page.
-
-**Codex Local Server Connection (deprecated)**
-
-1. Install `uv` (a [modern Python package](https://docs.astral.sh/uv/) and project manager):
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-2. Add the following to `~/.codex/config.toml`, replacing `YOUR_API_KEY` with your actual Alpha Vantage API key:
-```toml
-[mcp_servers.alphavantage]
-command = "uvx"
-args = ["marketdata-mcp-server", "YOUR_API_KEY"]
-```
-3. Run `codex` from your project directory
-4. Verify the connection with:
-```text
-/mcp
-```
-
-</details>
-
-</details>
-
-<details>
 <summary><b>⭐ (Anthropic-Verified Connector) Install in Claude Code</b></summary>
 
 **Requirements:**
@@ -453,6 +340,71 @@ Run `claude` in your terminal from your project directory.
 Then connect with:
 ```
 /mcp
+```
+
+</details>
+
+<details>
+<summary><b>⭐ (OpenAI-Verified Connector) Install in OpenAI Codex</b></summary>
+
+**Requirements:**
+- Any free or paid ChatGPT account
+
+See [OpenAI Codex](https://github.com/openai/codex) for more information.
+
+> **Note:** Codex and ChatGPT share the same account, so a plugin installed in one should be available for the other.
+
+#### Codex Remote Server Connection via ChatGPT App (Recommended, OAuth)
+
+The Alpha Vantage MCP Server is already listed in ChatGPT's official app directory. Getting started is easy:
+
+1. In Codex, click **Plugins**
+2. Type "Alpha Vantage" into the **Search plugins** bar
+3. Click the **+** (or **Install**) button on the Alpha Vantage result.
+4. Enter your Alpha Vantage API key in the pop-up authentication page
+5. Click "Authorize Access"
+
+If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #4 and #5 again.
+
+Test your connection with a sample query:
+
+```
+Give me last week's OHLCV data for IBM
+```
+
+📺 Watch the **tutorial**. (Click image below.)
+
+> ⚠️ **Legacy setup notice:** The initial connection steps demonstrate the legacy local method. For new installations, we strongly recommend following the OAuth instructions above.
+
+Starting at **[01:41](https://www.youtube.com/watch?v=8exfs5wpTU0&t=101s)**, the video covers troubleshooting and building end-to-end applications powered by Alpha Vantage market data and dynamic visualizations.
+
+[![Alpha Vantage MCP + Codex Tutorial](http://i3.ytimg.com/vi/8exfs5wpTU0/hqdefault.jpg)](https://www.youtube.com/watch?v=8exfs5wpTU0)
+
+- [Download the companion .md file from Github Gist.](https://tinyurl.com/7uwdd6ud)
+- For additional support links, please check the video description on YouTube.
+
+#### Codex Remote Server Connection via CLI (Alternative, OAuth)
+
+Prefer the command line? Getting started is easy:
+
+1. Add the server by running:
+```bash
+codex mcp add alphavantage --url https://mcp.alphavantage.co/mcp
+```
+2. Codex will open your browser. Enter your Alpha Vantage API key in the pop-up authentication page
+3. Click "Authorize Access"
+4. Run `codex` from your project directory
+5. Verify the connection with:
+```text
+/mcp
+```
+
+If you would like to update/rotate the API key in the future, simply run `codex mcp add` again and enter the new key in the authentication page.
+
+Test your connection with a sample query:
+
+```
+Give me last week's OHLCV data for IBM
 ```
 
 </details>
