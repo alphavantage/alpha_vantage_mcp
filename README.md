@@ -60,7 +60,7 @@ The Alpha Vantage MCP Server is already listed in Claude's official Connectors d
 6. Enter your Alpha Vantage API key in the pop-up authentication page 
 7. Click "Authorize Access"
 
-If you would like to update/rotate the API key in the future, simply disconnect then reconnect the MCP server and follow steps #6 and #7 again.
+If you would like to update/rotate the API key in the future, simply disconnect then reconnect to the MCP server and follow steps #6 and #7 again. [This brief video](https://www.youtube.com/watch?v=R36OcQXUNhM) shows the key rotation process.
 
 #### Claude Local Server Connection
 See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
