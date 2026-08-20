@@ -715,6 +715,7 @@ Expected Behavior:
 | economic_indicators | `REAL_GDP`, `REAL_GDP_PER_CAPITA`, `TREASURY_YIELD`, `FEDERAL_FUNDS_RATE`, `CPI`, `INFLATION`, `RETAIL_SALES`, `DURABLES`, `UNEMPLOYMENT`, `NONFARM_PAYROLL` |
 | technical_indicators | `SMA`, `EMA`, `WMA`, `DEMA`, `TEMA`, `TRIMA`, `KAMA`, `MAMA`, `VWAP`, `T3`, `MACD`, `MACDEXT`, `STOCH`, `STOCHF`, `RSI`, `STOCHRSI`, `WILLR`, `ADX`, `ADXR`, `APO`, `PPO`, `MOM`, `BOP`, `CCI`, `CMO`, `ROC`, `ROCR`, `AROON`, `AROONOSC`, `MFI`, `TRIX`, `ULTOSC`, `DX`, `MINUS_DI`, `PLUS_DI`, `MINUS_DM`, `PLUS_DM`, `BBANDS`, `MIDPOINT`, `MIDPRICE`, `SAR`, `TRANGE`, `ATR`, `NATR`, `AD`, `ADOSC`, `OBV`, `HT_TRENDLINE`, `HT_SINE`, `HT_TRENDMODE`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR` |
 | ping | `PING`, `ADD_TWO_NUMBERS` |
+| congress | `CONGRESS_TRADES`, `POLITICIAN_METADATA` |
 
 &nbsp;
 
@@ -729,6 +730,7 @@ Expected Behavior:
 - [economic_indicators](#economic_indicators)
 - [technical_indicators](#technical_indicators)
 - [ping](#ping)
+- [congress](#congress)
 
 💡 Each of these MCP tools maps to a corresponding Alpha Vantage API endpoint. If you are interested in the full API specs (in addition to the brief tool descriptions below), please refer to the Alpha Vantage [API documentation](https://www.alphavantage.co/documentation/). For general guidance on choosing the best stock market data API and/or MCP server in the AI agent era, please refer to [this article](https://medium.com/alpha-vantage/best-stock-market-apis-in-2026-e8a982b1ea0c). Independent API & MCP aggregation platform API Market has also published a [practitioner's guide to stock data](https://api.market/blog/magicapi/stock-market-api/choosing-the-best-stock-market-api), which details when to use an MCP server vs. a conventional API (or both) for your workflow design.
 
@@ -900,3 +902,16 @@ Expected Behavior:
 |----------|------|-------------|
 | ping | `PING` | Health check tool that returns 'pong' |
 | ping | `ADD_TWO_NUMBERS` | Example tool for adding two numbers |
+
+### CONGRESS
+
+| Category | Tool | Description |
+|----------|------|-------------|
+| congress | `CONGRESS_TRADES` | Congressional stock trades disclosed by US representatives, filtered by stock symbol and/or politician BioGuide ID |
+| congress | `POLITICIAN_METADATA` | Complete roster of US congressional representatives with bioguide_id, district, and time-in-service metadata |
+
+`CONGRESS_TRADES` requires at least one of `symbol` or `bioguide_id` (both may be given together to intersect the results); `datatype` defaults to `json` and also accepts `csv`. Example calls: `CONGRESS_TRADES(symbol="AAPL")` and `CONGRESS_TRADES(bioguide_id="S000510")`. Use `POLITICIAN_METADATA` to look up a politician's `bioguide_id`.
+
+`POLITICIAN_METADATA` takes no filter or pagination arguments: every call returns the complete, deterministic roster of representatives directly from Alpha Vantage. The response is large enough to trigger the server's standard preview/CDN handling by default; pass `return_full_data=true` to receive the complete payload inline.
+
+Both tools proxy the public Alpha Vantage `CONGRESS_TRADES` and `POLITICIAN_METADATA` endpoints and preserve upstream response fields (including `source_url`) unchanged.

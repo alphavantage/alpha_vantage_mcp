@@ -248,6 +248,7 @@ TOOL_MODULES = {
     ],
     "ping": "av_api.tools.ping",
     "index_data": "av_api.tools.index_data",
+    "congress": "av_api.tools.congress",
     # NOTE: 'openai' (SEARCH/FETCH) intentionally omitted — those tools are
     # placeholders whose behavior contradicts their descriptions, so they must
     # not ship in the exposed tool list (Software Directory Policy 2.B).
