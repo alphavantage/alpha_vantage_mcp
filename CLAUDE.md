@@ -48,7 +48,7 @@ All tools MUST have proper safety annotations:
 - `destructiveHint: true` — For tools that modify data or have side effects
 
 ### API Key Management
-Thread-safe via `contextvars.ContextVar`. Multiple input methods: env var, CLI arg, query param, `apikey`/`X-API-Key` headers, OAuth token. An explicit raw apikey always wins over an OAuth Bearer token (`resolve_credential` in `mcp/src/av_mcp/utils.py`). The `Authorization` header is strictly an OAuth access token: raw apikeys there are rejected with 401 invalid_token.
+Thread-safe via `contextvars.ContextVar`. Multiple input methods: env var, CLI arg, query param, header auth (`apikey`/`X-API-Key`, or `Authorization` carrying a raw non-JWT-shaped key), OAuth token. An explicit raw apikey always wins over an OAuth Bearer token (`resolve_credential` in `mcp/src/av_mcp/utils.py`). `Authorization` is dual-purpose: JWT-shaped values (exactly two dots) are OAuth access tokens and must never fall back to raw-key handling after failed validation; non-JWT-shaped values are treated as raw AV keys. Load-bearing assumption: AV raw keys are never JWT-shaped.
 
 ### Large Response Handling
 Responses >8192 tokens uploaded to S3 CDN, returns preview + link.

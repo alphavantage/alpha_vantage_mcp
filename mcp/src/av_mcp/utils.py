@@ -29,20 +29,20 @@ def cors_headers() -> dict[str, str]:
 
 
 def resolve_credential(event: dict) -> tuple[str, str]:
-    """Resolve the caller's credential with a single documented priority order (todo 2889).
+    """Resolve the caller's credential with a single documented priority order (todo 3240).
 
     Returns ``(raw_key, bearer)`` where at most one is non-empty:
 
     - ``raw_key``: an explicit raw AV apikey, from (in priority order) the request body >
-      ``?apikey=`` query > ``apikey`` / ``X-API-Key`` header. An explicit raw key is the
-      most recent credential the caller configured, so it wins over any cached OAuth Bearer
-      token (which embeds the apikey captured at consent time and would otherwise pin a
-      stale key across reconnects).
-    - ``bearer``: the ``Authorization`` value (with or without the ``Bearer `` prefix),
-      strictly the OAuth access-token candidate the caller must validate via
-      ``decode_access_token``. Raw apikeys are NOT accepted here (accepting arbitrary
-      strings would let any value through connection-level auth), so non-JWT values stay
-      a 401 invalid_token there (RFC 6750), as do invalid/expired JWTs.
+      ``?apikey=`` query > ``apikey`` / ``X-API-Key`` header > a non-JWT-shaped
+      ``Authorization`` value (with or without the ``Bearer `` prefix). An explicit raw key
+      is the most recent credential the caller configured, so it wins over any cached OAuth
+      Bearer token (which embeds the apikey captured at consent time and would otherwise pin
+      a stale key across reconnects).
+    - ``bearer``: a JWT-shaped ``Authorization`` value (exactly two dots — AV raw keys are
+      assumed never JWT-shaped), the OAuth access-token candidate the caller must validate
+      via ``decode_access_token``. Invalid/expired/tampered/wrong-type JWTs stay a 401 there
+      (RFC 6750) and must never fall back to raw-key handling.
     - ``("", "")``: no credential present anywhere in the request.
     """
     # Check request body first (highest priority)
@@ -73,11 +73,19 @@ def resolve_credential(event: dict) -> tuple[str, str]:
         if lower_headers.get(name):
             return lower_headers[name], ""
 
-    # Authorization header is strictly the OAuth access-token candidate; raw apikeys are
-    # not accepted via Authorization (any value fails decode_access_token -> 401).
+    # Authorization is dual-purpose (todo 3240): JWT-shaped values are OAuth access-token
+    # candidates; anything else is treated as a raw apikey (Anthropic's connector and other
+    # generic "access token" UIs emit `Authorization: Bearer <key>`).
     auth_header = lower_headers.get("authorization") or ""
-    bearer = auth_header[7:] if auth_header.startswith("Bearer ") else auth_header
-    return "", bearer
+    if auth_header[:7].lower() == "bearer ":
+        candidate = auth_header[7:]
+    else:
+        candidate = auth_header
+    if not candidate:
+        return "", ""
+    if candidate.count(".") == 2:
+        return "", candidate
+    return candidate, ""
 
 
 def extract_client_platform(event: dict) -> str:
