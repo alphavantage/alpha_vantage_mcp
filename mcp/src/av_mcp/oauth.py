@@ -38,6 +38,7 @@ ALLOWED_REDIRECT_HOSTS = {
     "claude.com",
     "chatgpt.com",  # ChatGPT connector callback (per-connector path)
     "chat.openai.com",
+    "gptcloud.arc53.com",  # DocsGPT cloud MCP connector (/api/mcp_server/callback)
 }
 # Base domains whose apex and any subdomain are allowed (https only).
 # mcp-use (Manufact) owns *.manufact.com: cloud connector, inspector, and
