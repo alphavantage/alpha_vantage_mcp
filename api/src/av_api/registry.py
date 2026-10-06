@@ -326,6 +326,9 @@ def _build_parameter_schema(func) -> dict:
             schema_type = "string"
 
         properties[param_name] = {"type": schema_type}
+        # A None default means the tool treats null as "not given"; let clients send it.
+        if param.default is None:
+            properties[param_name]["type"] = [schema_type, "null"]
 
         # Add description from docstring if available
         if func.__doc__:
