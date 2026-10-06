@@ -73,6 +73,14 @@ def setup_custom_tool_decorator(mcp):
             for param_name, param_type in hints.items():
                 param_schema = get_type_schema(param_type)
 
+                # A None default means the tool treats null as "not given"; let clients send it.
+                param = sig.parameters.get(param_name)
+                if param and param.default is None:
+                    if 'type' in param_schema:
+                        param_schema['type'] = [param_schema['type'], 'null']
+                    else:
+                        param_schema = {'anyOf': [param_schema, {'type': 'null'}]}
+
                 if param_name in arg_descriptions:
                     param_schema['description'] = arg_descriptions[param_name]
                 else:
